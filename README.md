@@ -4,7 +4,9 @@
 
 **Giảng viên:** TS.Nguyễn Quốc Huy
 
-**Lớp:** DCT122C3
+**Lớp:** DCT122C3 
+
+**Nhóm:** 15
 
 **Thành viên:**
 
