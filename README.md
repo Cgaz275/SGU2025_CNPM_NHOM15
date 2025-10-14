@@ -21,18 +21,6 @@
 FoodFast Drone Delivery là hệ thống giao đồ ăn nhanh bằng drone, mang đến trải nghiệm giao hàng hiện đại và tiện lợi.
 Người dùng có thể đặt món ăn từ các cửa hàng đối tác, thanh toán trực tuyến qua QR code, và nhận đồ ăn trực tiếp từ drone tại vị trí của mình.
 
-### Hệ thống hỗ trợ quy trình:
-
-- Người dùng đặt hàng.
-
-- Nhà hàng xác nhận và chuẩn bị món ăn.
-
-- Hệ thống sinh QR code thanh toán cho khách hàng.
-
-- Sau khi thanh toán thành công → sinh QR code mở hộp drone + hiển thị ETA và bản đồ theo dõi drone.
-
-- Drone giao đến vị trí → khách quét QR để mở hộp và nhận đơn.
-
 ### Công nghệ sử dụng
 
 ### Frontend:
