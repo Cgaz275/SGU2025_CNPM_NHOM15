@@ -8,7 +8,7 @@
     "yarn": "Please use npm instead."
   },
   "scripts": {
-    "dev": "cross-env NODE_OPTIONS='--inspect' next dev",
+    "dev": "dotenv -e .env.dev -- cross-env NODE_OPTIONS='--inspect' next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
@@ -76,6 +76,7 @@
     "autoprefixer": "^10.4.19",
     "cross-env": "^7.0.3",
     "cypress": "^13.13.1",
+    "dotenv-cli": "^10.0.0",
     "eslint": "^8.57.1",
     "eslint-config-next": "14.2.5",
     "eslint-config-prettier": "^9.1.0",

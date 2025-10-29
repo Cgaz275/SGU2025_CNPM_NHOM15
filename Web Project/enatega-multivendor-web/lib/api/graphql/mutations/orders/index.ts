@@ -101,19 +101,9 @@ export const PLACE_ORDER = gql`
 `;
 
 export const ADD_REVIEW_ORDER = gql`
-  mutation ReviewOrder(
-    $order: String!
-    $rating: Int!
-    $description: String
-    $comments: String
-  ) {
+  mutation ReviewOrder($order: String!, $rating: Int!, $description: String) {
     reviewOrder(
-      reviewInput: {
-        order: $order
-        rating: $rating
-        description: $description
-        comments: $comments
-      }
+      reviewInput: { order: $order, rating: $rating, description: $description }
     ) {
       _id
       orderId

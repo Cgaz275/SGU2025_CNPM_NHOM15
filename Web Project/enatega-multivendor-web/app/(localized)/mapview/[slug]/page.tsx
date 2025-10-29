@@ -27,13 +27,14 @@ const MapView: FC<MapViewPageProps> = ({ params }) => {
 
     const { slug } = params;
     const { error, loading, restaurantsData, groceriesData } =
-        useNearByRestaurantsPreview(true,1,110);
+        useNearByRestaurantsPreview();
 
     const { GOOGLE_MAPS_KEY } = useConfig();
     const data = slug === "restaurants" ? restaurantsData : groceriesData;
     const [center, setCenter] = useState<{ lat: number; lng: number } | null>(
         null
     );
+
     return (
         <div className="w-screen">
             {loading ? (
@@ -50,7 +51,6 @@ const MapView: FC<MapViewPageProps> = ({ params }) => {
                         />
                     </div>
                     <div className="flex-[0.65] xl:flex-[0.75] h-screen overflow-y-auto">
-
                         <Map
                             apiKey={GOOGLE_MAPS_KEY}
                             data={data}

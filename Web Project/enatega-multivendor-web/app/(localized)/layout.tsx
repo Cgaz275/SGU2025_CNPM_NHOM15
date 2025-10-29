@@ -2,6 +2,7 @@
 
 // Core
 import { ApolloProvider } from "@apollo/client";
+import { MockedProvider } from "@apollo/client/testing";
 
 // Prime React
 import { PrimeReactProvider } from "primereact/api";
@@ -32,6 +33,8 @@ import NotificationInitializer from "../NotificationInitialzer";
 import FirebaseForegroundHandler from "@/lib/config/FirebaseForegroundHandler";
 import { useEffect,useRef } from "react";
 
+import { mocks } from "@/lib/mocks"; // mock data
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -44,6 +47,8 @@ export default function RootLayout({
   const value = {
     ripple: true,
   };
+
+  const useMocks = process.env.NEXT_PUBLIC_USE_MOCKS === "true"; // ✅ đọc biến môi trường
 
   //  useEffect(()=>{
   //  if ("serviceWorker" in navigator) {
@@ -112,15 +117,26 @@ export default function RootLayout({
   //     });
   // }
 
-  return (
+   // ✅ Tách phần Provider để dễ đọc
+  const ApolloWrapper = ({ children }: { children: React.ReactNode }) =>
+    useMocks ? (
+      <MockedProvider mocks={mocks} addTypename={false}>
+        {children}
+      </MockedProvider>
+    ) : (
+      <ApolloProvider client={client}>{children}</ApolloProvider>
+    );
+
+
+   return (
     <html lang="en">
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <FontawesomeConfig />
       </head>
-      <body className={"flex flex-col flex-wrap"}>
+      <body className="flex flex-col flex-wrap">
         <PrimeReactProvider value={value}>
-          <ApolloProvider client={client}>
+          <ApolloWrapper>
             <ConfigurationProvider>
               <ToastProvider>
                 <AuthProvider>
@@ -129,10 +145,10 @@ export default function RootLayout({
                       <UserAddressProvider>
                         <SearchUIProvider>
                           <AppLayout>
-                            <NotificationInitializer/>
-                            <FirebaseForegroundHandler/>
+                            <NotificationInitializer />
+                            <FirebaseForegroundHandler />
                             {children}
-                            </AppLayout>
+                          </AppLayout>
                         </SearchUIProvider>
                       </UserAddressProvider>
                     </LocationProvider>
@@ -140,7 +156,7 @@ export default function RootLayout({
                 </AuthProvider>
               </ToastProvider>
             </ConfigurationProvider>
-          </ApolloProvider>
+          </ApolloWrapper>
         </PrimeReactProvider>
       </body>
     </html>

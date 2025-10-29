@@ -24,6 +24,7 @@ export default function DiscoveryScreen() {
 
   const {
     queryData,
+    groceriesData: MostOrderedRestaurantsGroceryData,
     loading: mostOrderedLoading,
     error: mostorderedError,
   } = useMostOrderedRestaurants(true, 1, 6);
@@ -70,9 +71,9 @@ export default function DiscoveryScreen() {
           error={!!restaurantsError}
         />
         <TopGroceryPicks
-          // // data={MostOrderedRestaurantsGroceryData}
-          // loading={mostOrderedLoading}
-          // error={!!mostorderedError}
+          data={MostOrderedRestaurantsGroceryData}
+          loading={mostOrderedLoading}
+          error={!!mostorderedError}
         />
         <TopRatedVendors />
         <PopularRestaurants />
@@ -123,9 +124,9 @@ export default function DiscoveryScreen() {
         error={!!restaurantsError}
       />
       <TopGroceryPicks
-        // // data={MostOrderedRestaurantsGroceryData}
-        // loading={mostOrderedLoading}
-        // error={!!mostorderedError}
+        data={MostOrderedRestaurantsGroceryData}
+        loading={mostOrderedLoading}
+        error={!!mostorderedError}
       />
       <TopRatedVendors />
       <PopularRestaurants />

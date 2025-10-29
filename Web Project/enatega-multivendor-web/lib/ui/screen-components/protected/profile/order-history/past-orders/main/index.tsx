@@ -94,21 +94,18 @@ export default function PastOrders({
   const handleSubmitRating = async (
     orderId: string | undefined,
     ratingValue: number,
-    comment?: string,
-    aspects: string[] = []
+    comment?: string
   ) => {
-    const reviewDescription = comment?.trim() || undefined;
-    const reviewComments =
-      aspects?.filter(Boolean).join(", ") || undefined;
+    // Temporarily console the aspects-
+    // console.log(aspects, "Temporarily consoling aspects");
 
     // Here you would  call an API to save the rating
     try {
       await mutate({
         variables: {
           order: orderId,
-          description: reviewDescription,
+          description: comment,
           rating: ratingValue,
-          comments: reviewComments,
         },
       });
     } catch (error) {

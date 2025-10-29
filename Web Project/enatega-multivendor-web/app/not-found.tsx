@@ -11,7 +11,6 @@ export default function NotFound() {
   }, []);
 
   // check file
-  // add comment 
 
   return <></>;
 }

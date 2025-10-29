@@ -30,7 +30,6 @@ const Map: FC<MapProps> = ({ apiKey, data, center }) => {
   });
 
   const defaultCenter = useMemo(() => {
-    
     if (data.length > 0) {
       const [lng, lat] = data[0].location.coordinates;
       return { lat: Number(lat), lng: Number(lng) };
