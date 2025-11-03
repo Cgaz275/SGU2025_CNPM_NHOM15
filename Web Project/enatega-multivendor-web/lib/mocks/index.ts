@@ -1,6 +1,6 @@
 import { countriesMock } from "./countries.mock";
-
+import restaurantMocks from "./restaurants.mock";  
 export const mocks = [
   ...countriesMock,
-  // other mocks can be added here
+  ...restaurantMocks,  
 ];

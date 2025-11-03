@@ -52,7 +52,7 @@ const Couriers:React.FC = () => {
         buttonText={t('RidersInfoCards.TinyTile.subText')}
         backColor={"#eaf7fc"}
         link={"/rider"}
-      />
+      /> 
     </div>
   );
 };

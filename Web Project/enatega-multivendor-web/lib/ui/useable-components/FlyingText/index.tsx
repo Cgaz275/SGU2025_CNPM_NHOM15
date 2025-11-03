@@ -8,7 +8,7 @@ const AnimatedText = () => {
   const t = useTranslations();
   const texts = [
   t('burgers'),
-  t('gifts'),
+  // t('gifts'),
   t('desserts'),
   t('pizza')
 ];
