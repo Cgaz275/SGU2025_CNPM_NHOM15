@@ -21,18 +21,18 @@ export default function ComingSoonScreen() {
       JSON.stringify({
         label: "Home",
         location: {
-          coordinates: [73.036187, 33.699619],
+          coordinates: [0, 0],
         },
         _id: "",
 
-        deliveryAddress: "Islamabad, Pakistan",
+        deliveryAddress: "Ho Chi Minh City, Vietnam",
       })
     );
     // reload window
     window.location.reload();
   };  
   return (
-    <div onClick={handleClick} className=" cursor-pointer relative flex flex-col rounded-lg items-center justify-center py-8  overflow-hidden  mt-10 text-center bg-gradient-to-b from-[#5AC12F] to-[#51b427] hover:from-[#47a320] hover:to-[#51b427] dark:bg-gradient-to-b dark:from-[#467e2e]  dark:to-[#316e17] dark:hover:from-[#316e17] dark:hover:to-[#386425] text-white">
+    <div onClick={handleClick} className=" cursor-pointer relative flex flex-col rounded-lg items-center justify-center py-8  overflow-hidden  mt-10 text-center bg-gradient-to-b from-[#366055] to-[#458070] hover:from-[#458070] hover:to-[#366055] dark:bg-gradient-to-b dark:from-[#467e2e]  dark:to-[#316e17] dark:hover:from-[#316e17] dark:hover:to-[#386425] text-white">
       {/* Floating Food Emojis */}
       <span
         aria-hidden="true"
@@ -42,7 +42,7 @@ export default function ComingSoonScreen() {
       </span>
       <span
         aria-hidden="true"
-        className="absolute top-1/3 right-10 text-5xl opacity-20 animate-pulse"
+        className="absolute top-1/3 right-10 text-5xl opacity-20 animate-bounce"
       >
         🍔
       </span>
@@ -54,7 +54,7 @@ export default function ComingSoonScreen() {
       </span>
       <span
         aria-hidden="true"
-        className="absolute bottom-24 right-1/3 text-4xl opacity-20 animate-pulse"
+        className="absolute bottom-24 right-1/3 text-4xl opacity-20 animate-bounce"
       >
         🍣
       </span>
@@ -66,7 +66,7 @@ export default function ComingSoonScreen() {
       </span>
       <span
         aria-hidden="true"
-        className="absolute bottom-10 right-1/4 text-4xl opacity-20 animate-pulse"
+        className="absolute bottom-10 right-1/4 text-4xl opacity-20 animate-bounce"
       >
         🌮
       </span>
@@ -90,7 +90,7 @@ export default function ComingSoonScreen() {
       <CustomButton
         label={"Click anywhere on this screen to explore restaurants."}
         // onClick={handleClick}
-        className="px-8 py-3 rounded-full font-semibold bg-white text-[#5AC12F] shadow-lg 
+        className="px-8 py-3 rounded-full font-semibold bg-white text-[#366055] shadow-lg 
                    hover:bg-white/90 hover:scale-105 transition-transform duration-200"
       />
     </div>

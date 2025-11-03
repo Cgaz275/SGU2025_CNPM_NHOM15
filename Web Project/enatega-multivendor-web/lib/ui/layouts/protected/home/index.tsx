@@ -4,7 +4,8 @@ import { IProtectedHomeLayoutComponent } from "@/lib/utils/interfaces";
 import { usePathname, useRouter } from "next/navigation";
 
 // Svg
-import { CutlerySvg,StoreSvg } from "@/lib/utils/assets/svg";
+// import { HomeSvg } from "@/lib/utils/assets/svg";
+import { CutlerySvg } from "@/lib/utils/assets/svg";
 import PaddingContainer from "@/lib/ui/useable-components/containers/padding";
 import { useEffect, useState } from "react";
 // context
@@ -40,7 +41,7 @@ export default function HomeLayout({
 
   const isDiscovery = pathname === "/discovery";
   const isRestaurants = pathname === "/restaurants";
-  const isStore = pathname === "/store";
+  // const isStore = pathname === "/store";
 
 
   const t = useTranslations();
@@ -84,12 +85,12 @@ export default function HomeLayout({
             onClick={() => onChangeScreen("Restaurants")}
             Icon={CutlerySvg}
           />
-          <TabItem
+          {/* <TabItem
             active={isStore}
             label={t("tab_store")}
             onClick={() => onChangeScreen("Store")}
             Icon={StoreSvg}
-          />
+          /> */}
         </div>
       </div>
 

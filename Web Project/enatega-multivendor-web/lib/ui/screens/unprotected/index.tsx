@@ -7,16 +7,16 @@ import React from "react";
 import Start from "../../screen-components/un-protected/Home/Start";
 import Cities from "../../screen-components/un-protected/Home/Cities";
 import Info from "../../screen-components/un-protected/Home/Info";
-import EnategaInfo from "../../screen-components/un-protected/Home/LifeWithEnatega";
-import GrowBussiness from "../../screen-components/un-protected/Home/GrowBussiness";
+// import EnategaInfo from "../../screen-components/un-protected/Home/LifeWithEnatega";
+// import GrowBussiness from "../../screen-components/un-protected/Home/GrowBussiness";
 import MiniCards from "../../screen-components/un-protected/Home/MiniCards";
-import TinyTiles from "../../useable-components/tinyTiles";
-import Couriers from "../../screen-components/un-protected/Home/ForCouriers";
+// import TinyTiles from "../../useable-components/tinyTiles";
+// import Couriers from "../../screen-components/un-protected/Home/ForCouriers";
 import { PaddingContainer } from "../../useable-components/containers";
-import { useTranslations } from "next-intl";
+// import { useTranslations } from "next-intl";
 
 const Main = () => {  
-  const t = useTranslations("MiniCardsHomeScreen");
+  // const t = useTranslations("MiniCardsHomeScreen"); 
   return (
     <div className="w-screen dark:bg-gray-900">
       <Start />
@@ -24,10 +24,10 @@ const Main = () => {
         <div className="w-full">
           <Cities />
           <Info />
-          <EnategaInfo />
-          <GrowBussiness />
+          {/* <EnategaInfo /> */}
+          {/* <GrowBussiness /> */}
           <MiniCards />
-          <div className="grid grid-cols-1 md:grid-cols-2 my-[40px] gap-8">
+          {/* <div className="grid grid-cols-1 md:grid-cols-2 my-[40px] gap-8">
             <TinyTiles
               image={
                 "https://images.ctfassets.net/23u853certza/6kRVPn5kxEnlkgCYUTozhL/7846cf51b410e633a8c30a021ec00bde/Restaurant.png?w=200&q=90&fm=webp"
@@ -46,9 +46,9 @@ const Main = () => {
               backColor="#eaf7fc"
               link={"/restaurantInfo"}
             />
-          </div>
+          </div> */}
 
-          <Couriers />
+          {/* <Couriers /> */}
         </div>
       </PaddingContainer>
     </div>

@@ -7,7 +7,7 @@ import { getLocale, getMessages } from "next-intl/server";
 import Script from "next/script";
 
 export const metadata = {
-  title: "Enatega Multivendor",
+  title: "FoodFast - Drone Delivery Service",
   manifest: "/manifest.json",
 };
 

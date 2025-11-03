@@ -29,7 +29,7 @@ import useUser from "@/lib/hooks/useUser";
 import { useSearchUI } from "@/lib/context/search/search.context";
 import useNearByRestaurantsPreview from "@/lib/hooks/useNearByRestaurantsPreview";
 
-import Logo from "@/lib/utils/assets/svg/Logo";
+import Logo from "@/lib/utils/assets/svg/foodfast_logo_apptop";
 
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -366,8 +366,8 @@ const AppTopbar = ({ handleModalToggle }: IAppBarProps) => {
                   >
                     <Logo
                       className="w-32 h-auto"
-                      fillColor="#000000"
-                      darkmode="#FFFFFFFF"
+                      // fillColor="#000000"
+                      // darkmode="#FFFFFFFF"
                     />
                   </div>
                 )}
@@ -381,7 +381,7 @@ const AppTopbar = ({ handleModalToggle }: IAppBarProps) => {
                       <LocationSvg width={22} height={22} />
                     </div>
 
-                    <span className="hidden md:inline text-xs sm:text-sm md:text-base text-[#94e469] font-inter font-normal leading-6 tracking-normal mr-2 truncate">
+                    <span className="hidden md:inline text-xs sm:text-sm md:text-base text-[#366055] font-inter font-normal leading-6 tracking-normal mr-2 truncate">
                       {fittedAddress(userAddress?.deliveryAddress)}
                     </span>
 
@@ -390,7 +390,7 @@ const AppTopbar = ({ handleModalToggle }: IAppBarProps) => {
                         icon={faChevronDown}
                         width={12}
                         hanging={12}
-                        color="#94e469"
+                        color="#366055"
                       />
                     </div>
                   </div>
@@ -440,7 +440,7 @@ const AppTopbar = ({ handleModalToggle }: IAppBarProps) => {
                 )}
                 {!authToken && !isSearchFocused ? (
                   <button
-                    className="w-auto min-w-[64px] h-fit py-2 md:py-3 px-4 bg-[#5AC12F] rounded text-sm lg:text-[16px] md:text-md flex items-center justify-center"
+                    className="w-auto min-w-[64px] h-fit py-2 md:py-3 px-4 bg-[#366055] rounded text-sm lg:text-[16px] md:text-md flex items-center justify-center"
                     onClick={handleModalToggle}
                   >
                     <span className="text-white font-semibold text-xs md:text-[16px] whitespace-nowrap">
@@ -456,7 +456,7 @@ const AppTopbar = ({ handleModalToggle }: IAppBarProps) => {
                   >
                     <div
                       className="h-6 w-6 md:w-8 md:h-8 rounded-full flex items-center justify-center text-white font-semibold select-none uppercase"
-                      style={{ backgroundColor: "#94e469" }}
+                      style={{ backgroundColor: "#366055" }}
                     >
                       {profile?.name
                         ?.trim()
@@ -476,7 +476,7 @@ const AppTopbar = ({ handleModalToggle }: IAppBarProps) => {
                       icon={faChevronDown}
                       width={12}
                       hanging={12}
-                      color="#94e469"
+                      color="#366055"
                     />
                     <Menu
                       className="
@@ -729,7 +729,7 @@ const AppTopbar = ({ handleModalToggle }: IAppBarProps) => {
                       icon={faChevronDown}
                       width={12}
                       hanging={12}
-                      color="#94e469"
+                      color="#366055"
                     />
                   </div>
                 </div>

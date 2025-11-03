@@ -8,10 +8,10 @@ export const darkMapStyle = [
       featureType: "landscape.natural",
       elementType: "geometry",
       stylers: [
-        { color: "#165E3A" }, // Tailwind green-900 for darker natural areas
+        { color: "#366055" }, // Tailwind green-900 for darker natural areas
       ],
     },
-  // Tailwind green-800 or #165E3A
+  // Tailwind green-800 or #366055
     {
       featureType: "administrative",
       elementType: "geometry",

@@ -9,8 +9,7 @@ export const countriesMock = [
     result: {
       data: {
         getCountries: [
-          { _id: "1", name: "Vietnam", flag: "🇻🇳" },
-          { _id: "2", name: "Japan", flag: "🇯🇵" },
+          { _id: "1", name: "Vietnam", flag: "/assets/images/png/vietnam_logo_flag.png" },
         ],
       },
     },
@@ -26,8 +25,8 @@ export const countriesMock = [
           id: "1",
           name: "Vietnam",
           cities: [
-            { id: "hcm", name: "Ho Chi Minh City", latitude: 10.8231, longitude: 106.6297 },
-            { id: "hn", name: "Hanoi", latitude: 21.0278, longitude: 105.8342 },
+            { id: "hcm", name: "Ho Chi Minh City", latitude: 0, longitude: 0 },
+            { id: "hn", name: "Hanoi", latitude: 0, longitude: 0 },
           ],
         },
       },

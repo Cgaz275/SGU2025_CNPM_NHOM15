@@ -60,7 +60,14 @@ export default function AuthModal({
     }
   }, [isAuthModalVisible]);
   // get the RTL direction
-  const direction = document.documentElement.getAttribute("dir") || "ltr";
+  // const direction = document.documentElement.getAttribute("dir") || "ltr";
+
+  const [direction, setDirection] = useState<"ltr" | "rtl">("ltr");
+
+  useEffect(() => {
+    setDirection(document.documentElement.getAttribute("dir") as "ltr" | "rtl" || "ltr");
+  }, [isAuthModalVisible]);
+
 
   // Refs
   const authenticationPanelRef = useRef(null);

@@ -4,13 +4,13 @@ import React from "react";
 import { useRouter } from "next/navigation";
 
 // Components
-import HomeSearch from "@/lib/ui/useable-components/Home-search";
+// import HomeSearch from "@/lib/ui/useable-components/Home-search";
 import TextFlyingAnimation from "@/lib/ui/useable-components/FlyingText";
 
 // Hooks
-import useLocation from "@/lib/hooks/useLocation";
-import useSetUserCurrentLocation from "@/lib/hooks/useSetUserCurrentLocation";
-import LoginInForSavedAddresses from "@/lib/ui/useable-components/LoginForSavedAddresses";
+// import useLocation from "@/lib/hooks/useLocation";
+// import useSetUserCurrentLocation from "@/lib/hooks/useSetUserCurrentLocation";
+// import LoginInForSavedAddresses from "@/lib/ui/useable-components/LoginForSavedAddresses";
 
 // imports related to auth module
 import AuthModal from "../../authentication";
@@ -20,8 +20,8 @@ import { useTranslations } from "next-intl";
 const Start: React.FC = () => {
   // Hooks
   const router = useRouter();
-  const { getCurrentLocation } = useLocation();
-  const { onSetUserLocation } = useSetUserCurrentLocation();
+  // const { getCurrentLocation } = useLocation();
+  // const { onSetUserLocation } = useSetUserCurrentLocation();
   const { isAuthModalVisible, setIsAuthModalVisible, setActivePanel } =
     useAuth();
 
@@ -42,13 +42,15 @@ const Start: React.FC = () => {
   const t = useTranslations();
 
   return (
-    <div className="h-[100vh] w-full bg-cover bg-center flex items-center justify-center bg-[#94e469] relative">
+    <div className="h-[100vh] w-full bg-cover bg-center flex items-center justify-center bg-[#325d52] relative bg-[url('/assets/images/png/Homepage/drone_big_bg.png')]">
+
       <div className="text-center flex flex-col items-center justify-center">
         <TextFlyingAnimation />
-        <h1 className="text-[40px] md:text-[90px] font-extrabold text-white">
-          {t("delivered_heading")}
-        </h1>
-        <HomeSearch />
+        <h1 className="text-[40px] md:text-[90px] font-extrabold text-[#d6a056]">
+        {t("delivered_heading")}
+      </h1>
+              
+        {/* <HomeSearch />
         <div className="my-6 text-white flex items-center justify-center">
           <div className="flex items-center gap-2">
             <i
@@ -66,8 +68,10 @@ const Start: React.FC = () => {
             </button>
           </div>
           <LoginInForSavedAddresses handleModalToggle={handleModalToggle} />
-        </div>
+        </div> */}
       </div>
+
+      
 
       <svg
         viewBox="0 0 1000 200"

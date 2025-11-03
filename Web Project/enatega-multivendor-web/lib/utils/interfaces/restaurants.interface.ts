@@ -1,5 +1,8 @@
 import { IAddon, IReview, IVariation } from "./orders.interface";
 
+export type { IAddon, IReview, IVariation } from "./orders.interface";
+
+
 // Define types for the GraphQL query response
 export interface IRestaurantLocation {
   coordinates: [number, number];

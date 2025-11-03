@@ -1,24 +1,26 @@
+import Link from "next/link";
 import React from "react";
 import Image from "next/image";
 
 const PlayStoreLink =
-  "https://play.google.com/store/apps/details?id=com.enatega.multivendor&hl=en_IE";
+  "/";
 const AppleStoreLink =
-  "https://apps.apple.com/pk/app/enatega-multivendor/id1526488093";
-import Logo from "@/lib/utils/assets/svg/Logo";
+  "/";
+import Logo from "@/lib/utils/assets/svg/foodfast_logo_apptop_white";
 import { useTranslations } from "next-intl";
 
 const AppLinks = () => {
   
   const t = useTranslations()
   const handleButtonClick = (url: string) => {
-    window.open(url, "_blank", "noopener,noreferrer");
+    // window.open(url, "_blank", "noopener,noreferrer");
+    window.location.href = url;
   };
 
   return (
     <div>
       <div className="text-[20px] mb-4 font-extrabold text-white">
-        <Logo className="w-32 h-auto" fillColor="#94e469" />
+        <Link href="/"><Logo className="w-32 h-auto" /></Link>
       </div>
 
       <div className="flex gap-2 flex-wrap">

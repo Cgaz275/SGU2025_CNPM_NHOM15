@@ -18,7 +18,6 @@ const AppFooter = () => {
     title: t("Footer.partnerWithEnatega"),
     links: [
       { label: t("Footer.home"), link: "/", internal: true },
-      { label: t("Footer.forRiders"), link: "/rider", internal: true },
       { label: t("Footer.forRestaurants"), link: "/restaurantInfo", internal: true },
     ],
   };
@@ -28,12 +27,12 @@ const AppFooter = () => {
     links: [
       {
         label: t("Footer.enategaRider"),
-        link: "https://play.google.com/store/apps/details?id=com.enatega.multirider&hl=en",
+        link: "/",
         internal: false,
       },
       {
         label: t("Footer.enategaRestaurant"),
-        link: "https://play.google.com/store/apps/details?id=multivendor.enatega.restaurant&hl=en",
+        link: "/",
         internal: false,
       },
     ],
@@ -45,28 +44,28 @@ const AppFooter = () => {
       { label: t("Footer.aboutUs"), link: "/about", internal: true },
       { label: t("Footer.termsConditions"), link: "/terms", internal: true },
       { label: t("Footer.privacyPolicy"), link: "/privacy", internal: true },
-      { label: t("Footer.contact"), link: "https://ninjascode.com/", internal: false },
-      { label: t("Footer.developers"), link: "https://ninjascode.com/", internal: false },
+      { label: t("Footer.contact"), link: "/", internal: false },
+      { label: t("Footer.developers"), link: "/", internal: false },
     ],
   };
 
   const followUs = {
     title: t("Footer.followUs"),
     links: [
-      { label: t("Footer.blog"), link: "https://ninjascode.com/blog", internal: false },
+      { label: t("Footer.blog"), link: "/", internal: false },
       {
         label: t("Footer.instagram"),
-        link: "https://www.instagram.com/ninjascodeofficial?igsh=ajFoeGxud3FqYnd3",
+        link: "/",
         internal: false,
       },
       {
         label: t("Footer.facebook"),
-        link: "https://www.facebook.com/enatega/",
+        link: "/",
         internal: false,
       },
       {
         label: t("Footer.linkedIn"),
-        link: "https://www.linkedin.com/company/enatega/?originalSubdomain=pk",
+        link: "/",
         internal: false,
       },
     ],
