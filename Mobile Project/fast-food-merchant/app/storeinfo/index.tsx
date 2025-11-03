@@ -25,6 +25,16 @@ export default function StoreInfoScreen() {
 
   return (
     <View style={styles.container}>
+      <TouchableOpacity
+        style={{ marginTop: 10, marginLeft: 20, paddingBottom: 10 }}
+        onPress={() => router.back()}
+      >
+        <Image
+          source={require('../../assets/icons/arrow.png')}
+          style={{ width: 24, height: 24 }}
+          resizeMode="contain"
+        />
+      </TouchableOpacity>
       {/* Avatar + Tên nhà hàng */}
       <View style={styles.header}>
         <Image

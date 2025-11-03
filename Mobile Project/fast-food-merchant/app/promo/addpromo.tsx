@@ -3,6 +3,8 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
+  Image,
+  Modal,
   Platform,
   ScrollView,
   StyleSheet,
@@ -42,12 +44,11 @@ export default function AddPromo() {
   const [usageLimit, setUsageLimit] = useState('');
   const [description, setDescription] = useState('');
 
-  // Điều kiện
   const [minOrderValue, setMinOrderValue] = useState('');
   const [firstTimeUserOnly, setFirstTimeUserOnly] = useState(false);
 
   const [applicableItems, setApplicableItems] = useState<string[]>([]);
-  const [showDishList, setShowDishList] = useState(false);
+  const [showDishModal, setShowDishModal] = useState(false);
 
   const allDishes = restaurants.flatMap((r) => r.dishes);
 
@@ -93,7 +94,16 @@ export default function AddPromo() {
 
   return (
     <ScrollView style={styles.container}>
-      <Text style={styles.header}>Thêm khuyến mãi</Text>
+      <View style={styles.headerRow}>
+        <TouchableOpacity onPress={() => router.back()}>
+          <Image
+            source={require('../../assets/icons/arrow.png')}
+            style={{ width: 24, height: 24 }}
+            resizeMode="contain"
+          />
+        </TouchableOpacity>
+        <Text style={styles.pageTitle}>Thêm khuyến mãi</Text>
+      </View>
 
       <TextInput
         style={styles.input}
@@ -185,7 +195,6 @@ export default function AddPromo() {
         onChangeText={setDescription}
       />
 
-      {/* Điều kiện sử dụng */}
       <Text style={styles.subHeader}>Điều kiện sử dụng</Text>
       <TextInput
         style={styles.input}
@@ -203,29 +212,61 @@ export default function AddPromo() {
         />
       </View>
 
-      {/* Món áp dụng */}
+      {/* Nút mở modal chọn món */}
       <TouchableOpacity
         style={styles.dateBtn}
-        onPress={() => setShowDishList(!showDishList)}
+        onPress={() => setShowDishModal(true)}
       >
         <Text>Món áp dụng ({applicableItems.length} đã chọn)</Text>
       </TouchableOpacity>
 
-      {showDishList &&
-        allDishes.map((dish) => {
-          const selected = applicableItems.includes(dish.id);
-          return (
+      {/* Modal chọn món */}
+      <Modal
+        visible={showDishModal}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setShowDishModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Chọn món áp dụng</Text>
+            <ScrollView>
+              {allDishes.map((dish) => {
+                const selected = applicableItems.includes(dish.id);
+                return (
+                  <TouchableOpacity
+                    key={dish.id}
+                    style={[styles.dishItem, selected && styles.dishSelected]}
+                    onPress={() => toggleDish(dish.id)}
+                  >
+                    {dish.image && (
+                      <Image
+                        source={dish.image}
+                        style={styles.dishImage}
+                      />
+                    )}
+                    <Text
+                      style={{
+                        marginLeft: 10,
+                        color: selected ? '#fff' : '#000',
+                        fontWeight: '500',
+                      }}
+                    >
+                      {dish.name}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
             <TouchableOpacity
-              key={dish.id}
-              style={[styles.dishItem, selected && styles.dishSelected]}
-              onPress={() => toggleDish(dish.id)}
+              style={styles.closeBtn}
+              onPress={() => setShowDishModal(false)}
             >
-              <Text style={{ color: selected ? '#fff' : '#000' }}>
-                {dish.name}
-              </Text>
+              <Text style={{ color: '#fff', fontWeight: '600' }}>Xong</Text>
             </TouchableOpacity>
-          );
-        })}
+          </View>
+        </View>
+      </Modal>
 
       <TouchableOpacity
         style={styles.addBtn}
@@ -239,25 +280,25 @@ export default function AddPromo() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f9f9f9', padding: 16 },
-  header: {
-    fontSize: 22,
-    fontWeight: '700',
-    marginBottom: 16,
-    textAlign: 'center',
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 50,
+    marginBottom: 15,
+    paddingHorizontal: 5,
   },
-  subHeader: { fontSize: 16, fontWeight: '600', marginVertical: 8 },
+  pageTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    marginLeft: 12,
+  },
   input: {
     backgroundColor: '#fff',
     padding: 12,
     borderRadius: 8,
     marginBottom: 12,
   },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-    justifyContent: 'space-between',
-  },
+  row: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
   typeBtn: {
     flex: 1,
     padding: 12,
@@ -266,7 +307,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginHorizontal: 4,
   },
-  typeSelected: { backgroundColor: '#007AFF' },
+  typeSelected: { backgroundColor: '#D7A359' },
   typeText: { color: '#000', fontWeight: '600' },
   typeSelectedText: { color: '#fff', fontWeight: '600' },
   dateBtn: {
@@ -281,14 +322,42 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 12,
   },
-  dishItem: { padding: 12, borderBottomWidth: 1, borderBottomColor: '#eee' },
-  dishSelected: { backgroundColor: '#007AFF' },
   addBtn: {
-    backgroundColor: '#4caf50',
+    backgroundColor: '#D7A359',
     padding: 14,
     borderRadius: 8,
     alignItems: 'center',
     marginBottom: 16,
   },
   addBtnText: { color: '#fff', fontWeight: '600', fontSize: 16 },
+  subHeader: { fontSize: 16, fontWeight: '600', marginVertical: 8 },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    maxHeight: '80%',
+  },
+  modalTitle: { fontSize: 18, fontWeight: '600', marginBottom: 12 },
+  dishItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  dishSelected: { backgroundColor: '#D7A359' },
+  dishImage: { width: 40, height: 40, borderRadius: 6 },
+  closeBtn: {
+    backgroundColor: '#D7A359',
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 12,
+  },
 });

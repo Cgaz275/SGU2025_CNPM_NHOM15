@@ -1,7 +1,9 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
+  Image,
   Platform,
   ScrollView,
   StyleSheet,
@@ -11,6 +13,8 @@ import {
 } from 'react-native';
 
 export default function Close() {
+  const router = useRouter();
+
   const [closedDates, setClosedDates] = useState<Date[]>([]);
   const [pickerVisible, setPickerVisible] = useState(false);
 
@@ -37,6 +41,17 @@ export default function Close() {
 
   return (
     <ScrollView style={styles.container}>
+      <View style={styles.headerRow}>
+        <TouchableOpacity onPress={() => router.back()}>
+          <Image
+            source={require('../../assets/icons/arrow.png')}
+            style={{ width: 24, height: 24 }}
+            resizeMode="contain"
+          />
+        </TouchableOpacity>
+
+        <Text style={styles.pageTitle}>Lịch đóng cửa</Text>
+      </View>
       <TouchableOpacity
         style={styles.addButton}
         onPress={() => setPickerVisible(true)}
@@ -83,9 +98,9 @@ export default function Close() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f9f9f9', padding: 16 },
+  container: { flex: 1, backgroundColor: '#ffffffff', padding: 16 },
   addButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: '#D7A359',
     paddingVertical: 12,
     borderRadius: 8,
     alignItems: 'center',
@@ -103,6 +118,19 @@ const styles = StyleSheet.create({
     borderBottomColor: '#eee',
     borderRadius: 8,
     marginBottom: 8,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 50,
+    paddingHorizontal: 5,
+    paddingBottom: 20,
+  },
+
+  pageTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    marginLeft: 12, // khoảng cách giữa mũi tên và title
   },
   label: { fontSize: 16, color: '#333' },
 });

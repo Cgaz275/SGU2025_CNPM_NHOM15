@@ -1,5 +1,6 @@
 import { restaurants } from '@/data/mockData';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
   Image,
@@ -10,8 +11,9 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-
 export default function StoreDetail() {
+  const router = useRouter();
+
   const restaurant = restaurants[0]; // tạm lấy 1 quán
   const [storeInfo, setStoreInfo] = useState({
     name: restaurant.name,
@@ -39,6 +41,18 @@ export default function StoreDetail() {
 
   return (
     <View style={styles.container}>
+      <View style={styles.headerRow}>
+        <TouchableOpacity onPress={() => router.back()}>
+          <Image
+            source={require('../../assets/icons/arrow.png')}
+            style={{ width: 24, height: 24 }}
+            resizeMode="contain"
+          />
+        </TouchableOpacity>
+
+        <Text style={styles.pageTitle}>Thông tin quán</Text>
+      </View>
+
       {/* Avatar */}
       <View style={styles.rowBetween}>
         <Text style={styles.label}>Ảnh đại diện</Text>
@@ -97,7 +111,7 @@ export default function StoreDetail() {
               placeholder="Nhập thông tin..."
             />
             <TouchableOpacity
-              style={[styles.modalButton, { backgroundColor: '#007AFF' }]}
+              style={[styles.modalButton, { backgroundColor: '#D7A359' }]}
               onPress={saveChange}
             >
               <Text style={styles.modalButtonText}>Lưu</Text>
@@ -149,7 +163,7 @@ function InfoRow({
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#ffffffff', padding: 16 },
   changeButton: { flexDirection: 'row', alignItems: 'center', marginTop: 6 },
-  changeText: { marginLeft: 4, color: '#007AFF', fontSize: 14 },
+  changeText: { marginLeft: 4, color: '#D7A359', fontSize: 14 },
   infoBox: { marginTop: 10 },
   rowBetween: {
     flexDirection: 'row',
@@ -170,7 +184,7 @@ const styles = StyleSheet.create({
     borderRadius: 30,
   },
   changeImageBtn: {
-    backgroundColor: '#007AFF',
+    backgroundColor: '#D7A359',
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 8,
@@ -223,6 +237,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 8,
   },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 50,
+    marginBottom: 10,
+    paddingHorizontal: 5,
+  },
+
+  pageTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    marginLeft: 12, // khoảng cách giữa mũi tên và title
+  },
+
   modalButtonText: { color: '#fff', fontWeight: '600' },
   infoRowClean: {
     flexDirection: 'row',

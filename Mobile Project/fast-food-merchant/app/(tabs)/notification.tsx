@@ -1,12 +1,12 @@
+import { Notification, notifications } from '@/data/notification';
 import React, { useEffect, useState } from 'react';
 import {
-  View,
-  Text,
   FlatList,
   StyleSheet,
+  Text,
   TouchableOpacity,
+  View,
 } from 'react-native';
-import { notifications, Notification } from '@/data/notification';
 
 const typeColors = {
   order: '#4caf50',
@@ -100,6 +100,7 @@ const styles = StyleSheet.create({
   header: {
     fontSize: 22,
     fontWeight: 'bold',
+    marginTop: 17,
     marginBottom: 16,
   },
   filterContainer: {
@@ -115,7 +116,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#e0e0e0',
   },
   filterButtonActive: {
-    backgroundColor: '#000',
+    backgroundColor: '#e67e22',
   },
   filterText: {
     color: '#333',

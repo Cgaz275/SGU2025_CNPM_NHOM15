@@ -64,7 +64,7 @@ export default function StoreScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fafafa',
+    backgroundColor: '#ffffffff',
     paddingHorizontal: 20,
     paddingTop: 60,
   },
@@ -72,7 +72,7 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: '700',
     marginBottom: 24,
-    textAlign: 'center',
+    textAlign: 'left',
   },
   button: {
     flexDirection: 'row',

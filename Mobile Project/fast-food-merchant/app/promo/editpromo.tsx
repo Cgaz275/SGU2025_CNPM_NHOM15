@@ -3,6 +3,8 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
+  Image,
+  Modal,
   Platform,
   ScrollView,
   StyleSheet,
@@ -34,7 +36,6 @@ interface PromoCode {
 export default function EditPromo() {
   const router = useRouter();
 
-  // Dummy promo data, giả lập load từ server
   const [promo, setPromo] = useState<PromoCode>({
     id: '1',
     code: 'FIRST50',
@@ -51,7 +52,6 @@ export default function EditPromo() {
     },
   });
 
-  // Modal edit state
   const [editField, setEditField] = useState<
     | keyof PromoCode
     | 'minOrderValue'
@@ -117,115 +117,139 @@ export default function EditPromo() {
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.header}>Chi tiết khuyến mãi</Text>
+    <View style={styles.container}>
+      <ScrollView>
+        <View style={styles.headerRow}>
+          <TouchableOpacity onPress={() => router.back()}>
+            <Image
+              source={require('../../assets/icons/arrow.png')}
+              style={{ width: 24, height: 24 }}
+              resizeMode="contain"
+            />
+          </TouchableOpacity>
 
-      {/* Mã giảm giá */}
-      <TouchableOpacity
-        style={styles.row}
-        onPress={() => openEdit('code')}
-      >
-        <Text style={styles.label}>Mã giảm giá</Text>
-        <Text style={styles.value}>{promo.code}</Text>
-      </TouchableOpacity>
+          <Text style={styles.pageTitle}>Chi tiết khuyến mãi</Text>
+        </View>
 
-      {/* Kiểu giảm */}
-      <TouchableOpacity
-        style={styles.row}
-        onPress={() => openEdit('type')}
-      >
-        <Text style={styles.label}>Kiểu giảm</Text>
-        <Text style={styles.value}>{promo.type === 'percent' ? '%' : '₫'}</Text>
-      </TouchableOpacity>
+        {/* Các row promo */}
+        {/** Mã giảm giá */}
+        <TouchableOpacity style={styles.row}>
+          <Text style={styles.label}>Mã giảm giá</Text>
+          <Text style={styles.value}>{promo.code}</Text>
+        </TouchableOpacity>
 
-      {/* Giá trị */}
-      <TouchableOpacity
-        style={styles.row}
-        onPress={() => openEdit('value')}
-      >
-        <Text style={styles.label}>Giá trị</Text>
-        <Text style={styles.value}>{promo.value}</Text>
-      </TouchableOpacity>
+        {/* Kiểu giảm */}
+        <TouchableOpacity style={styles.row}>
+          <Text style={styles.label}>Kiểu giảm</Text>
+          <Text style={styles.value}>
+            {promo.type === 'percent' ? '%' : '₫'}
+          </Text>
+        </TouchableOpacity>
 
-      {/* Ngày bắt đầu */}
-      <TouchableOpacity
-        style={styles.row}
-        onPress={() => {
-          setDateField('startDate');
-          setShowDatePicker(true);
-        }}
-      >
-        <Text style={styles.label}>Ngày bắt đầu</Text>
-        <Text style={styles.value}>{formatDate(promo.startDate)}</Text>
-      </TouchableOpacity>
+        {/* Giá trị */}
+        <TouchableOpacity style={styles.row}>
+          <Text style={styles.label}>Giá trị</Text>
+          <Text style={styles.value}>{promo.value}</Text>
+        </TouchableOpacity>
 
-      {/* Ngày kết thúc */}
-      <TouchableOpacity
-        style={styles.row}
-        onPress={() => {
-          setDateField('endDate');
-          setShowDatePicker(true);
-        }}
-      >
-        <Text style={styles.label}>Ngày kết thúc</Text>
-        <Text style={styles.value}>{formatDate(promo.endDate)}</Text>
-      </TouchableOpacity>
+        {/* Ngày bắt đầu */}
+        <TouchableOpacity
+          style={styles.row}
+          onPress={() => {
+            setDateField('startDate');
+            setShowDatePicker(true);
+          }}
+        >
+          <Text style={styles.label}>Ngày bắt đầu</Text>
+          <Text style={styles.value}>{formatDate(promo.startDate)}</Text>
+        </TouchableOpacity>
 
-      {/* Giới hạn sử dụng */}
-      <TouchableOpacity
-        style={styles.row}
-        onPress={() => openEdit('usageLimit')}
-      >
-        <Text style={styles.label}>Giới hạn sử dụng</Text>
-        <Text style={styles.value}>{promo.usageLimit || 'Không giới hạn'}</Text>
-      </TouchableOpacity>
+        {/* Ngày kết thúc */}
+        <TouchableOpacity
+          style={styles.row}
+          onPress={() => {
+            setDateField('endDate');
+            setShowDatePicker(true);
+          }}
+        >
+          <Text style={styles.label}>Ngày kết thúc</Text>
+          <Text style={styles.value}>{formatDate(promo.endDate)}</Text>
+        </TouchableOpacity>
 
-      {/* Mô tả */}
-      <TouchableOpacity
-        style={styles.row}
-        onPress={() => openEdit('description')}
-      >
-        <Text style={styles.label}>Mô tả</Text>
-        <Text style={styles.value}>{promo.description || '-'}</Text>
-      </TouchableOpacity>
+        {/* Giới hạn sử dụng */}
+        <TouchableOpacity
+          style={styles.row}
+          onPress={() => openEdit('usageLimit')}
+        >
+          <Text style={styles.label}>Giới hạn sử dụng</Text>
+          <Text style={styles.value}>
+            {promo.usageLimit || 'Không giới hạn'}
+          </Text>
+        </TouchableOpacity>
 
-      {/* Điều kiện */}
-      <Text style={styles.subHeader}>Điều kiện sử dụng</Text>
+        {/* Mô tả */}
+        <TouchableOpacity
+          style={styles.row}
+          onPress={() => openEdit('description')}
+        >
+          <Text style={styles.label}>Mô tả</Text>
+          <Text style={styles.value}>{promo.description || '-'}</Text>
+        </TouchableOpacity>
 
-      <TouchableOpacity
-        style={styles.row}
-        onPress={() => openEdit('minOrderValue')}
-      >
-        <Text style={styles.label}>Giá trị đơn tối thiểu</Text>
-        <Text style={styles.value}>
-          {promo.condition?.minOrderValue || '-'}
-        </Text>
-      </TouchableOpacity>
+        {/* Điều kiện */}
+        <Text style={styles.subHeader}>Điều kiện sử dụng</Text>
 
-      <TouchableOpacity
-        style={styles.row}
-        onPress={() => openEdit('firstTimeUserOnly')}
-      >
-        <Text style={styles.label}>Chỉ áp dụng khách hàng lần đầu</Text>
-        <Text style={styles.value}>
-          {promo.condition?.firstTimeUserOnly ? 'Có' : 'Không'}
-        </Text>
-      </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.row}
+          // onPress={() => openEdit('minOrderValue')}
+        >
+          <Text style={styles.label}>Giá trị đơn tối thiểu</Text>
+          <Text style={styles.value}>
+            {promo.condition?.minOrderValue || '-'}
+          </Text>
+        </TouchableOpacity>
 
-      <TouchableOpacity
-        style={styles.row}
-        onPress={() => openEdit('applicableItems')}
-      >
-        <Text style={styles.label}>Món áp dụng</Text>
-        <Text style={styles.value}>
-          {promo.condition?.applicableItems
-            ?.map((id) => allDishes.find((d) => d.id === id)?.name)
-            .join(', ') || '-'}
-        </Text>
-      </TouchableOpacity>
+        <TouchableOpacity
+        // onPress={() => openEdit('firstTimeUserOnly')}
+        >
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: 12,
+              backgroundColor: '#fff',
+              borderRadius: 8,
+              marginBottom: 8,
+            }}
+          >
+            <Text style={styles.label}>Chỉ áp dụng khách hàng lần đầu</Text>
+            <Text style={styles.value}>
+              {promo.condition?.firstTimeUserOnly ? 'Có' : 'Không'}
+            </Text>
+          </View>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.row}
+          // onPress={() => openEdit('applicableItems')}
+        >
+          <Text style={styles.label}>Món áp dụng</Text>
+          <Text style={styles.value}>
+            {promo.condition?.applicableItems
+              ?.map((id) => allDishes.find((d) => d.id === id)?.name)
+              .join(', ') || '-'}
+          </Text>
+        </TouchableOpacity>
+      </ScrollView>
 
       {/* Modal edit */}
-      {editField && (
+      <Modal
+        visible={!!editField}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setEditField(null)}
+      >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>
@@ -234,11 +258,10 @@ export default function EditPromo() {
                 : editField === 'firstTimeUserOnly'
                 ? 'Chỉ áp dụng khách hàng lần đầu'
                 : editField === 'applicableItems'
-                ? 'Chọn món'
+                ? 'Chọn món áp dụng'
                 : `Chỉnh sửa ${editField}`}
             </Text>
 
-            {/* Nội dung modal theo type */}
             {editField === 'firstTimeUserOnly' ? (
               <Switch
                 value={tempValue}
@@ -254,7 +277,19 @@ export default function EditPromo() {
                       style={[styles.dishItem, selected && styles.dishSelected]}
                       onPress={() => toggleDish(dish.id)}
                     >
-                      <Text style={{ color: selected ? '#fff' : '#000' }}>
+                      {dish.image && (
+                        <Image
+                          source={dish.image}
+                          style={styles.dishImage}
+                        />
+                      )}
+                      <Text
+                        style={{
+                          marginLeft: 10,
+                          color: selected ? '#fff' : '#000',
+                          fontWeight: '500',
+                        }}
+                      >
                         {dish.name}
                       </Text>
                     </TouchableOpacity>
@@ -264,7 +299,7 @@ export default function EditPromo() {
             ) : (
               <TextInput
                 style={styles.input}
-                value={tempValue.toString()}
+                value={tempValue != null ? tempValue.toString() : ''}
                 onChangeText={setTempValue}
                 keyboardType={
                   typeof tempValue === 'number' ? 'numeric' : 'default'
@@ -280,7 +315,7 @@ export default function EditPromo() {
               }}
             >
               <TouchableOpacity
-                style={[styles.modalButton, { backgroundColor: '#007AFF' }]}
+                style={[styles.modalButton, { backgroundColor: '#D7A359' }]}
                 onPress={saveEdit}
               >
                 <Text style={styles.modalButtonText}>Lưu</Text>
@@ -296,7 +331,7 @@ export default function EditPromo() {
             </View>
           </View>
         </View>
-      )}
+      </Modal>
 
       {/* Date Picker modal */}
       {showDatePicker && dateField && (
@@ -313,17 +348,23 @@ export default function EditPromo() {
           }}
         />
       )}
-    </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f9f9f9', padding: 16 },
-  header: {
-    fontSize: 22,
-    fontWeight: '700',
-    marginBottom: 16,
-    textAlign: 'center',
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 50,
+    marginBottom: 20,
+    paddingHorizontal: 5,
+  },
+  pageTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    marginLeft: 12,
   },
   subHeader: {
     fontSize: 16,
@@ -343,20 +384,16 @@ const styles = StyleSheet.create({
   label: { fontSize: 15, color: '#555' },
   value: { fontSize: 15, fontWeight: '500', color: '#000' },
   modalOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+    flex: 1,
     backgroundColor: 'rgba(0,0,0,0.4)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: 'flex-end',
   },
   modalContent: {
     backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 20,
-    width: '85%',
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    padding: 16,
+    maxHeight: '90%',
   },
   modalTitle: { fontSize: 16, fontWeight: '600', marginBottom: 12 },
   input: { backgroundColor: '#f0f0f0', padding: 10, borderRadius: 8 },
@@ -368,6 +405,13 @@ const styles = StyleSheet.create({
     marginHorizontal: 4,
   },
   modalButtonText: { color: '#fff', fontWeight: '600' },
-  dishItem: { padding: 12, borderBottomWidth: 1, borderBottomColor: '#eee' },
-  dishSelected: { backgroundColor: '#007AFF' },
+  dishItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  dishSelected: { backgroundColor: '#D7A359' },
+  dishImage: { width: 40, height: 40, borderRadius: 6 },
 });

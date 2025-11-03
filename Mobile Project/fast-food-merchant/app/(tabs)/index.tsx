@@ -1,27 +1,26 @@
+import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
-  View,
+  Image,
+  ScrollView,
+  StyleSheet,
   Text,
   TouchableOpacity,
-  Image,
-  StyleSheet,
-  ScrollView,
-  Alert,
+  View,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import {
+  Button,
+  Dialog,
+  Provider as PaperProvider,
+  Paragraph,
+  Portal,
+} from 'react-native-paper';
 import {
   getOrders,
   getRestaurantName,
-  updateOrderStatus,
   Order,
+  updateOrderStatus,
 } from '../../data/orders';
-import {
-  Provider as PaperProvider,
-  Portal,
-  Dialog,
-  Button,
-  Paragraph,
-} from 'react-native-paper';
 
 function OrderManagementScreen() {
   const router = useRouter();
@@ -54,7 +53,8 @@ function OrderManagementScreen() {
 
   return (
     <View style={styles.container}>
-      {/* 🔙 Nút quay lại */}
+      {/* Title */}
+      <Text style={styles.pageTitle}>Quản lý đơn hàng</Text>
 
       {/* 🧭 Tabs */}
       <View style={styles.tabContainer}>
@@ -227,7 +227,7 @@ function translateStatus(status: string) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff', paddingTop: 40 },
+  container: { flex: 1, backgroundColor: '#fff', paddingTop: 60 },
   backButton: {
     position: 'absolute',
     top: 40,
@@ -238,7 +238,7 @@ const styles = StyleSheet.create({
   tabContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    marginTop: 80,
+    marginTop: 20,
     marginBottom: 12,
     paddingHorizontal: 8,
   },
@@ -249,6 +249,15 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#ccc',
   },
+  pageTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    textAlign: 'left',
+    marginBottom: 16,
+    paddingLeft: 20,
+    color: '#333',
+  },
+
   activeTabButton: {
     backgroundColor: '#e67e22',
     borderColor: '#e67e22',

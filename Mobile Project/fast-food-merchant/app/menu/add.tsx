@@ -109,32 +109,48 @@ export default function AddDishScreen() {
 
   return (
     <View style={styles.container}>
+      <TouchableOpacity
+        style={{ marginTop: 50, marginLeft: 7, paddingBottom: 10 }}
+        onPress={() => router.back()}
+      >
+        <Image
+          source={require('../../assets/icons/arrow.png')}
+          style={{ width: 24, height: 24 }}
+          resizeMode="contain"
+        />
+      </TouchableOpacity>
       <ScrollView>
         <Text style={styles.header}>Thêm món ăn mới</Text>
 
-        {/* Ảnh */}
-        <TouchableOpacity
-          style={styles.imagePicker}
-          onPress={handleAddImage}
-        >
-          {dish.image ? (
-            <Image
-              source={dish.image}
-              style={styles.image}
-            />
-          ) : (
-            <>
-              <Ionicons
-                name="camera-outline"
-                size={32}
-                color="#888"
+        <View style={styles.imageRow}>
+          {/* Ảnh */}
+          <TouchableOpacity
+            style={styles.imagePicker}
+            onPress={handleAddImage}
+          >
+            {dish.image ? (
+              <Image
+                source={dish.image}
+                style={styles.image}
               />
-              <Text style={{ color: '#888', marginTop: 4 }}>Thêm ảnh</Text>
-            </>
-          )}
-        </TouchableOpacity>
+            ) : (
+              <>
+                <Ionicons
+                  name="camera-outline"
+                  size={32}
+                  color="#888"
+                />
+                <Text style={styles.imagePickerText}>Thêm ảnh</Text>
+              </>
+            )}
+          </TouchableOpacity>
+
+          {/* Chú thích */}
+          <Text style={styles.imageNote}>Chỉ chấp nhận ảnh 1x1</Text>
+        </View>
 
         {/* Tên món */}
+        <Text style={styles.label}>Tên món ăn</Text>
         <TextInput
           placeholder="Tên món ăn"
           style={styles.input}
@@ -143,6 +159,7 @@ export default function AddDishScreen() {
         />
 
         {/* Giá */}
+        <Text style={styles.label}>Giá</Text>
         <TextInput
           placeholder="Giá (VNĐ)"
           style={styles.input}
@@ -154,25 +171,30 @@ export default function AddDishScreen() {
         {/* Dropdown danh mục */}
         <View style={styles.pickerBox}>
           <Text style={styles.label}>Danh mục</Text>
-          <Picker
-            selectedValue={dish.categoryId}
-            onValueChange={(value) => handleChange('categoryId', value)}
-          >
-            <Picker.Item
-              label="-- Chọn danh mục --"
-              value=""
-            />
-            {categories.map((c) => (
+          <View style={styles.pickerWrapper}>
+            <Picker
+              selectedValue={dish.categoryId}
+              onValueChange={(value) => handleChange('categoryId', value)}
+              style={styles.pickerStyle}
+              dropdownIconColor="#D7A359"
+            >
               <Picker.Item
-                key={c.id}
-                label={c.name}
-                value={c.id}
+                label="Chọn danh mục"
+                value=""
               />
-            ))}
-          </Picker>
+              {categories.map((c) => (
+                <Picker.Item
+                  key={c.id}
+                  label={c.name}
+                  value={c.id}
+                />
+              ))}
+            </Picker>
+          </View>
         </View>
 
         {/* Mô tả */}
+        <Text style={styles.label}>Mô tả</Text>
         <TextInput
           placeholder="Mô tả món ăn"
           style={[styles.input, { height: 80 }]}
@@ -280,9 +302,9 @@ export default function AddDishScreen() {
                 <Ionicons
                   name="add-circle-outline"
                   size={18}
-                  color="#007AFF"
+                  color="#D7A359"
                 />
-                <Text style={{ color: '#007AFF', marginLeft: 4 }}>
+                <Text style={{ color: '#D7A359', marginLeft: 4 }}>
                   Thêm tùy chọn
                 </Text>
               </TouchableOpacity>
@@ -296,9 +318,9 @@ export default function AddDishScreen() {
             <Ionicons
               name="add-circle-outline"
               size={20}
-              color="#007AFF"
+              color="#D7A359"
             />
-            <Text style={{ color: '#007AFF', marginLeft: 4 }}>
+            <Text style={{ color: '#D7A359', marginLeft: 4 }}>
               Thêm nhóm tùy chọn
             </Text>
           </TouchableOpacity>
@@ -329,32 +351,17 @@ const styles = StyleSheet.create({
     padding: 10,
     marginBottom: 10,
   },
-  imagePicker: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 12,
-    padding: 20,
-    marginBottom: 16,
-  },
-  image: { width: 100, height: 100, borderRadius: 10 },
-  pickerBox: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    marginBottom: 10,
-  },
+
   typeRow: { flexDirection: 'row', gap: 10, marginVertical: 8 },
   typeButton: {
     flex: 1,
     borderWidth: 1,
-    borderColor: '#007AFF',
+    borderColor: '#D7A359',
     borderRadius: 6,
     alignItems: 'center',
     paddingVertical: 6,
   },
-  typeButtonActive: { backgroundColor: '#007AFF' },
+  typeButtonActive: { backgroundColor: '#D7A359' },
   groupCard: {
     borderWidth: 1,
     borderColor: '#eee',
@@ -377,12 +384,67 @@ const styles = StyleSheet.create({
     marginVertical: 10,
   },
   submitBtn: {
-    backgroundColor: '#007AFF',
+    backgroundColor: '#D7A359',
     padding: 14,
     borderRadius: 8,
     alignItems: 'center',
     marginTop: 10,
   },
   submitText: { color: '#fff', fontWeight: '600' },
-  label: { color: '#666', marginBottom: 4, fontSize: 13 },
+  imageRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 12,
+    marginBottom: 10,
+  },
+
+  imagePicker: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+    overflow: 'hidden',
+  },
+
+  imagePickerText: {
+    color: '#888',
+    marginTop: 4,
+    fontSize: 12,
+    textAlign: 'center',
+  },
+
+  image: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+
+  imageNote: {
+    color: '#888',
+    fontSize: 12,
+  },
+  pickerBox: {
+    marginBottom: 10,
+  },
+  pickerWrapper: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 10,
+    overflow: 'hidden',
+    backgroundColor: '#fafafa',
+  },
+  pickerStyle: {
+    height: 55,
+    color: '#333',
+  },
+  label: {
+    color: '#555',
+    fontSize: 13,
+    marginBottom: 6,
+    fontWeight: '500',
+  },
 });

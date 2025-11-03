@@ -1,6 +1,9 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
+
 import {
+  Image,
   Modal,
   ScrollView,
   StyleSheet,
@@ -15,6 +18,8 @@ const DAYS = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 
 type TimeRange = { start: Date; end: Date };
 
 export default function Daily() {
+  const router = useRouter();
+
   const [openDays, setOpenDays] = useState<boolean[]>(Array(7).fill(true));
   const [modalVisible, setModalVisible] = useState(false);
   const [currentDayIndex, setCurrentDayIndex] = useState<number | null>(null);
@@ -84,6 +89,17 @@ export default function Daily() {
 
   return (
     <View style={styles.container}>
+      <View style={styles.headerRow}>
+        <TouchableOpacity onPress={() => router.back()}>
+          <Image
+            source={require('../../assets/icons/arrow.png')}
+            style={{ width: 24, height: 24 }}
+            resizeMode="contain"
+          />
+        </TouchableOpacity>
+
+        <Text style={styles.pageTitle}>Giờ mở cửa hằng ngày</Text>
+      </View>
       <ScrollView>
         {DAYS.map((day, index) => (
           <TouchableOpacity
@@ -204,7 +220,7 @@ export default function Daily() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f9f9f9' },
+  container: { flex: 1, backgroundColor: '#ffffffff' },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -214,6 +230,20 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
     backgroundColor: '#fff',
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 60,
+    marginBottom: 20,
+    marginLeft: 10,
+    paddingHorizontal: 5,
+  },
+
+  pageTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    marginLeft: 20, // khoảng cách giữa mũi tên và title
   },
   label: { fontSize: 16, color: '#333' },
   rowRight: { flexDirection: 'row', alignItems: 'center' },

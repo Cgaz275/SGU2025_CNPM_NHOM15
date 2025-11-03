@@ -1,6 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Picker } from '@react-native-picker/picker';
 import { useRouter } from 'expo-router';
+
 import React, { useState } from 'react';
 import {
   Image,
@@ -15,8 +16,6 @@ import { categories, restaurants } from '../../data/mockData';
 
 export default function EditDishScreen() {
   const router = useRouter();
-
-  // 🥣 Lấy đại một món trong mockData
   const sampleDish = restaurants[0].dishes[0];
 
   const [dish, setDish] = useState({
@@ -28,7 +27,6 @@ export default function EditDishScreen() {
     image: sampleDish.image,
   });
 
-  // 🧩 demo 1 nhóm tùy chọn sẵn
   const [optionGroups, setOptionGroups] = useState<any[]>([
     {
       id: '1',
@@ -50,22 +48,19 @@ export default function EditDishScreen() {
     },
   ]);
 
-  const handleChange = (key: string, value: any) => {
+  const handleChange = (key: string, value: any) =>
     setDish((prev) => ({ ...prev, [key]: value }));
-  };
 
-  const addOptionGroup = () => {
+  const addOptionGroup = () =>
     setOptionGroups((prev) => [
       ...prev,
       { id: Date.now().toString(), name: '', type: 'single', options: [] },
     ]);
-  };
 
-  const removeOptionGroup = (groupId: string) => {
+  const removeOptionGroup = (groupId: string) =>
     setOptionGroups((prev) => prev.filter((g) => g.id !== groupId));
-  };
 
-  const addOptionValue = (groupId: string) => {
+  const addOptionValue = (groupId: string) =>
     setOptionGroups((prev) =>
       prev.map((g) =>
         g.id === groupId
@@ -79,53 +74,45 @@ export default function EditDishScreen() {
           : g
       )
     );
-  };
 
-  const removeOptionValue = (groupId: string, optionId: string) => {
+  const removeOptionValue = (groupId: string, optionId: string) =>
     setOptionGroups((prev) =>
       prev.map((g) =>
         g.id === groupId
-          ? {
-              ...g,
-              options: g.options.filter((opt: any) => opt.id !== optionId),
-            }
+          ? { ...g, options: g.options.filter((o) => o.id !== optionId) }
           : g
       )
     );
-  };
 
-  const handleGroupChange = (groupId: string, key: string, value: any) => {
+  const handleGroupChange = (groupId: string, key: string, value: any) =>
     setOptionGroups((prev) =>
       prev.map((g) => (g.id === groupId ? { ...g, [key]: value } : g))
     );
-  };
 
   const handleOptionChange = (
     groupId: string,
     optionId: string,
     key: string,
     value: any
-  ) => {
+  ) =>
     setOptionGroups((prev) =>
       prev.map((g) =>
         g.id === groupId
           ? {
               ...g,
-              options: g.options.map((opt: any) =>
-                opt.id === optionId ? { ...opt, [key]: value } : opt
+              options: g.options.map((o) =>
+                o.id === optionId ? { ...o, [key]: value } : o
               ),
             }
           : g
       )
     );
-  };
 
-  const handleAddImage = () => {
+  const handleAddImage = () =>
     setDish((prev) => ({
       ...prev,
       image: require('@/assets/images/pho.webp'),
     }));
-  };
 
   const handleSubmit = () => {
     console.log('Edited dish:', dish);
@@ -135,32 +122,47 @@ export default function EditDishScreen() {
 
   return (
     <View style={styles.container}>
+      <TouchableOpacity
+        style={{ marginTop: 50, marginLeft: 7, paddingBottom: 10 }}
+        onPress={() => router.back()}
+      >
+        <Image
+          source={require('../../assets/icons/arrow.png')}
+          style={{ width: 24, height: 24 }}
+          resizeMode="contain"
+        />
+      </TouchableOpacity>
+
       <ScrollView>
         <Text style={styles.header}>Chỉnh sửa món ăn</Text>
 
         {/* Ảnh */}
-        <TouchableOpacity
-          style={styles.imagePicker}
-          onPress={handleAddImage}
-        >
-          {dish.image ? (
-            <Image
-              source={dish.image}
-              style={styles.image}
-            />
-          ) : (
-            <>
-              <Ionicons
-                name="camera-outline"
-                size={32}
-                color="#888"
+        <View style={styles.imageRow}>
+          <TouchableOpacity
+            style={styles.imagePicker}
+            onPress={handleAddImage}
+          >
+            {dish.image ? (
+              <Image
+                source={dish.image}
+                style={styles.image}
               />
-              <Text style={{ color: '#888', marginTop: 4 }}>Thêm ảnh</Text>
-            </>
-          )}
-        </TouchableOpacity>
+            ) : (
+              <>
+                <Ionicons
+                  name="camera-outline"
+                  size={32}
+                  color="#888"
+                />
+                <Text style={styles.imagePickerText}>Thêm ảnh</Text>
+              </>
+            )}
+          </TouchableOpacity>
+          <Text style={styles.imageNote}>Chỉ chấp nhận ảnh 1x1</Text>
+        </View>
 
         {/* Tên món */}
+        <Text style={styles.label}>Tên món ăn</Text>
         <TextInput
           placeholder="Tên món ăn"
           style={styles.input}
@@ -169,6 +171,7 @@ export default function EditDishScreen() {
         />
 
         {/* Giá */}
+        <Text style={styles.label}>Giá</Text>
         <TextInput
           placeholder="Giá (VNĐ)"
           style={styles.input}
@@ -180,25 +183,30 @@ export default function EditDishScreen() {
         {/* Dropdown danh mục */}
         <View style={styles.pickerBox}>
           <Text style={styles.label}>Danh mục</Text>
-          <Picker
-            selectedValue={dish.categoryId}
-            onValueChange={(value) => handleChange('categoryId', value)}
-          >
-            <Picker.Item
-              label="-- Chọn danh mục --"
-              value=""
-            />
-            {categories.map((c) => (
+          <View style={styles.pickerWrapper}>
+            <Picker
+              selectedValue={dish.categoryId}
+              onValueChange={(value) => handleChange('categoryId', value)}
+              style={styles.pickerStyle}
+              dropdownIconColor="#D7A359"
+            >
               <Picker.Item
-                key={c.id}
-                label={c.name}
-                value={c.id}
+                label="Chọn danh mục"
+                value=""
               />
-            ))}
-          </Picker>
+              {categories.map((c) => (
+                <Picker.Item
+                  key={c.id}
+                  label={c.name}
+                  value={c.id}
+                />
+              ))}
+            </Picker>
+          </View>
         </View>
 
         {/* Mô tả */}
+        <Text style={styles.label}>Mô tả</Text>
         <TextInput
           placeholder="Mô tả món ăn"
           style={[styles.input, { height: 80 }]}
@@ -306,9 +314,9 @@ export default function EditDishScreen() {
                 <Ionicons
                   name="add-circle-outline"
                   size={18}
-                  color="#007AFF"
+                  color="#D7A359"
                 />
-                <Text style={{ color: '#007AFF', marginLeft: 4 }}>
+                <Text style={{ color: '#D7A359', marginLeft: 4 }}>
                   Thêm tùy chọn
                 </Text>
               </TouchableOpacity>
@@ -322,9 +330,9 @@ export default function EditDishScreen() {
             <Ionicons
               name="add-circle-outline"
               size={20}
-              color="#007AFF"
+              color="#D7A359"
             />
-            <Text style={{ color: '#007AFF', marginLeft: 4 }}>
+            <Text style={{ color: '#D7A359', marginLeft: 4 }}>
               Thêm nhóm tùy chọn
             </Text>
           </TouchableOpacity>
@@ -352,32 +360,49 @@ const styles = StyleSheet.create({
     padding: 10,
     marginBottom: 10,
   },
+  imageRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
   imagePicker: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 12,
-    padding: 20,
-    marginBottom: 16,
-  },
-  image: { width: 100, height: 100, borderRadius: 10 },
-  pickerBox: {
+    width: 80,
+    height: 80,
     borderWidth: 1,
     borderColor: '#ccc',
-    borderRadius: 8,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+    overflow: 'hidden',
+  },
+  imagePickerText: {
+    color: '#888',
+    marginTop: 4,
+    fontSize: 12,
+    textAlign: 'center',
+  },
+  image: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+    borderRadius: 10,
+  },
+  imageNote: { color: '#888', fontSize: 12 },
+  pickerBox: {
+    borderColor: '#ccc',
+    borderRadius: 10,
+    backgroundColor: '#ffffffff',
     marginBottom: 10,
   },
+
+  label: { color: '#666', marginBottom: 4, fontSize: 13 },
   typeRow: { flexDirection: 'row', gap: 10, marginVertical: 8 },
   typeButton: {
     flex: 1,
     borderWidth: 1,
-    borderColor: '#007AFF',
+    borderColor: '#D7A359',
     borderRadius: 6,
     alignItems: 'center',
     paddingVertical: 6,
   },
-  typeButtonActive: { backgroundColor: '#007AFF' },
+  typeButtonActive: { backgroundColor: '#D7A359' },
   groupCard: {
     borderWidth: 1,
     borderColor: '#eee',
@@ -386,6 +411,18 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     backgroundColor: '#fafafa',
   },
+  pickerStyle: {
+    width: '100%',
+    color: '#333',
+  },
+  pickerWrapper: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 5,
+    overflow: 'hidden',
+    backgroundColor: '#fafafa',
+  },
+
   groupHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
   optionRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
   addOptionBtn: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },
@@ -396,12 +433,11 @@ const styles = StyleSheet.create({
     marginVertical: 10,
   },
   submitBtn: {
-    backgroundColor: '#007AFF',
+    backgroundColor: '#D7A359',
     padding: 14,
     borderRadius: 8,
     alignItems: 'center',
     marginTop: 10,
   },
   submitText: { color: '#fff', fontWeight: '600' },
-  label: { color: '#666', marginBottom: 4, fontSize: 13 },
 });

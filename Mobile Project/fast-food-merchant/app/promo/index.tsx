@@ -3,6 +3,7 @@ import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
   Alert,
+  Image,
   ScrollView,
   StyleSheet,
   Text,
@@ -76,8 +77,17 @@ export default function Promotion() {
 
   return (
     <ScrollView style={styles.container}>
-      <Text style={styles.header}>Danh sách khuyến mãi</Text>
+      <View style={styles.headerRow}>
+        <TouchableOpacity onPress={() => router.back()}>
+          <Image
+            source={require('../../assets/icons/arrow.png')}
+            style={{ width: 24, height: 24 }}
+            resizeMode="contain"
+          />
+        </TouchableOpacity>
 
+        <Text style={styles.pageTitle}>Quản lý khuyến mãi</Text>
+      </View>
       <TouchableOpacity
         style={styles.addBtn}
         onPress={() =>
@@ -143,7 +153,7 @@ export default function Promotion() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f9f9f9', padding: 16 },
+  container: { flex: 1, backgroundColor: '#ffffffff', padding: 16 },
   header: {
     fontSize: 22,
     fontWeight: '700',
@@ -151,7 +161,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   addBtn: {
-    backgroundColor: '#4caf50',
+    backgroundColor: '#D7A359',
     padding: 14,
     borderRadius: 8,
     alignItems: 'center',
@@ -168,6 +178,19 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 3 },
     shadowRadius: 6,
     elevation: 3,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 50,
+    paddingBottom: 20,
+    paddingHorizontal: 5,
+  },
+
+  pageTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    marginLeft: 12, // khoảng cách giữa mũi tên và title
   },
   code: { fontSize: 18, fontWeight: '700', marginBottom: 6, color: '#ff9800' },
   actionRow: { flexDirection: 'row', marginTop: 8 },

@@ -2,13 +2,24 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function StoreState() {
   const navigation = useNavigation();
   const router = useRouter();
   return (
     <View style={styles.container}>
+      <View style={styles.headerRow}>
+        <TouchableOpacity onPress={() => router.back()}>
+          <Image
+            source={require('../../assets/icons/arrow.png')}
+            style={{ width: 24, height: 24 }}
+            resizeMode="contain"
+          />
+        </TouchableOpacity>
+
+        <Text style={styles.pageTitle}>Tình trạng mở bán</Text>
+      </View>
       {/* Row trạng thái với icon tròn màu xanh */}
       <View style={styles.statusRow}>
         <View style={styles.statusCircle} />
@@ -47,7 +58,7 @@ export default function StoreState() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9f9f9',
+    backgroundColor: '#ffffffff',
     paddingVertical: 16,
   },
   statusRow: {
@@ -79,6 +90,19 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
     backgroundColor: '#fff',
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 50,
+    paddingHorizontal: 20,
+    paddingBottom: 10,
+  },
+
+  pageTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    marginLeft: 12, // khoảng cách giữa mũi tên và title
   },
   label: {
     fontSize: 16,

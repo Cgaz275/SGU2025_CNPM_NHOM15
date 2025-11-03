@@ -31,7 +31,7 @@ export default function TabLayout() {
           title: 'Đơn hàng',
           tabBarIcon: ({ color, size }) => (
             <Ionicons
-              name="home"
+              name="receipt-outline"
               size={size}
               color={color}
             />
@@ -45,7 +45,7 @@ export default function TabLayout() {
           title: 'Thông báo',
           tabBarIcon: ({ color, size }) => (
             <Ionicons
-              name="location"
+              name="notifications-outline"
               size={size}
               color={color}
             />
@@ -59,7 +59,7 @@ export default function TabLayout() {
           title: 'Cửa hàng',
           tabBarIcon: ({ color, size }) => (
             <Ionicons
-              name="search"
+              name="storefront-outline"
               size={size}
               color={color}
             />

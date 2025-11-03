@@ -34,6 +34,16 @@ export default function MenuScreen() {
   return (
     <View style={styles.container}>
       {/* Header */}
+      <TouchableOpacity
+        style={{ marginTop: 50, marginLeft: 7, paddingBottom: 10 }}
+        onPress={() => router.back()}
+      >
+        <Image
+          source={require('../../assets/icons/arrow.png')}
+          style={{ width: 24, height: 24 }}
+          resizeMode="contain"
+        />
+      </TouchableOpacity>
       <View style={styles.header}>
         <Text style={styles.title}>Quản lý menu</Text>
         <View style={styles.headerButtons}>
@@ -47,14 +57,6 @@ export default function MenuScreen() {
               color="#333"
             />
             <Text style={styles.iconText}>Món ăn</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.iconButton}>
-            <Ionicons
-              name="folder-open-outline"
-              size={24}
-              color="#333"
-            />
-            <Text style={styles.iconText}>Danh mục</Text>
           </TouchableOpacity>
         </View>
       </View>
