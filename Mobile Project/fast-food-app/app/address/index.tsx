@@ -6,7 +6,6 @@ import {
 import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import {
-  Alert,
   FlatList,
   Image,
   StyleSheet,
@@ -39,10 +38,6 @@ export default function AddressScreen() {
   const handleSelectDefault = (id: string) => {
     setDefaultAddress(id);
     reloadList();
-    Alert.alert(
-      '✅ Đã chọn làm mặc định',
-      'Địa chỉ này sẽ được sử dụng tự động khi đặt hàng.'
-    );
   };
 
   // ✅ Khi bấm thêm địa chỉ mới → đi đến /add và sau khi back thì tự reload

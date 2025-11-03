@@ -13,7 +13,10 @@ export default function ProfileScreen() {
   const pendingOrders = 3; // số đơn hàng đang chờ, mock data
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={{ paddingBottom: 100 }}
+    >
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.greeting}>Chào {userName}!</Text>
@@ -39,10 +42,16 @@ export default function ProfileScreen() {
       {/* Settings */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Cài đặt</Text>
-        <TouchableOpacity style={styles.linkItem}>
+        <TouchableOpacity
+          onPress={() => router.push('../info')}
+          style={styles.linkItem}
+        >
           <Text style={styles.linkText}>Thông tin cá nhân</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.linkItem}>
+        <TouchableOpacity
+          onPress={() => router.push('../address')}
+          style={styles.linkItem}
+        >
           <Text style={styles.linkText}>Địa chỉ</Text>
         </TouchableOpacity>
       </View>

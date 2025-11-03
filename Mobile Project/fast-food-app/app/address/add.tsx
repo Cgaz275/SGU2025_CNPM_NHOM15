@@ -49,7 +49,6 @@ export default function AddAddressScreen() {
     addAddress(newAddress);
     console.log('📦 Đã thêm địa chỉ:', newAddress);
 
-    alert('Đã lưu địa chỉ mới!');
     router.back();
   };
 

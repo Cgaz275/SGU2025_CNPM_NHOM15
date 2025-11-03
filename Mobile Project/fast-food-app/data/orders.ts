@@ -59,7 +59,7 @@ const sampleOrders: Order[] = [
   },
   {
     id: 'o3',
-    restaurantId: 'r3',
+    restaurantId: 'r4',
     items: [
       {
         id: 'd3',

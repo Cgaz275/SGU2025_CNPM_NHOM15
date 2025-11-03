@@ -1,5 +1,4 @@
 import { HapticTab } from '@/components/haptic-tab';
-import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
@@ -11,9 +10,19 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
         headerShown: false,
         tabBarButton: HapticTab,
+        tabBarActiveTintColor: '#D7A359',
+        tabBarInactiveTintColor: '#999',
+
+        // 🔥 Hiệu ứng chuyển tab mượt như iOS
+        animation: 'shift', // hoặc thử 'slide_from_right'
+        tabBarStyle: {
+          backgroundColor: '#fff',
+          borderTopColor: '#eee',
+          height: 70,
+          paddingBottom: 10,
+        },
       }}
     >
       <Tabs.Screen
