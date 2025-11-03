@@ -66,20 +66,6 @@ export default function TabLayout() {
           ),
         }}
       />
-
-      <Tabs.Screen
-        name="promo"
-        options={{
-          title: 'Khuyến mãi',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons
-              name="person"
-              size={size}
-              color={color}
-            />
-          ),
-        }}
-      />
     </Tabs>
   );
 }
