@@ -5,6 +5,7 @@ import { CartItem } from './cart';
 export type OrderStatus =
   | 'pending'
   | 'confirmed'
+  | 'shipping'
   | 'waitingCustomer'
   | 'completed'
   | 'cancelled';
@@ -93,7 +94,7 @@ const sampleOrders: Order[] = [
   },
   {
     id: 'o5',
-    restaurantId: 'r3',
+    restaurantId: 'r2',
     items: [
       {
         id: 'd5',
@@ -106,6 +107,23 @@ const sampleOrders: Order[] = [
     total: 48000,
     paymentMethod: 'Visa',
     status: 'cancelled',
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: 'o6',
+    restaurantId: 'r2',
+    items: [
+      {
+        id: 'd5',
+        name: 'Mì xào giòn',
+        price: 48000,
+        quantity: 1,
+        image: require('../assets/images/comtam.jpg'),
+      },
+    ],
+    total: 48000,
+    paymentMethod: 'Visa',
+    status: 'shipping',
     createdAt: new Date().toISOString(),
   },
 ];

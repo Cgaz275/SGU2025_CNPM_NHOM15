@@ -2,6 +2,7 @@ import { restaurants } from '@/data/mockData';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
+
 import {
   Image,
   Modal,
@@ -13,7 +14,7 @@ import {
 } from 'react-native';
 export default function StoreDetail() {
   const router = useRouter();
-
+  const [logoutModalVisible, setLogoutModalVisible] = useState(false);
   const restaurant = restaurants[0]; // tạm lấy 1 quán
   const [storeInfo, setStoreInfo] = useState({
     name: restaurant.name,
@@ -86,6 +87,13 @@ export default function StoreDetail() {
           value={storeInfo.phone}
           onPress={() => openEditModal('phone')}
         />
+        {/* Nút đăng xuất */}
+        <TouchableOpacity
+          style={styles.logoutButton}
+          onPress={() => setLogoutModalVisible(true)}
+        >
+          <Text style={styles.logoutButtonText}>Đăng xuất</Text>
+        </TouchableOpacity>
       </View>
 
       {/* Modal edit */}
@@ -124,6 +132,37 @@ export default function StoreDetail() {
                 Hủy
               </Text>
             </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+      {/* Modal xác nhận */}
+      <Modal
+        transparent
+        visible={logoutModalVisible}
+        animationType="fade"
+      >
+        <View style={styles.logoutModalOverlay}>
+          <View style={styles.logoutModalContent}>
+            <Text style={styles.logoutModalTitle}>
+              Bạn có chắc muốn đăng xuất?
+            </Text>
+            <View style={styles.logoutModalButtonsRow}>
+              <TouchableOpacity
+                style={[styles.logoutModalButton, { backgroundColor: '#ccc' }]}
+                onPress={() => setLogoutModalVisible(false)}
+              >
+                <Text style={styles.logoutModalButtonTextCancel}>Hủy</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.logoutModalButton,
+                  { backgroundColor: '#D9534F' },
+                ]}
+                onPress={() => router.replace('../(auth)')}
+              >
+                <Text style={styles.logoutModalButtonTextConfirm}>Đồng ý</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>
@@ -269,5 +308,60 @@ const styles = StyleSheet.create({
   value: {
     fontSize: 15,
     color: '#000',
+  },
+
+  storeContainer: {
+    flex: 1,
+    backgroundColor: '#fff',
+    padding: 16,
+  },
+  logoutButton: {
+    marginTop: 30,
+    backgroundColor: '#D9534F',
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  logoutButtonText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 16,
+  },
+  logoutModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  logoutModalContent: {
+    width: '80%',
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 20,
+  },
+  logoutModalTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  logoutModalButtonsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 20,
+  },
+  logoutModalButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginHorizontal: 5,
+  },
+  logoutModalButtonTextCancel: {
+    color: '#333',
+    fontWeight: '600',
+  },
+  logoutModalButtonTextConfirm: {
+    color: '#fff',
+    fontWeight: '600',
   },
 });
