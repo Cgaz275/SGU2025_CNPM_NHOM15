@@ -1,5 +1,6 @@
-import { useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import { getDefaultAddress } from '@/data/address'; // import hàm lấy địa chỉ mặc định
+import { useFocusEffect, useRouter } from 'expo-router';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Alert,
   Dimensions,
@@ -17,6 +18,14 @@ import { addOrder } from '../../../data/orders';
 export default function Checkout2Screen() {
   const router = useRouter();
   const screenWidth = Dimensions.get('window').width;
+
+  const [defaultAddress, setDefaultAddress] = useState(getDefaultAddress());
+
+  useFocusEffect(
+    useCallback(() => {
+      setDefaultAddress(getDefaultAddress());
+    }, [])
+  );
 
   const [cart, setCart] = useState<any[]>([]);
   const [paymentMethod, setPaymentMethod] = useState<'Cash' | 'Visa' | 'Momo'>(
@@ -58,6 +67,11 @@ export default function Checkout2Screen() {
       items: cart,
       total,
       paymentMethod,
+      address: defaultAddress
+        ? `${defaultAddress.address}${
+            defaultAddress.building ? ', ' + defaultAddress.building : ''
+          }${defaultAddress.gate ? ', ' + defaultAddress.gate : ''}`
+        : 'Không có địa chỉ',
     });
 
     clearCart();
@@ -86,15 +100,40 @@ export default function Checkout2Screen() {
         contentContainerStyle={{ paddingBottom: 120 }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Map */}
-        <View style={styles.mapPlaceholder}>
-          <Image
-            source={require('../../../assets/images/map_placeholder.png')}
-            style={{ width: screenWidth - 32, height: 200, borderRadius: 12 }}
-            resizeMode="cover"
-          />
-        </View>
+        {/* Địa chỉ mặc định */}
+        {defaultAddress && (
+          <View
+            style={[
+              styles.section,
+              {
+                backgroundColor: '#f8f8f8',
+                padding: 12,
+                borderRadius: 8,
+                marginBottom: 16,
+              },
+            ]}
+          >
+            <Text style={[styles.sectionTitle, { marginBottom: 4 }]}>
+              Địa chỉ giao hàng
+            </Text>
+            <Text style={{ fontWeight: '600' }}>
+              {defaultAddress.name} - {defaultAddress.phone}
+            </Text>
+            <Text>{defaultAddress.address}</Text>
+            {defaultAddress.building && <Text>{defaultAddress.building}</Text>}
+            {defaultAddress.gate && <Text>{defaultAddress.gate}</Text>}
+            <Text style={{ fontStyle: 'italic', marginTop: 4 }}>
+              {defaultAddress.tag}
+            </Text>
 
+            <TouchableOpacity
+              style={{ marginTop: 8 }}
+              onPress={() => router.push('../../address')}
+            >
+              <Text style={{ color: '#007BFF' }}>Thay đổi địa chỉ</Text>
+            </TouchableOpacity>
+          </View>
+        )}
         {/* Giỏ hàng */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Giỏ hàng</Text>

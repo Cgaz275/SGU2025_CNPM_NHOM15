@@ -18,15 +18,16 @@ export let addresses: Address[] = [
     id: 'a1',
     name: 'Nguyễn Văn A',
     phone: '0901234567',
-    address: '123 Đường Láng, Hà Nội',
-    tag: 'Nhà riêng',
+    address: 'THTH Sài Gòn, An Dương Vương, phường 3, Quận 5, Hồ Chí Minh',
+    tag: 'Khác',
     isDefault: true,
   },
   {
     id: 'a2',
     name: 'Trần Thị B',
     phone: '0912345678',
-    address: '456 Phố Huế, Hà Nội',
+    address:
+      'Sân bóng chuyền, Đ. An Dương Vương, Phường 3, Quận 5, Hồ Chí Minh',
     tag: 'Văn phòng',
     isDefault: false,
   },
@@ -64,3 +65,19 @@ export const setDefaultAddress = (id: string) => {
 
 // 🔍 Lấy địa chỉ mặc định
 export const getDefaultAddress = () => addresses.find((a) => a.isDefault);
+
+// biến tạm lưu địa chỉ đang chọn
+let tempAddress: Partial<Address> | null = null;
+
+// set temp
+export const setTempAddress = (address: Partial<Address>) => {
+  tempAddress = address;
+};
+
+// get temp
+export const getTempAddress = () => tempAddress;
+
+// clear temp khi cần
+export const clearTempAddress = () => {
+  tempAddress = null;
+};

@@ -27,6 +27,7 @@ export const restaurants = [
     distance: '0.8 km',
     rating: 4.8,
     categories: ['c1'],
+    address: '1 Hẻm 197 Trần Bình Trọng, Phường 3, Quận 5, Hồ Chí Minh',
     dishes: [
       {
         id: 'd1',
@@ -105,6 +106,7 @@ export const restaurants = [
     distance: '1.2 km',
     rating: 4.7,
     categories: ['c2'],
+    address: '25 Hẻm 120 Trần Bình Trọng, Phường 2, Quận 5, Hồ Chí Minh',
     dishes: [
       {
         id: 'd3',
@@ -180,6 +182,7 @@ export const restaurants = [
     distance: '2.5 km',
     rating: 4.6,
     categories: ['c1', 'c3'],
+    address: '25 Phan Văn Trị, Quận 5, Hồ Chí Minh',
     dishes: [
       {
         id: 'd5',
@@ -259,6 +262,7 @@ export const restaurants = [
     distance: '3.2 km',
     rating: 4.5,
     categories: ['c4'],
+    address: '119/44 Nguyễn Văn Cừ, Phường 2, Quận 5, Hồ Chí Minh',
     dishes: [
       {
         id: 'd7',
@@ -324,6 +328,7 @@ export const restaurants = [
     distance: '5.0 km',
     rating: 4.7,
     categories: ['c5'],
+    address: '8 Hẻm 111 Trần Bình Trọng, Phường 2, Quận 5, Hồ Chí Minh',
     dishes: [
       {
         id: 'd9',
@@ -377,6 +382,7 @@ export const restaurants = [
     distance: '1.8 km',
     rating: 4.3,
     categories: ['c6', 'c10'],
+    address: 'Hẻm 85 Trần Bình Trọng, Phường 1, Quận 5, Hồ Chí Minh',
     dishes: [
       {
         id: 'd11',
@@ -433,6 +439,7 @@ export const restaurants = [
     distance: '2.1 km',
     rating: 4.6,
     categories: ['c7'],
+    address: '131 Trần Bình Trọng, Phường 2, Quận 5, Hồ Chí Minh',
     dishes: [
       {
         id: 'd13',
@@ -493,6 +500,7 @@ export const restaurants = [
     distance: '1.5 km',
     rating: 4.4,
     categories: ['c8'],
+    address: '289 An Dương Vương, Phường 3, Quận 5, Hồ Chí Minh',
     dishes: [
       {
         id: 'd15',
@@ -540,6 +548,7 @@ export const restaurants = [
     distance: '2.0 km',
     rating: 4.5,
     categories: ['c9'],
+    address: '303 An Dương Vương, Phường 3, Quận 5, Hồ Chí Minh',
     dishes: [
       {
         id: 'd16',
@@ -577,6 +586,7 @@ export const restaurants = [
     distance: '1.0 km',
     rating: 4.8,
     categories: ['c3', 'c10'],
+    address: '34A Trần Bình Trọng, Phường 4, Quận 5, Hồ Chí Minh',
     dishes: [
       {
         id: 'd17',

@@ -20,6 +20,7 @@ import {
   getRestaurantName,
   updateOrderStatus,
 } from '../../data/orders';
+import NavigationScreen from './location';
 
 export default function Checkout3Screen() {
   const router = useRouter();
@@ -54,13 +55,14 @@ export default function Checkout3Screen() {
   const handleConfirmReceived = () => {
     updateOrderStatus(order.id, 'completed');
     setOrder({ ...order, status: 'completed' });
-    alert('🎉 Cảm ơn bạn! Đơn hàng đã được xác nhận hoàn tất.');
   };
 
   const renderStatusMessage = () => {
     switch (order.status) {
       case 'pending':
         return 'Đang đợi nhà hàng xác nhận đơn hàng.';
+      case 'shipping':
+        return 'Drone đang giao hàng đến bạn, vui lòng chờ trong giây lát';
       case 'confirmed':
         return 'Nhà hàng đã xác nhận, đang chuẩn bị món ăn.';
       case 'waitingCustomer':
@@ -73,21 +75,33 @@ export default function Checkout3Screen() {
         return '';
     }
   };
+  // Trước phần Scroll nội dung
+  const statusSteps = [
+    { key: 'pending', label: 'Đã đặt' },
+    { key: 'confirmed', label: 'Chờ chuẩn bị' },
+    { key: 'shipping', label: 'Đang giao đến bạn' },
+    { key: 'completed', label: 'Đã hoàn thành' },
+  ];
+
+  const currentStepIndex = statusSteps.findIndex((s) => s.key === order.status);
+
   // Thêm hàm bên trong component
   const getStatusImage = () => {
     switch (order.status) {
       case 'pending':
-        return require('../../assets/images/time-left.png');
+        return require('../../assets/images/wait.png');
       case 'confirmed':
-        return require('../../assets/images/medicine.png');
+        return require('../../assets/images/medicine2.png');
       case 'waitingCustomer':
-        return require('../../assets/images/landing.png');
+        return require('../../assets/images/landing2.png');
       case 'completed':
         return require('../../assets/images/package.png');
       case 'cancelled':
-        return require('../../assets/images/time-left.png');
+        return require('../../assets/images/wait.png');
+      case 'shipping':
+        return '';
       default:
-        return require('../../assets/images/time-left.png');
+        return require('../../assets/images/wait.png');
     }
   };
 
@@ -100,7 +114,6 @@ export default function Checkout3Screen() {
   return (
     <PaperProvider>
       <View style={{ flex: 1 }}>
-        {/* Scroll nội dung */}
         <ScrollView
           style={styles.container}
           contentContainerStyle={{ paddingBottom: 250 }}
@@ -119,15 +132,68 @@ export default function Checkout3Screen() {
             />
           </TouchableOpacity>
 
+          {/* Scroll nội dung */}
           {/* Status */}
-          <View style={styles.section}>
-            <View style={styles.imageContainer}>
-              <Image
-                source={getStatusImage()} // thay bằng hàm này
-                style={styles.waitImage}
-              />
+          {[
+            'pending',
+            'confirmed',
+            'waitingCustomer',
+            'completed',
+            'cancelled',
+          ].includes(order.status) && (
+            <View style={styles.sectionPic}>
+              <View style={styles.imageContainer}>
+                <Image
+                  source={getStatusImage()} // thay bằng hàm này
+                  style={styles.waitImage}
+                />
+
+                {/* khung map nhỏ chỉ hiện khi đang giao hàng */}
+              </View>
+              <Text style={styles.infoTextCentered}>
+                {renderStatusMessage()}
+              </Text>
             </View>
-            <Text style={styles.infoTextCentered}>{renderStatusMessage()}</Text>
+          )}
+
+          {order.status === 'shipping' && (
+            <View style={styles.mapContainer}>
+              <NavigationScreen />
+            </View>
+          )}
+
+          <View style={styles.progressContainer}>
+            {statusSteps.map((step, index) => {
+              const isActive = index <= currentStepIndex;
+              return (
+                <React.Fragment key={step.key}>
+                  <View style={styles.stepWrapper}>
+                    <View
+                      style={[
+                        styles.stepCircle,
+                        isActive && styles.stepCircleActive,
+                      ]}
+                    />
+                    <Text
+                      style={[
+                        styles.stepLabel,
+                        isActive && styles.stepLabelActive,
+                      ]}
+                    >
+                      {step.label}
+                    </Text>
+                  </View>
+                  {index < statusSteps.length - 1 && (
+                    <View
+                      style={[
+                        styles.stepLine,
+                        index < currentStepIndex && styles.stepLineActive,
+                      ]}
+                    />
+                  )}
+                </React.Fragment>
+              );
+            })}
           </View>
 
           {/* Chi tiết đơn hàng */}
@@ -268,7 +334,12 @@ export default function Checkout3Screen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff', paddingTop: 50 },
-  imageContainer: { alignItems: 'center', marginVertical: 16 },
+  imageContainer: {
+    alignItems: 'center',
+    marginVertical: 16,
+    marginTop: 30,
+    marginBottom: 30,
+  },
   waitImage: { width: 200, height: 200, resizeMode: 'contain' },
   infoTextCentered: {
     fontSize: 14,
@@ -276,7 +347,16 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     textAlign: 'center',
   },
-  section: { marginHorizontal: 16, marginTop: 80 },
+  mapContainer: {
+    height: 300, // giới hạn chiều cao cho map nhỏ
+    borderRadius: 10,
+    overflow: 'hidden',
+    marginVertical: 10,
+    margin: 10,
+  },
+  section: { marginHorizontal: 16, marginTop: 0 },
+  sectionPic: { marginHorizontal: 16, marginTop: 20, marginBottom: 50 },
+
   orderId: { fontSize: 17, fontWeight: '600', marginBottom: 9 },
   sectionTitle: { fontWeight: '700', fontSize: 16, marginBottom: 12 },
   dishRow: {
@@ -332,5 +412,50 @@ const styles = StyleSheet.create({
     padding: 16,
     borderTopWidth: 0.5,
     borderTopColor: '#ccc',
+  },
+
+  progressContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between', // chia đều các step
+    paddingHorizontal: 16,
+    marginVertical: 20,
+  },
+  stepWrapper: {
+    alignItems: 'center',
+    width: 70, // cố định width, chữ dài xuống dòng
+  },
+  stepCircle: {
+    width: 10,
+    height: 10,
+    borderRadius: 8,
+    backgroundColor: '#ccc',
+  },
+  stepCircleActive: {
+    width: 16,
+    height: 16,
+    backgroundColor: '#d7a358', // màu active
+  },
+  stepLabel: {
+    fontSize: 12,
+    color: '#666',
+    textAlign: 'center',
+    marginTop: 4,
+  },
+  stepLabelActive: {
+    color: '#d7a358',
+    fontWeight: '700',
+  },
+  stepLine: {
+    flex: 1,
+    height: 2,
+    alignSelf: 'center',
+    marginBottom: 33,
+    backgroundColor: '#ccc',
+    marginHorizontal: 4,
+  },
+  stepLineActive: {
+    alignSelf: 'center',
+    backgroundColor: '#d7a358',
   },
 });

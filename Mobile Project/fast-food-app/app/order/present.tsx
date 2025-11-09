@@ -46,6 +46,7 @@ export default function PresentOrders() {
           data={orders.filter(
             (o) =>
               o.status === 'pending' ||
+              o.status === 'shipping' ||
               o.status === 'confirmed' ||
               o.status === 'waitingCustomer'
           )}
@@ -80,6 +81,8 @@ export default function PresentOrders() {
                         ? 'Chờ nhà hàng xác nhận'
                         : item.status === 'confirmed'
                         ? 'Nhà hàng đã xác nhận'
+                        : item.status === 'shipping'
+                        ? 'Đơn hàng đang được giao đến bạn'
                         : 'Đang chờ khách xác nhận'}
                     </Text>
                     <Text style={styles.total}>
