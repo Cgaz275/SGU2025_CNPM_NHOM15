@@ -21,10 +21,8 @@ export default function AddressScreen() {
 
   // ✅ Hàm reload lại danh sách (dùng lại nhiều chỗ)
   const reloadList = useCallback(() => {
-    const newList = getAddresses();
-    const newDefault = getDefaultAddress();
-    setList(newList);
-    setDefaultAddrState(newDefault);
+    setList([...getAddresses()]); // spread để tạo mảng mới, ép React rerender
+    setDefaultAddrState(getDefaultAddress());
   }, []);
 
   // 🔁 Reload mỗi khi quay lại trang

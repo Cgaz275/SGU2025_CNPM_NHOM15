@@ -5,12 +5,14 @@ import { CartItem } from './cart';
 export type OrderStatus =
   | 'pending'
   | 'confirmed'
+  | 'shipping'
   | 'waitingCustomer'
   | 'completed'
   | 'cancelled';
 
 export type Order = {
   id: string;
+  address: string;
   restaurantId: string;
   items: CartItem[];
   total: number;
@@ -25,6 +27,7 @@ let orders: Order[] = [];
 const sampleOrders: Order[] = [
   {
     id: 'o1',
+    address: 'THTH Sài Gòn, An Dương Vương, phường 3, Quận 5, Hồ Chí Minh',
     restaurantId: 'r1',
     items: [
       {
@@ -37,11 +40,12 @@ const sampleOrders: Order[] = [
     ],
     total: 45000,
     paymentMethod: 'Cash',
-    status: 'pending',
+    status: 'waitingCustomer',
     createdAt: new Date().toISOString(),
   },
   {
     id: 'o2',
+    address: 'THTH Sài Gòn, An Dương Vương, phường 3, Quận 5, Hồ Chí Minh',
     restaurantId: 'r2',
     items: [
       {
@@ -59,6 +63,7 @@ const sampleOrders: Order[] = [
   },
   {
     id: 'o3',
+    address: 'THTH Sài Gòn, An Dương Vương, phường 3, Quận 5, Hồ Chí Minh',
     restaurantId: 'r4',
     items: [
       {
@@ -71,11 +76,12 @@ const sampleOrders: Order[] = [
     ],
     total: 60000,
     paymentMethod: 'Momo',
-    status: 'waitingCustomer',
+    status: 'shipping',
     createdAt: new Date().toISOString(),
   },
   {
     id: 'o4',
+    address: 'THTH Sài Gòn, An Dương Vương, phường 3, Quận 5, Hồ Chí Minh',
     restaurantId: 'r1',
     items: [
       {
@@ -93,6 +99,7 @@ const sampleOrders: Order[] = [
   },
   {
     id: 'o5',
+    address: 'THTH Sài Gòn, An Dương Vương, phường 3, Quận 5, Hồ Chí Minh',
     restaurantId: 'r3',
     items: [
       {

@@ -1,5 +1,8 @@
-import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import { clearTempAddress, getTempAddress } from '@/data/address';
+import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useCallback, useState } from 'react';
 import {
   Image,
   ScrollView,
@@ -23,6 +26,20 @@ export default function AddAddressScreen() {
     tag: 'Nhà riêng',
     note: '',
   });
+  const params = useLocalSearchParams();
+
+  const [address, setAddress] = useState('');
+
+  const [formKey, setFormKey] = useState(0); // state phụ để ép rerender
+  useFocusEffect(
+    useCallback(() => {
+      const temp = getTempAddress();
+      if (temp?.address) {
+        setForm((prev) => ({ ...prev, address: temp.address! }));
+        clearTempAddress();
+      }
+    }, [])
+  );
 
   const handleChange = (field: string, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -80,23 +97,83 @@ export default function AddAddressScreen() {
 
       <View style={styles.field}>
         <Text style={styles.label}>Số điện thoại *</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Nhập số điện thoại"
-          keyboardType="phone-pad"
-          value={form.phone}
-          onChangeText={(v) => handleChange('phone', v)}
-        />
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            borderWidth: 1,
+            borderColor: '#ccc',
+            borderRadius: 8,
+            overflow: 'hidden', // để +84 và input liền khối
+          }}
+        >
+          {/* Prefix +84 */}
+          <View
+            style={{
+              backgroundColor: '#e67e22',
+              paddingHorizontal: 10,
+              paddingVertical: 13,
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}
+          >
+            <Text style={{ fontWeight: '500', color: '#fff' }}>+84</Text>
+          </View>
+
+          {/* Input số */}
+          <TextInput
+            style={{
+              flex: 1,
+              paddingHorizontal: 10,
+              paddingVertical: 12,
+              backgroundColor: '#fff',
+              fontSize: 16,
+            }}
+            placeholder="Nhập số điện thoại"
+            keyboardType="phone-pad"
+            value={form.phone?.replace(/^\+84/, '')}
+            maxLength={10}
+            onChangeText={(v) => {
+              let cleaned = v.replace(/[^0-9]/g, '');
+              if (cleaned.startsWith('0')) cleaned = cleaned.slice(1);
+              handleChange('phone', '+84' + cleaned);
+            }}
+          />
+        </View>
       </View>
 
       <View style={styles.field}>
         <Text style={styles.label}>Địa chỉ *</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Nhập địa chỉ cụ thể"
-          value={form.address}
-          onChangeText={(v) => handleChange('address', v)}
-        />
+
+        <TouchableOpacity
+          style={[
+            styles.input,
+            {
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            },
+          ]}
+          onPress={() =>
+            router.push({
+              pathname: './location',
+              params: form, // truyền toàn bộ form hiện tại
+            })
+          }
+        >
+          <Text
+            key={formKey}
+            style={{ color: form.address ? '#000' : '#888' }}
+          >
+            {form.address ? form.address : 'Chọn địa chỉ'}
+          </Text>
+
+          <Ionicons
+            name="chevron-forward"
+            size={18}
+            color="#888"
+          />
+        </TouchableOpacity>
       </View>
 
       <View style={styles.field}>
