@@ -45,7 +45,11 @@ function OrderManagementScreen() {
   const filteredOrders = orders.filter((o) => {
     if (activeTab === 'new') return o.status === 'pending';
     if (activeTab === 'inprogress')
-      return o.status === 'waitingCustomer' || o.status === 'confirmed';
+      return (
+        o.status === 'waitingCustomer' ||
+        o.status === 'confirmed' ||
+        o.status === 'shipping'
+      );
     if (activeTab === 'completed')
       return o.status === 'completed' || o.status === 'cancelled';
     return true;
@@ -212,11 +216,13 @@ function OrderManagementScreen() {
 function translateStatus(status: string) {
   switch (status) {
     case 'pending':
-      return 'Chờ xác nhận';
+      return 'Chờ nhà hàng xác nhận';
     case 'confirmed':
       return 'Đã xác nhận';
+    case 'shipping':
+      return 'Đang giao hàng';
     case 'waitingCustomer':
-      return 'Đang giao';
+      return 'Chờ người dùng xác nhận';
     case 'completed':
       return 'Hoàn tất';
     case 'cancelled':
@@ -309,6 +315,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   status_pending: { backgroundColor: '#f1c40f' },
+  status_shipping: { backgroundColor: '#be9500ff' },
   status_confirmed: { backgroundColor: '#3498db' },
   status_waitingCustomer: { backgroundColor: '#9b59b6' },
   status_completed: { backgroundColor: '#2ecc71' },

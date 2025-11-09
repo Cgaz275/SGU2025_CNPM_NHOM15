@@ -28,13 +28,6 @@ export default function StoreScreen() {
       onPress: () => router.push('../statistic'),
       color: '#9c27b0',
     },
-    {
-      id: 'promotion',
-      label: 'Khuyến mãi',
-      icon: 'pricetag-outline', // voucher / khuyến mãi
-      onPress: () => router.push('../promo'), // tạo page promotion riêng
-      color: '#ff9800',
-    },
   ];
 
   return (
