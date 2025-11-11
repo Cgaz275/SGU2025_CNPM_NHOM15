@@ -88,7 +88,7 @@ export const dummyOrderStatsData: IStatsCardProps[] = [
   {
     label: 'Card Orders',
     total: 12689,
-    description: '1.9% up from yesterday',
+    description: '1,9% up from yesterday',
 
     route: '#',
   },

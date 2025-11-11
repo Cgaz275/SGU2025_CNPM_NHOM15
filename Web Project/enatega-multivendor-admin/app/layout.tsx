@@ -2,11 +2,12 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getLocale, getMessages } from 'next-intl/server';
 import Script from 'next/script';
 
+
 // ✅ Add metadata export for favicon
 export const metadata = {
-  title: 'Enatega Admin Dashboard',
+  title: 'FoodFast Admin Dashboard',
   icons: {
-    icon: '/favicon.png',
+    icon: '/assets/images/png/foodfast_favicon.png',
     // You can add more like:
     // shortcut: "/favicon.png",
     // apple: "/apple-touch-icon.png"
