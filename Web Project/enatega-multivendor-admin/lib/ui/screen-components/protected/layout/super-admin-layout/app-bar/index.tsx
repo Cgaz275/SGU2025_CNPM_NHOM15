@@ -630,54 +630,54 @@ const AppTopbar = () => {
                   onLocaleChange('fr');
                 },
               },
-              {
-                label: 'KHMER',
-                template(item) {
-                  return (
-                    <div
-                      className={`${currentLocale === 'km' ? 'bg-[#b1c748]' : ''} p-2  cursor-pointer`}
-                      onClick={() => onLocaleChange('km')}
-                    >
-                      {item.label}
-                    </div>
-                  );
-                },
-                command: () => {
-                  onLocaleChange('km');
-                },
-              },
-              {
-                label: 'CHINESE',
-                template(item) {
-                  return (
-                    <div
-                      className={`${currentLocale === 'zh' ? 'bg-[#b1c748]' : ''} p-2  cursor-pointer`}
-                      onClick={() => onLocaleChange('zh')}
-                    >
-                      {item.label}
-                    </div>
-                  );
-                },
-                command: () => {
-                  onLocaleChange('zh');
-                },
-              },
-              {
-                label: 'HEBREW',
-                template(item) {
-                  return (
-                    <div
-                      className={`${currentLocale === 'he' ? 'bg-[#b1c748]' : ''} p-2  cursor-pointer`}
-                      onClick={() => onLocaleChange('he')}
-                    >
-                      {item.label}
-                    </div>
-                  );
-                },
-                command: () => {
-                  onLocaleChange('he');
-                },
-              },
+              // {
+              //   label: 'KHMER',
+              //   template(item) {
+              //     return (
+              //       <div
+              //         className={`${currentLocale === 'km' ? 'bg-[#b1c748]' : ''} p-2  cursor-pointer`}
+              //         onClick={() => onLocaleChange('km')}
+              //       >
+              //         {item.label}
+              //       </div>
+              //     );
+              //   },
+              //   command: () => {
+              //     onLocaleChange('km');
+              //   },
+              // },
+              // {
+              //   label: 'CHINESE',
+              //   template(item) {
+              //     return (
+              //       <div
+              //         className={`${currentLocale === 'zh' ? 'bg-[#b1c748]' : ''} p-2  cursor-pointer`}
+              //         onClick={() => onLocaleChange('zh')}
+              //       >
+              //         {item.label}
+              //       </div>
+              //     );
+              //   },
+              //   command: () => {
+              //     onLocaleChange('zh');
+              //   },
+              // },
+              // {
+              //   label: 'HEBREW',
+              //   template(item) {
+              //     return (
+              //       <div
+              //         className={`${currentLocale === 'he' ? 'bg-[#b1c748]' : ''} p-2  cursor-pointer`}
+              //         onClick={() => onLocaleChange('he')}
+              //       >
+              //         {item.label}
+              //       </div>
+              //     );
+              //   },
+              //   command: () => {
+              //     onLocaleChange('he');
+              //   },
+              // },
             ]}
             popup
             ref={languageMenuRef}
