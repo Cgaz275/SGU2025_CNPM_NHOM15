@@ -10,6 +10,10 @@ export default function LoginScreen() {
     router.replace('/(tabs)');
   };
 
+  const handleEmail = (type: string) => {
+    router.replace('./email');
+  };
+
   const handleGuest = () => {
     router.replace('/(tabs)');
   };
@@ -60,7 +64,7 @@ export default function LoginScreen() {
           {/* nút Email */}
           <TouchableOpacity
             style={[styles.button, styles.gmail]}
-            onPress={() => handleLogin('Gmail')}
+            onPress={() => handleEmail('Email')}
           >
             <View style={styles.iconWrapper}>
               <Image

@@ -27,7 +27,7 @@ export default function ProfileScreen() {
         style: 'destructive',
         onPress: () => {
           // Mock logout
-          router.replace('/(auth)/login');
+          router.replace('../(auth)');
         },
       },
     ]);
