@@ -13,8 +13,7 @@ export function AppLogo2({ className = "" }: { className?: string }) {
       className={className} 
       version="1"
     >
-          <rect x="0" y="0" width="203" height="48" fill="#FFC107" />
-  <text x="40" y="30" fill="#000" fontSize="16">FoodFast</text>
+          <rect x="0" y="0" width="203" height="48" />
       <defs>
         <clipPath id="d397bf5086">
             <path d="M1.691 0h148.137v35.027H1.691Zm0 0"></path>

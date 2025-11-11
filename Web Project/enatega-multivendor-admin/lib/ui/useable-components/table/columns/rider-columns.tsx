@@ -75,22 +75,22 @@ export const RIDER_TABLE_COLUMNS = ({
   };
 
   return [
-    { headerName: t('Name'), propertyName: 'name' },
-    { headerName: t('Username'), propertyName: 'username' },
-    { headerName: t('Phone'), propertyName: 'phone' },
+    { headerName: 'Drone ID', propertyName: 'name' },
+    { headerName: t('Drone Name'), propertyName: 'username' },
+    { headerName: t('Battery'), propertyName: 'phone' },
     {
-      headerName: t('Zone'),
+      headerName: 'Location Zone',
       propertyName: 'zone',
       body: (rider: IRiderResponse) => rider.zone.title,
     },
     {
-      headerName: 'Vehicle Type',
+      headerName: 'Drone Model',
       propertyName: 'vehicleType',
       body: (rider: IRiderResponse) =>
         toTextCase(rider.vehicleType.replaceAll('_', ' '), 'title'),
     },
     {
-      headerName: t('Available'),
+      headerName: 'Drone Status',
       propertyName: 'available',
       body: (rider: IRiderResponse) => (
         <CustomInputSwitch

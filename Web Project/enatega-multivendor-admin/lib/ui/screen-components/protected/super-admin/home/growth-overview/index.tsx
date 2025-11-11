@@ -71,14 +71,14 @@ export default function GrowthOverView() {
         t('December'),
       ],
       datasets: [
-        {
-          label: t('Stores'),
-          data: dashboardUsersByYear?.restaurantsCount ?? [],
-          fill: false,
-          borderColor: documentStyle.getPropertyValue('--pink-500'),
-          backgroundColor: documentStyle.getPropertyValue('--pink-100'),
-          tension: 0.5,
-        },
+        // {
+        //   label: t('Stores'),
+        //   data: dashboardUsersByYear?.restaurantsCount ?? [],
+        //   fill: false,
+        //   borderColor: documentStyle.getPropertyValue('--pink-500'),
+        //   backgroundColor: documentStyle.getPropertyValue('--pink-100'),
+        //   tension: 0.5,
+        // },
         {
           label: t('Vendors'),
           data: dashboardUsersByYear?.vendorsCount ?? [],

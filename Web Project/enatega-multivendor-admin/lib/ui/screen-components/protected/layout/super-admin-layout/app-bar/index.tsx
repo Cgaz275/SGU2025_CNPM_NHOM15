@@ -60,7 +60,7 @@ import { timeAgo } from '@/lib/utils/methods/timeAgo';
 
 // Styles
 import classes from './app-bar.module.css';
-import { AppLogo } from '@/lib/utils/assets/svgs/logo';
+import { AppLogo2 } from '@/lib/utils/assets/svgs/foodfast_logo_apptop';
 import { useLocale, useTranslations } from 'next-intl';
 import { TLocale } from '@/lib/utils/types/locale';
 import { setUserLocale } from '@/lib/utils/methods/locale';
@@ -208,7 +208,7 @@ const AppTopbar = () => {
           </button>
         </div>
         <div onClick={() => onRedirectToPage('/home')}>
-          <AppLogo />
+          <AppLogo2 />
         </div>
       </div>
       <div className="hidden items-center space-x-5 md:flex">

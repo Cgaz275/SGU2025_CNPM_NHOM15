@@ -1,4 +1,9 @@
 'use client';
+import {
+  IOwnerLoginDataResponse,
+  ISignInForm,
+  ILoginResponse,
+} from '@/lib/utils/interfaces/forms';
 
 // Core
 import { useContext } from 'react';
@@ -11,8 +16,6 @@ import { Card } from 'primereact/card';
 
 // Interface
 import {
-  IOwnerLoginDataResponse,
-  ISignInForm,
 } from '@/lib/utils/interfaces/forms';
 
 // Component
@@ -62,7 +65,7 @@ export default function LoginEmailPasswordMain() {
   const { setUser } = useUserContext();
 
   // API
-  const [onLogin, { loading }] = useMutation(OWNER_LOGIN, {
+  const [, { loading }] = useMutation(OWNER_LOGIN, {
     onError,
     onCompleted,
   });
@@ -103,19 +106,67 @@ export default function LoginEmailPasswordMain() {
   }
 
   // Handler
+  // const onSubmitHandler = async (data: ISignInForm) => {
+  //   try {
+  //     await onLogin({
+  //       variables: {
+  //         ...data,
+  //       },
+  //     });
+  //   } catch (err) {
+  //     showToast({
+  //       type: 'error',
+  //       title: 'Login',
+  //       message: 'Login Failed',
+  //     });
+  //   }
+  // };
+  // 🧪 Fake login (bypass backend)
   const onSubmitHandler = async (data: ISignInForm) => {
     try {
-      await onLogin({
-        variables: {
-          ...data,
-        },
+      // Fake user matches ILoginResponse exactly
+      const fakeUser: ILoginResponse = {
+        shopType: 'restaurant',
+        userId: 'dev-user-id',
+        token: 'dev-fake-token',
+        email: data.email || initialValues.email,
+        name: 'Admin',
+        userType: 'ADMIN', // change to VENDOR if needed
+        userTypeId: 'dev-type-id',
+        restaurants: [],
+        permissions: ['Vendors', 'Orders', 'Products'],
+        __typename: 'LoginResponse',
+      };
+
+      // Save to localStorage & context
+      onUseLocalStorage('save', `user-${APP_NAME}`, JSON.stringify(fakeUser));
+      if (fakeUser.userType === 'VENDOR') {
+        onUseLocalStorage('save', SELECTED_VENDOR, fakeUser.userId);
+        onUseLocalStorage('save', SELECTED_VENDOR_EMAIL, fakeUser.email);
+      }
+      if (fakeUser.userType === 'RESTAURANT') {
+        onUseLocalStorage('save', SELECTED_RESTAURANT, fakeUser.userTypeId);
+        onUseLocalStorage('save', SELECTED_SHOPTYPE, fakeUser.shopType ?? '');
+      }
+
+      setUser(fakeUser);
+
+      // Redirect
+      const redirect_url = DEFAULT_ROUTES[fakeUser.userType] ?? '/dashboard';
+      router.replace(redirect_url);
+
+      showToast({
+        type: 'success',
+        title: 'Login',
+        message: 'Login Successfully',
       });
     } catch (err) {
       showToast({
         type: 'error',
         title: 'Login',
-        message: 'Login Failed',
+        message: 'Failed to login. Please try again.',
       });
+      console.error('Fake login error:', err);
     }
   };
 
@@ -210,3 +261,4 @@ export default function LoginEmailPasswordMain() {
     </div>
   );
 }
+
