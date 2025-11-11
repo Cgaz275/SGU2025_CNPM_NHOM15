@@ -28,9 +28,7 @@ export default function Checkout2Screen() {
   );
 
   const [cart, setCart] = useState<any[]>([]);
-  const [paymentMethod, setPaymentMethod] = useState<'Cash' | 'Visa' | 'Momo'>(
-    'Cash'
-  );
+  const [paymentMethod, setPaymentMethod] = useState<'Visa' | 'VNPay'>('Cash');
 
   const serviceFee = 5000;
   const shippingFee = 15000;
@@ -194,7 +192,7 @@ export default function Checkout2Screen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Hình thức thanh toán</Text>
           <View style={styles.paymentContainer}>
-            {['Cash', 'Visa', 'Momo'].map((method) => (
+            {['Visa', 'VNPay'].map((method) => (
               <TouchableOpacity
                 key={method}
                 style={[

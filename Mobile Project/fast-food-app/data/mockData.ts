@@ -28,6 +28,8 @@ export const restaurants = [
     rating: 4.8,
     categories: ['c1'],
     address: '1 Hẻm 197 Trần Bình Trọng, Phường 3, Quận 5, Hồ Chí Minh',
+    latitude: 10.758935462000075,
+    longitude: 106.68025133800008,
     dishes: [
       {
         id: 'd1',
@@ -107,6 +109,8 @@ export const restaurants = [
     rating: 4.7,
     categories: ['c2'],
     address: '25 Hẻm 120 Trần Bình Trọng, Phường 2, Quận 5, Hồ Chí Minh',
+    latitude: 10.75774371200004,
+    longitude: 106.68164681700006,
     dishes: [
       {
         id: 'd3',
@@ -183,6 +187,8 @@ export const restaurants = [
     rating: 4.6,
     categories: ['c1', 'c3'],
     address: '25 Phan Văn Trị, Quận 5, Hồ Chí Minh',
+    latitude: 10.757713984000066,
+    longitude: 106.68409774600008,
     dishes: [
       {
         id: 'd5',
@@ -263,6 +269,8 @@ export const restaurants = [
     rating: 4.5,
     categories: ['c4'],
     address: '119/44 Nguyễn Văn Cừ, Phường 2, Quận 5, Hồ Chí Minh',
+    latitude: 10.756989499999996,
+    longitude: 106.6844894,
     dishes: [
       {
         id: 'd7',
@@ -329,6 +337,8 @@ export const restaurants = [
     rating: 4.7,
     categories: ['c5'],
     address: '8 Hẻm 111 Trần Bình Trọng, Phường 2, Quận 5, Hồ Chí Minh',
+    latitude: 10.756175375000064,
+    longitude: 106.68063147500004,
     dishes: [
       {
         id: 'd9',
@@ -383,6 +393,8 @@ export const restaurants = [
     rating: 4.3,
     categories: ['c6', 'c10'],
     address: 'Hẻm 85 Trần Bình Trọng, Phường 1, Quận 5, Hồ Chí Minh',
+    latitude: 10.75510011604958,
+    longitude: 106.68136643110192,
     dishes: [
       {
         id: 'd11',
@@ -440,6 +452,8 @@ export const restaurants = [
     rating: 4.6,
     categories: ['c7'],
     address: '131 Trần Bình Trọng, Phường 2, Quận 5, Hồ Chí Minh',
+    latitude: 10.757095180000025,
+    longitude: 106.68089036400005,
     dishes: [
       {
         id: 'd13',
@@ -501,6 +515,8 @@ export const restaurants = [
     rating: 4.4,
     categories: ['c8'],
     address: '289 An Dương Vương, Phường 3, Quận 5, Hồ Chí Minh',
+    latitude: 10.75992445599999,
+    longitude: 106.68048153600004,
     dishes: [
       {
         id: 'd15',
@@ -549,6 +565,8 @@ export const restaurants = [
     rating: 4.5,
     categories: ['c9'],
     address: '303 An Dương Vương, Phường 3, Quận 5, Hồ Chí Minh',
+    latitude: 10.75967604100003,
+    longitude: 106.67985169300003,
     dishes: [
       {
         id: 'd16',
@@ -587,6 +605,8 @@ export const restaurants = [
     rating: 4.8,
     categories: ['c3', 'c10'],
     address: '34A Trần Bình Trọng, Phường 4, Quận 5, Hồ Chí Minh',
+    latitude: 10.76281162300008,
+    longitude: 106.67891226300009,
     dishes: [
       {
         id: 'd17',

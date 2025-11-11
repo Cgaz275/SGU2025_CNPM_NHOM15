@@ -16,7 +16,7 @@ export type Order = {
   restaurantId: string;
   items: CartItem[];
   total: number;
-  paymentMethod: 'Cash' | 'Visa' | 'Momo';
+  paymentMethod: 'Visa' | 'VNPay';
   status: OrderStatus;
   createdAt: string;
 };

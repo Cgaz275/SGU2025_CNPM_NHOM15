@@ -145,7 +145,7 @@ const NavigationScreen = () => {
             >
               <Image
                 source={require('@/assets/images/drone.png')}
-                style={{ width: 50, height: 50 }}
+                style={{ width: 100, height: 100 }}
                 resizeMode="center"
               />
             </View>
