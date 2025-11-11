@@ -28,7 +28,10 @@ export default function ProfileScreen() {
       {/* Quick Links */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Liên kết nhanh</Text>
-        <TouchableOpacity style={styles.linkItem}>
+        <TouchableOpacity
+          onPress={() => router.push('../map/nearby')}
+          style={styles.linkItem}
+        >
           <Text style={styles.linkText}>Hỗ trợ người dùng</Text>
         </TouchableOpacity>
         <TouchableOpacity

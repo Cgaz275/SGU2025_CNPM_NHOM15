@@ -61,7 +61,22 @@ export default function RestaurantScreen() {
         </TouchableOpacity>
       </View>
       {/* Title */}
-      <Text style={styles.title}> Nhà hàng gần đây</Text>
+      {/* Title + nút Nearby */}
+      <View style={styles.titleRow}>
+        <Text style={styles.title}>Nhà hàng gần đây</Text>
+
+        <TouchableOpacity
+          style={styles.nearbyButton}
+          onPress={() => router.push('/map/nearby')}
+          activeOpacity={0.7}
+        >
+          <Ionicons
+            name="map"
+            size={20}
+            color="#fff"
+          />
+        </TouchableOpacity>
+      </View>
 
       <FlatList
         data={restaurants}
@@ -194,5 +209,29 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
     color: '#D7A359', // xanh nhẹ kiểu app giao đồ ăn
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginHorizontal: 13,
+    marginBottom: 12,
+    marginTop: 7,
+  },
+
+  nearbyButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#e67e22',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 15,
+  },
+
+  nearbyText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+    marginLeft: 4,
   },
 });
