@@ -6,7 +6,7 @@
 import Link from 'next/link';
 
 // Assets
-import { AppLogo } from '@/lib/utils/assets/svgs/logo';
+import { AppLogo2 } from '@/lib/utils/assets/svgs/foodfast_logo_apptop';
 
 // Styles
 import classes from './app-bar.module.css';
@@ -17,11 +17,11 @@ const AppTopbar = () => {
       <div>
         <div className="flex flex-row items-center gap-6">
           <Link href="/" className="layout-topbar-log">
-            <AppLogo />
+            <AppLogo2 />
           </Link>
         </div>
       </div>
-    </div>
+    </div>  
   );
 };
 

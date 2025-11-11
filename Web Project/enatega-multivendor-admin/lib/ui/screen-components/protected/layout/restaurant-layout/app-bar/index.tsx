@@ -62,7 +62,7 @@ import { onUseLocalStorage } from '@/lib/utils/methods';
 
 // Styles
 import classes from './app-bar.module.css';
-import { AppLogo } from '@/lib/utils/assets/svgs/logo';
+import {AppLogo2} from '@/lib/utils/assets/svgs/foodfast_logo_apptop';
 import { useQuery } from '@apollo/client';
 import { GET_RESTAURANT_PROFILE } from '@/lib/api/graphql';
 import { useLocale, useTranslations } from 'next-intl';
@@ -171,7 +171,7 @@ const AppTopbar = () => {
           </button>
         </div>
         <div onClick={() => onRedirectToPage('/admin/store/dashboard')}>
-          <AppLogo />
+          <AppLogo2 />
         </div>
       </div>
       <div className="hidden items-center space-x-1 md:flex">
@@ -235,54 +235,54 @@ const AppTopbar = () => {
                   onLocaleChange('fr');
                 },
               },
-              {
-                label: 'KHMER',
-                template(item) {
-                  return (
-                    <div
-                      className={`${currentLocale === 'km' ? 'bg-[#b1c748]' : ''} p-2 cursor-pointer `}
-                      onClick={()=>onLocaleChange('km')}
-                    >
-                      {item.label}
-                    </div>
-                  );
-                },
-                command: () => {
-                  onLocaleChange('km');
-                },
-              },
-              {
-                label: 'CHINESE',
-                template(item) {
-                  return (
-                    <div
-                      className={`${currentLocale === 'zh' ? 'bg-[#b1c748]' : ''} p-2 cursor-pointer `}
-                      onClick={()=>onLocaleChange('zh')}
-                    >
-                      {item.label}
-                    </div>
-                  );
-                },
-                command: () => {
-                  onLocaleChange('zh');
-                },
-              },
-              {
-                label: 'HEBREW',
-                template(item) {
-                  return (
-                    <div
-                      className={`${currentLocale === 'he' ? 'bg-[#b1c748]' : ''} p-2 cursor-pointer `}
-                      onClick={()=>onLocaleChange('he')}
-                    >
-                      {item.label}
-                    </div>
-                  );
-                },
-                command: () => {
-                  onLocaleChange('he');
-                },
-              },
+              // {
+              //   label: 'KHMER',
+              //   template(item) {
+              //     return (
+              //       <div
+              //         className={`${currentLocale === 'km' ? 'bg-[#b1c748]' : ''} p-2 cursor-pointer `}
+              //         onClick={()=>onLocaleChange('km')}
+              //       >
+              //         {item.label}
+              //       </div>
+              //     );
+              //   },
+              //   command: () => {
+              //     onLocaleChange('km');
+              //   },
+              // },
+              // {
+              //   label: 'CHINESE',
+              //   template(item) {
+              //     return (
+              //       <div
+              //         className={`${currentLocale === 'zh' ? 'bg-[#b1c748]' : ''} p-2 cursor-pointer `}
+              //         onClick={()=>onLocaleChange('zh')}
+              //       >
+              //         {item.label}
+              //       </div>
+              //     );
+              //   },
+              //   command: () => {
+              //     onLocaleChange('zh');
+              //   },
+              // },
+              // {
+              //   label: 'HEBREW',
+              //   template(item) {
+              //     return (
+              //       <div
+              //         className={`${currentLocale === 'he' ? 'bg-[#b1c748]' : ''} p-2 cursor-pointer `}
+              //         onClick={()=>onLocaleChange('he')}
+              //       >
+              //         {item.label}
+              //       </div>
+              //     );
+              //   },
+              //   command: () => {
+              //     onLocaleChange('he');
+              //   },
+              // },
             ]}
             popup
             ref={languageMenuRef}
