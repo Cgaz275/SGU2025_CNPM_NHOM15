@@ -24,6 +24,8 @@ Người dùng có thể đặt món ăn từ các cửa hàng đối tác, than
 
 ## 1. Narrative (Luồng hoạt động chuẩn)
 
+**Nguồn tham khảo nghiệp vụ:** https://flytrex.com/
+
 1.1. Khởi tạo đơn hàng
 
 | Bước | Mô tả Hoạt động | Hệ thống/Thành phần liên quan |
