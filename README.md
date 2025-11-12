@@ -15,13 +15,13 @@
 
 **Đề tài:** 1/FE DEV (React Native + React.JS) chuyên nghiệp xử lý giao diện đặt hàng (trên Web, Mobile)
 
-## FoodFast Drone Delivery
-### Giới thiệu
+# FoodFast Drone Delivery
+## Giới thiệu
 
 FoodFast Drone Delivery là hệ thống giao đồ ăn nhanh bằng drone, mang đến trải nghiệm giao hàng hiện đại và tiện lợi.
 Người dùng có thể đặt món ăn từ các cửa hàng đối tác, thanh toán trực tuyến qua QR code, và nhận đồ ăn trực tiếp từ drone tại vị trí của mình.
 
-### 1. Narrative (Luồng hoạt động chuẩn)
+## 1. Narrative (Luồng hoạt động chuẩn)
 
 1.1. Khởi tạo đơn hàng
 
@@ -60,21 +60,21 @@ Người dùng có thể đặt món ăn từ các cửa hàng đối tác, than
 
 ---
 
-### 2. Sơ đồ nghiệp vụ
+## 2. Sơ đồ nghiệp vụ
 
 <img width="657" height="330" alt="image" src="https://github.com/user-attachments/assets/742bb544-f7ad-4b8b-b51a-81b80b7c841f" />
 <img width="657" height="238" alt="image" src="https://github.com/user-attachments/assets/e7a707bf-5f30-4333-8b9f-6a0f55e847a2" />
 <img width="656" height="353" alt="image" src="https://github.com/user-attachments/assets/95c0a020-d818-416b-8c33-f56868c89a9e" />
 
-### 3. Solution Alignment
+## 3. Solution Alignment
 
 <img width="656" height="266" alt="image" src="https://github.com/user-attachments/assets/7f94d727-4067-4f1b-8964-fba391ae5c1f" />
 
-### 4. Use Case Diagram
+## 4. Use Case Diagram
 
 <img width="501" height="909" alt="image" src="https://github.com/user-attachments/assets/dc19205e-125b-43ce-b777-8a3b1444d01c" />
 
-### 4. Công nghệ sử dụng
+## 4. Công nghệ sử dụng
 
 Hệ thống FoodFast được phát triển trên nền tảng JavaScript hiện đại, sử dụng các công nghệ chủ đạo:
 - ReactJS: Xây dựng giao diện web cho Customer App, Merchant Interface, và Admin Dashboard – tối ưu hiệu năng, dễ mở rộng và tái sử dụng component.
