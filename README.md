@@ -74,6 +74,14 @@ Người dùng có thể đặt món ăn từ các cửa hàng đối tác, than
 
 <img width="501" height="909" alt="image" src="https://github.com/user-attachments/assets/dc19205e-125b-43ce-b777-8a3b1444d01c" />
 
+### 4. Công nghệ sử dụng
+
+Hệ thống FoodFast được phát triển trên nền tảng JavaScript hiện đại, sử dụng các công nghệ chủ đạo:
+- ReactJS: Xây dựng giao diện web cho Customer App, Merchant Interface, và Admin Dashboard – tối ưu hiệu năng, dễ mở rộng và tái sử dụng component.
+- React Native: Phát triển ứng dụng mobile đa nền tảng (iOS & Android) cho khách hàng và merchant, đồng bộ trải nghiệm với web.
+- NextJS: Dùng cho frontend web với khả năng server-side rendering (SSR), SEO tốt hơn và hiệu suất tải nhanh.
+
+
 
 
 
