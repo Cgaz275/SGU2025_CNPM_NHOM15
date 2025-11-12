@@ -81,6 +81,42 @@ Hệ thống FoodFast được phát triển trên nền tảng JavaScript hiệ
 - React Native: Phát triển ứng dụng mobile đa nền tảng (iOS & Android) cho khách hàng và merchant, đồng bộ trải nghiệm với web.
 - NextJS: Dùng cho frontend web với khả năng server-side rendering (SSR), SEO tốt hơn và hiệu suất tải nhanh.
 
+### Danh sách Dịch vụ Khác và Lớp Giao Diện Truy Vấn
+
+ **Dịch vụ Bên ngoài (External Services)**
+
+| Dịch vụ | API Tích hợp | Định nghĩa Cơ bản | Trách nhiệm đối với Hệ thống |
+| :--- | :--- | :--- | :--- |
+| **Gooing Map** (Map service) | `Map API` | Dịch vụ bản đồ số, cung cấp dữ liệu địa lý, hình ảnh vệ tinh và chức năng định tuyến. | Cung cấp **dữ liệu vị trí và định tuyến** cho các hoạt động đặt hàng. Nhận dữ liệu vị trí người dùng, thể hiện đường bay của drone. |
+| **VNpay** (External Payment Services) | `VNpay API` | Cổng thanh toán điện tử (Payment Gateway) bên ngoài, xử lý các giao dịch tài chính online. | **Xử lý các giao dịch thanh toán** của khách hàng (thanh toán đơn hàng, hoàn tiền, xác thực thẻ). Dịch vụ Payment Services của Backend sẽ tương tác với API này. |
+| **FlytBase** (External Drone Services) | `FlytBase Drone API` | Nền tảng quản lý và điều khiển Drone từ xa (Drone Fleet Management Platform) dựa trên đám mây. | **Quản lý, theo dõi và điều khiển các thiết bị Drone** vật lý (gửi lệnh bay, nhận dữ liệu telemetry, giám sát tình trạng). Dịch vụ Drone Services của Backend sẽ giao tiếp với API này. |
+| **FireBase (FCM)** | `FireBase API` | Dịch vụ nhắn tin đa nền tảng (Cloud Messaging Service) dùng để gửi thông báo đẩy (Push Notifications). | Kích hoạt và **phân phối thông báo đẩy** theo thời gian thực đến các thiết bị của người dùng (Customer, Merchant). |
+
+---
+
+**Lớp Giao Diện Truy Vấn (Query Interface Layer)**
+
+| Lớp Giao Diện | API Tích hợp | Định nghĩa Cơ bản | Trách nhiệm đối với Hệ thống |
+| :--- | :--- | :--- | :--- |
+| **GraphQL** | `Web API, Mobile App API` | Lớp runtime và ngôn ngữ truy vấn (Query Language) cho API, đóng vai trò là API Gateway thống nhất. | **Tổng hợp dữ liệu (Data Aggregation)** từ nhiều dịch vụ Backend thành một phản hồi duy nhất. Cung cấp một Schema linh hoạt, cho phép Clients chỉ truy vấn chính xác dữ liệu cần thiết. |
+
+
+## Giao diện cài đặt
+
+### Mobile App
+<img width="370" height="785" alt="image" src="https://github.com/user-attachments/assets/1a4e0e27-7ca4-46d3-a356-8ebce9d7c831" />
+<img width="374" height="783" alt="image" src="https://github.com/user-attachments/assets/ea5e981f-0007-4d21-8933-33eee15747b8" />
+<img width="371" height="794" alt="image" src="https://github.com/user-attachments/assets/dba9a114-bcd1-4d0b-b4c1-3c106c02aca9" />
+<img width="370" height="790" alt="image" src="https://github.com/user-attachments/assets/df7a9c02-5710-4931-b760-89f4ee0ae2a2" />
+
+### Website
+
+<img width="1364" height="631" alt="image" src="https://github.com/user-attachments/assets/2286f413-484a-42a5-a27a-151cbec0622d" />
+
+
+
+
+
 
 
 
