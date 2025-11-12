@@ -101,7 +101,7 @@ Hệ thống FoodFast được phát triển trên nền tảng JavaScript hiệ
 | **GraphQL** | `Web API, Mobile App API` | Lớp runtime và ngôn ngữ truy vấn (Query Language) cho API, đóng vai trò là API Gateway thống nhất. | **Tổng hợp dữ liệu (Data Aggregation)** từ nhiều dịch vụ Backend thành một phản hồi duy nhất. Cung cấp một Schema linh hoạt, cho phép Clients chỉ truy vấn chính xác dữ liệu cần thiết. |
 
 
-## Giao diện cài đặt
+## 5. Giao diện cài đặt
 
 ### Mobile App
 <img width="370" height="785" alt="image" src="https://github.com/user-attachments/assets/1a4e0e27-7ca4-46d3-a356-8ebce9d7c831" />
