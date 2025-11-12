@@ -104,14 +104,18 @@ Hệ thống FoodFast được phát triển trên nền tảng JavaScript hiệ
 ## 5. Giao diện cài đặt
 
 ### Mobile App
-<img width="370" height="785" alt="image" src="https://github.com/user-attachments/assets/1a4e0e27-7ca4-46d3-a356-8ebce9d7c831" />
-<img width="374" height="783" alt="image" src="https://github.com/user-attachments/assets/ea5e981f-0007-4d21-8933-33eee15747b8" />
-<img width="371" height="794" alt="image" src="https://github.com/user-attachments/assets/dba9a114-bcd1-4d0b-b4c1-3c106c02aca9" />
-<img width="370" height="790" alt="image" src="https://github.com/user-attachments/assets/df7a9c02-5710-4931-b760-89f4ee0ae2a2" />
+<div align="center">
+  <img src="https://github.com/user-attachments/assets/1a4e0e27-7ca4-46d3-a356-8ebce9d7c831" width="200" alt="image 1"/>
+  <img src="https://github.com/user-attachments/assets/ea5e981f-0007-4d21-8933-33eee15747b8" width="200" alt="image 2"/>
+  <img src="https://github.com/user-attachments/assets/dba9a114-bcd1-4d0b-b4c1-3c106c02aca9" width="200" alt="image 3"/>
+  <img src="https://github.com/user-attachments/assets/df7a9c02-5710-4931-b760-89f4ee0ae2a2" width="200" alt="image 4"/>
+</div>
 
 ### Website
 
+<div align="Center">
 <img width="1364" height="631" alt="image" src="https://github.com/user-attachments/assets/2286f413-484a-42a5-a27a-151cbec0622d" />
+</div>
 
 
 
