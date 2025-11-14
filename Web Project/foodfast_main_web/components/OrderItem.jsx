@@ -1,6 +1,6 @@
 'use client'
 import Image from "next/image";
-import { DotIcon } from "lucide-react";
+import { DotIcon, FormInput } from "lucide-react";
 import { useSelector } from "react-redux";
 import Rating from "./Rating";
 import { useState } from "react";
@@ -8,7 +8,7 @@ import RatingModal from "./RatingModal";
 
 const OrderItem = ({ order }) => {
 
-    const currency = process.env.NEXT_PUBLIC_CURRENCY_SYMBOL || '$';
+    const currency = process.env.NEXT_PUBLIC_CURRENCY_SYMBOL || 'VND ';
     const [ratingModal, setRatingModal] = useState(null);
 
     const { ratings } = useSelector(state => state.rating);
@@ -36,7 +36,7 @@ const OrderItem = ({ order }) => {
                                     <div>
                                         {ratings.find(rating => order.id === rating.orderId && item.product.id === rating.productId)
                                             ? <Rating value={ratings.find(rating => order.id === rating.orderId && item.product.id === rating.productId).rating} />
-                                            : <button onClick={() => setRatingModal({ orderId: order.id, productId: item.product.id })} className={`text-green-500 hover:bg-green-50 transition ${order.status !== "DELIVERED" && 'hidden'}`}>Rate Product</button>
+                                            : <button onClick={() => setRatingModal({ orderId: order.id, productId: item.product.id })} className={`text-green-500 hover:bg-green-50 transition ${order.status !== "DELIVERED" && 'hidden'}`}>Rate Restaurant</button>
                                         }</div>
                                     {ratingModal && <RatingModal ratingModal={ratingModal} setRatingModal={setRatingModal} />}
                                 </div>
@@ -48,9 +48,15 @@ const OrderItem = ({ order }) => {
                 <td className="text-center max-md:hidden">{currency}{order.total}</td>
 
                 <td className="text-left max-md:hidden">
-                    <p>{order.address.name}, {order.address.street},</p>
-                    <p>{order.address.city}, {order.address.state}, {order.address.zip}, {order.address.country},</p>
-                    <p>{order.address.phone}</p>
+                    <p><span className="text-[#FC8A06] ">Receiver name -</span> {order.address.name}, {order.address.street},</p>
+                    <p><span className="text-[#FC8A06] ">Address - </span>{order.address.city}, {order.address.state}, {order.address.zip}, {order.address.country},</p>
+                    <p><span className="text-[#FC8A06] ">Phone Number - </span>{order.address.phone}</p>
+                    <div>
+                        <p><span className="text-[#FC8A06] ">Note: </span></p>
+                        <textarea readOnly className='resize-none" w-full p-2 border border-gray-300 rounded-md mb-4' placeholder="Your note is empty">
+
+                        </textarea>
+                    </div>
                 </td>
 
                 <td className="text-left space-y-2 text-sm max-md:hidden">

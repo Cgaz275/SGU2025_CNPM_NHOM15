@@ -1,3 +1,4 @@
+
 import { Outfit } from "next/font/google";
 import { Toaster } from "react-hot-toast";
 import StoreProvider from "@/app/StoreProvider";
@@ -6,8 +7,11 @@ import "./globals.css";
 const outfit = Outfit({ subsets: ["latin"], weight: ["400", "500", "600"] });
 
 export const metadata = {
-    title: "GoCart. - Shop smarter",
-    description: "GoCart. - Shop smarter",
+    title: "FoodFast - Drone Delivery",
+    description: "FoodFast - Drone Delivery",
+    icons: {
+        icon: '/images/logo.png' 
+    },
 };
 
 export default function RootLayout({ children }) {

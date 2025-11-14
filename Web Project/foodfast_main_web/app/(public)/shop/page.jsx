@@ -4,6 +4,10 @@ import ProductCard from "@/components/ProductCard"
 import { MoveLeftIcon } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useSelector } from "react-redux"
+import PopularRestaurants from "@/components/PopularRestaurants";
+import Hero_restaurant from "@/components/Hero_restaurant";
+import AllRestaurant from "@/components/AllRestaurant"
+import AllCategories from "@/components/AllCategories"
 
  function ShopContent() {
 
@@ -35,8 +39,14 @@ import { useSelector } from "react-redux"
 
 export default function Shop() {
   return (
-    <Suspense fallback={<div>Loading shop...</div>}>
-      <ShopContent />
-    </Suspense>
+    // <Suspense fallback={<div>Loading shop...</div>}>
+    //   <ShopContent />
+    // </Suspense>
+       <div className="min-h-screen bg-white">
+            <Hero_restaurant />
+            <PopularRestaurants />
+            <AllCategories />
+            <AllRestaurant/>/
+        </div>
   );
 }

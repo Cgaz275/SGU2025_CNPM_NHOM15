@@ -27,12 +27,12 @@ const RatingModal = ({ ratingModal, setRatingModal }) => {
                 <button onClick={() => setRatingModal(null)} className='absolute top-3 right-3 text-gray-500 hover:text-gray-700'>
                     <XIcon size={20} />
                 </button>
-                <h2 className='text-xl font-medium text-slate-600 mb-4'>Rate Product</h2>
+                <h2 className='text-xl font-medium text-[#366055] mb-4'>Rate Restaurant</h2>
                 <div className='flex items-center justify-center mb-4'>
                     {Array.from({ length: 5 }, (_, i) => (
                         <Star
                             key={i}
-                            className={`size-8 cursor-pointer ${rating > i ? "text-green-400 fill-current" : "text-gray-300"}`}
+                            className={`size-8 cursor-pointer ${rating > i ? "text-[#FC8A06] fill-current" : "text-gray-300"}`}
                             onClick={() => setRating(i + 1)}
                         />
                     ))}
@@ -44,7 +44,7 @@ const RatingModal = ({ ratingModal, setRatingModal }) => {
                     value={review}
                     onChange={(e) => setReview(e.target.value)}
                 ></textarea>
-                <button onClick={e => toast.promise(handleSubmit(), { loading: 'Submitting...' })} className='w-full bg-green-500 text-white py-2 rounded-md hover:bg-green-600 transition'>
+                <button onClick={e => toast.promise(handleSubmit(), { loading: 'Submitting...' })} className='w-full bg-[#366055] text-white py-2 rounded-md hover:bg-green-600 transition'>
                     Submit Rating
                 </button>
             </div>

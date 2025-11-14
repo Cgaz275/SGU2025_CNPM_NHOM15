@@ -15,6 +15,7 @@ export default function Home() {
             <PopularRestaurants />
             <AppDownload />
             <PartnerWithUs />
+            
         </div>
     );
 }

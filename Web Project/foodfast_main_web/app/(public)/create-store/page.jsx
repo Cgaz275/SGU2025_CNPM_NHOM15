@@ -52,7 +52,7 @@ export default function CreateStore() {
                         {/* Title */}
                         <div>
                             <h1 className="text-3xl ">Add Your <span className="text-slate-800 font-medium">Store</span></h1>
-                            <p className="max-w-lg">To become a seller on GoCart, submit your store details for review. Your store will be activated after admin verification.</p>
+                            <p className="max-w-lg">To become a seller on FoodFast, submit your store details for review. Your store will be activated after admin verification.</p>
                         </div>
 
                         <label className="mt-10 cursor-pointer">
@@ -60,9 +60,6 @@ export default function CreateStore() {
                             <Image src={storeInfo.image ? URL.createObjectURL(storeInfo.image) : assets.upload_area} className="rounded-lg mt-2 h-16 w-auto" alt="" width={150} height={100} />
                             <input type="file" accept="image/*" onChange={(e) => setStoreInfo({ ...storeInfo, image: e.target.files[0] })} hidden />
                         </label>
-
-                        <p>Username</p>
-                        <input name="username" onChange={onChangeHandler} value={storeInfo.username} type="text" placeholder="Enter your store username" className="border border-slate-300 outline-slate-400 w-full max-w-lg p-2 rounded" />
 
                         <p>Name</p>
                         <input name="name" onChange={onChangeHandler} value={storeInfo.name} type="text" placeholder="Enter your store name" className="border border-slate-300 outline-slate-400 w-full max-w-lg p-2 rounded" />
@@ -79,7 +76,7 @@ export default function CreateStore() {
                         <p>Address</p>
                         <textarea name="address" onChange={onChangeHandler} value={storeInfo.address} rows={5} placeholder="Enter your store address" className="border border-slate-300 outline-slate-400 w-full max-w-lg p-2 rounded resize-none" />
 
-                        <button className="bg-slate-800 text-white px-12 py-2 rounded mt-10 mb-40 active:scale-95 hover:bg-slate-900 transition ">Submit</button>
+                        <button className="bg-[#366055] text-white px-12 py-2 rounded mt-10 mb-40 active:scale-95 hover:bg-slate-900 transition ">Submit</button>
                     </form>
                 </div>
             ) : (

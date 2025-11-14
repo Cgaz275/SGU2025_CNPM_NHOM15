@@ -1,31 +1,47 @@
 'use client'
 
-import { User, Menu, X, ShoppingBasket } from "lucide-react";
+import { User, Menu, X, ShoppingBasket, LogOut } from "lucide-react"; // 🚨 Thêm LogOut
 import Link from "next/link";
 import { useState } from "react";
 import { useSelector } from "react-redux";
-import { usePathname } from 'next/navigation'; // <-- Import Hook để lấy đường dẫn hiện tại
-
-// Đảm bảo import AuthModal đúng đường dẫn
+import { usePathname } from 'next/navigation';
 import AuthModal from './AuthModal'; 
 
+// 🚨 Import Firebase Auth và Router
+import { auth } from "../lib/firebaseConfig";
+import { signOut } from "firebase/auth";
+import { useRouter } from 'next/navigation'; // Nếu bạn muốn chuyển hướng sau khi logout
 
 const Navbar = () => {
-    const pathname = usePathname(); // Lấy đường dẫn hiện tại
+    const pathname = usePathname();
+    const router = useRouter(); // Khởi tạo router
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false); 
 
     const cartCount = useSelector(state => state.cart.total); 
-
+    const user = useSelector(state => state.auth.user); // get logged-in user
 
     const navLinks = [
-        { name: 'Home', href: '/', active: true },
-        { name: 'Special Offers', href: '/pricing' },
+        { name: 'Home', href: '/' },
         { name: 'Restaurants', href: '/shop' },
+        { name: 'Partner With Us', href: '/create-store' },
+
     ];
 
+    // --- Chức năng Logout ---
+    const handleLogout = async () => {
+        try {
+            await signOut(auth);
+            // Tùy chọn: chuyển hướng về trang chủ hoặc trang đăng nhập
+            // router.push('/'); 
+            console.log("Đăng xuất thành công!");
+        } catch (error) {
+            console.error("Lỗi khi đăng xuất:", error);
+            // Có thể hiển thị thông báo lỗi cho người dùng
+        }
+    };
+    // ------------------------
 
-    // Component CartLink tái sử dụng (giữ nguyên)
     const CartLink = ({ isMobile = false }) => (
         <Link
             href="/cart"
@@ -41,16 +57,8 @@ const Navbar = () => {
             )}
         </Link>
     );
-    
-    // Hàm kiểm tra link active
-    const isActive = (href) => {
-        // Kiểm tra đường dẫn chính xác hoặc bắt đầu bằng (ví dụ: /shop và /shop/details)
-        if (href === '/') {
-            return pathname === href;
-        }
-        return pathname.startsWith(href);
-    };
 
+    const isActive = (href) => href === '/' ? pathname === href : pathname.startsWith(href);
 
     return (
         <>
@@ -63,6 +71,7 @@ const Navbar = () => {
                                 src="https://api.builder.io/api/v1/image/assets/TEMP/21fb37881c8a700a2aff3a03c52250c97364baa5?width=676" 
                                 alt="FoodFast Logo" 
                                 className="h-12 md:h-16 w-auto"
+                                onError={(e) => { e.target.onerror = null; e.target.src = "https://placehold.co/100x48/366055/ffffff?text=FOODFAST" }} // Fallback image
                             />
                         </Link>
 
@@ -70,21 +79,15 @@ const Navbar = () => {
                         <div className="hidden lg:flex items-center gap-8">
                             {navLinks.map((link) => {
                                 const active = isActive(link.href);
-                                
                                 return (
                                     <div 
                                         key={link.name}
-                                        // Áp dụng style nổi bật nếu active
                                         className={active ? 'bg-[#366055] rounded-full px-6 py-3 transition' : ''}
                                     >
                                         <Link 
                                             href={link.href} 
                                             className={`text-lg font-medium transition 
-                                                ${active 
-                                                    ? 'text-white' // Màu trắng cho link active (có background)
-                                                    : 'text-black hover:text-[#FC8A06]' // Màu đen cho link thường
-                                                }
-                                            `}
+                                                ${active ? 'text-white' : 'text-black hover:text-[#FC8A06]'}`}
                                         >
                                             {link.name}
                                         </Link>
@@ -95,21 +98,27 @@ const Navbar = () => {
 
                         {/* Action Buttons */}
                         <div className="flex items-center gap-3 md:gap-4">
-                            
                             <CartLink isMobile={false} />
                             <CartLink isMobile={true} />
 
-                            {/* Login Button */}
+                            {/* Login / User / Logout Button */}
                             <button 
-                                onClick={() => setIsAuthModalOpen(true)}
+                                // Nếu có user, gọi handleLogout, ngược lại mở AuthModal
+                                onClick={user ? handleLogout : () => setIsAuthModalOpen(true)}
                                 className="bg-[#366055] rounded-full px-4 md:px-8 py-2 md:py-4 flex items-center gap-2 md:gap-3 hover:bg-[#e87d05] transition"
                             >
-                                <User className="w-5 h-5 md:w-8 md:h-8 text-white" />
+                                {user ? (
+                                    // 🚨 Nếu đã đăng nhập, hiển thị icon Logout
+                                    <LogOut className="w-5 h-5 md:w-8 md:h-8 text-white" />
+                                ) : (
+                                    // Nếu chưa đăng nhập, hiển thị icon User
+                                    <User className="w-5 h-5 md:w-8 md:h-8 text-white" />
+                                )}
                                 <span className="text-white text-sm md:text-lg font-medium hidden sm:inline">
-                                    Login/Signup
+                                    {/* 🚨 Hiển thị tên người dùng hoặc nút Logout */}
+                                    {user ? (user.name || 'User') : 'Login/Signup'}
                                 </span>
                             </button>
-
 
                             {/* Mobile Menu Button */}
                             <button
@@ -133,7 +142,6 @@ const Navbar = () => {
                                     <Link 
                                         key={link.name} 
                                         href={link.href} 
-                                        // Sử dụng isActive cho menu mobile
                                         className={`text-lg font-medium ${isActive(link.href) ? 'text-[#FC8A06]' : 'text-black'}`}
                                         onClick={() => setMobileMenuOpen(false)}
                                     >

@@ -65,7 +65,7 @@ export default function ExclusiveDeals() {
 
                         {/* Restaurant Info */}
                         <div className="absolute bottom-0 left-0 p-8">
-                            <p className="text-[#366055] text-lg font-medium mb-2">Restaurant</p>
+                            <p className="text-[#FFFFFF] text-lg font-medium mb-2">Restaurant</p>
                             <h3 className="text-white text-2xl font-bold">{deal.restaurant}</h3>
                         </div>
                     </div>
