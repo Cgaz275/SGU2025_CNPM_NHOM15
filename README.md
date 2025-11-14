@@ -117,7 +117,8 @@ Hệ thống FoodFast được phát triển trên nền tảng JavaScript hiệ
 ### Website
 
 <div align="Center">
-<img width="1364" height="631" alt="image" src="https://github.com/user-attachments/assets/2286f413-484a-42a5-a27a-151cbec0622d" />
+<img width="1915" height="949" alt="image" src="https://github.com/user-attachments/assets/c92ab30a-2a4b-4c1f-9d94-9b1f400d68e4" />
+
 </div>
 
 
