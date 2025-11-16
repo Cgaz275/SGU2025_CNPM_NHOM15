@@ -5,19 +5,27 @@ import OrderModal from '../Modals/OrderModal'
 
 export default function MenuItemCard({ item, onAddToCart }) {
     const [isModalOpen, setIsModalOpen] = useState(false)
+    const [quantity, setQuantity] = useState(1)
 
     const handleAddClick = () => {
         if (item.optionGroup) {
             setIsModalOpen(true)
         } else {
-            // If no option group, add directly to cart
+            // If no option group, add directly to cart with selected quantity
             onAddToCart({
                 dishId: item.id,
                 dishName: item.name,
                 price: item.price,
-                quantity: 1,
+                quantity: quantity,
                 selectedChoices: {},
             })
+            setQuantity(1)
+        }
+    }
+
+    const handleQuantityChange = (newQuantity) => {
+        if (newQuantity > 0) {
+            setQuantity(newQuantity)
         }
     }
 
@@ -42,21 +50,42 @@ export default function MenuItemCard({ item, onAddToCart }) {
 
                     {/* Right Side - Image and Add Button */}
                     <div className="relative w-full sm:w-[180px] md:w-[203px] h-[180px] md:h-[199px] flex-shrink-0">
-                        <img 
+                        <img
                             src={item.imageUrl || item.image}
                             alt={item.name}
                             className="w-full h-full object-cover rounded-xl"
                             onError={(e) => { e.target.src = 'https://via.placeholder.com/200' }}
                         />
-                        
-                        {/* Add Button */}
-                        <button
-                            onClick={handleAddClick}
-                            className="absolute bottom-0 right-0 w-[70px] md:w-[88px] h-[70px] md:h-[81px] bg-white/90 hover:bg-white rounded-tl-[45px] rounded-br-xl flex items-center justify-center transition group"
-                            aria-label="Add to cart"
-                        >
-                            <Plus className="w-10 h-10 md:w-12 md:h-12 text-[#366055] group-hover:scale-110 transition" strokeWidth={3} />
-                        </button>
+
+                        {/* Quantity and Add Button */}
+                        <div className="absolute bottom-0 right-0 flex items-center gap-2 p-2 bg-white/90 rounded-tl-[45px] rounded-br-xl">
+                            {!item.optionGroup && (
+                                <div className="flex items-center gap-1 bg-gray-100 rounded px-2 py-1">
+                                    <button
+                                        onClick={() => handleQuantityChange(quantity - 1)}
+                                        className="text-[#366055] font-bold text-sm w-6 h-6 flex items-center justify-center hover:bg-white rounded transition"
+                                        aria-label="Decrease quantity"
+                                    >
+                                        −
+                                    </button>
+                                    <span className="text-[#366055] font-bold text-sm w-6 text-center">{quantity}</span>
+                                    <button
+                                        onClick={() => handleQuantityChange(quantity + 1)}
+                                        className="text-[#366055] font-bold text-sm w-6 h-6 flex items-center justify-center hover:bg-white rounded transition"
+                                        aria-label="Increase quantity"
+                                    >
+                                        +
+                                    </button>
+                                </div>
+                            )}
+                            <button
+                                onClick={handleAddClick}
+                                className="w-10 h-10 md:w-12 md:h-12 bg-white hover:bg-gray-100 rounded flex items-center justify-center transition group"
+                                aria-label="Add to cart"
+                            >
+                                <Plus className="w-6 h-6 md:w-8 md:h-8 text-[#366055] group-hover:scale-110 transition" strokeWidth={3} />
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>

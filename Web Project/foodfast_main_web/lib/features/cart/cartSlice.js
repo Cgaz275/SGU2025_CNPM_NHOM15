@@ -8,13 +8,13 @@ const cartSlice = createSlice({
     },
     reducers: {
         addToCart: (state, action) => {
-            const { productId } = action.payload
+            const { productId, quantity = 1 } = action.payload
             if (state.cartItems[productId]) {
-                state.cartItems[productId]++
+                state.cartItems[productId] += quantity
             } else {
-                state.cartItems[productId] = 1
+                state.cartItems[productId] = quantity
             }
-            state.total += 1
+            state.total += quantity
         },
         removeFromCart: (state, action) => {
             const { productId } = action.payload
@@ -35,9 +35,14 @@ const cartSlice = createSlice({
             state.cartItems = {}
             state.total = 0
         },
+        restoreCart: (state, action) => {
+            const { cartItems, total } = action.payload
+            state.cartItems = cartItems || {}
+            state.total = total || 0
+        },
     }
 })
 
-export const { addToCart, removeFromCart, clearCart, deleteItemFromCart } = cartSlice.actions
+export const { addToCart, removeFromCart, clearCart, deleteItemFromCart, restoreCart } = cartSlice.actions
 
 export default cartSlice.reducer

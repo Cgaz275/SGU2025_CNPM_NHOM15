@@ -21,13 +21,17 @@ const OrderItem = ({ order }) => {
                         {order.orderItems.map((item, index) => (
                             <div key={index} className="flex items-center gap-4">
                                 <div className="w-20 aspect-square bg-slate-100 flex items-center justify-center rounded-md">
-                                    <Image
-                                        className="h-14 w-auto"
-                                        src={item.product.images[0]}
-                                        alt="product_img"
-                                        width={50}
-                                        height={50}
-                                    />
+                                    {item.product.images && item.product.images[0] ? (
+                                        <Image
+                                            className="h-14 w-auto"
+                                            src={item.product.images[0]}
+                                            alt="product_img"
+                                            width={50}
+                                            height={50}
+                                        />
+                                    ) : (
+                                        <div className="text-slate-400 text-xs">No image</div>
+                                    )}
                                 </div>
                                 <div className="flex flex-col justify-center text-sm">
                                     <p className="font-medium text-slate-600 text-base">{item.product.name}</p>

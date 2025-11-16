@@ -7,6 +7,7 @@ import { useState } from "react";
 import Image from "next/image";
 import Counter from "../Counter";
 import { useDispatch, useSelector } from "react-redux";
+import toast from "react-hot-toast";
 
 const ProductDetails = ({ product }) => {
 
@@ -18,10 +19,11 @@ const ProductDetails = ({ product }) => {
 
     const router = useRouter()
 
-    const [mainImage, setMainImage] = useState(product.images[0]);
+    const [mainImage, setMainImage] = useState(product.images && product.images[0] ? product.images[0] : null);
 
     const addToCartHandler = () => {
         dispatch(addToCart({ productId }))
+        toast.success(`${product.name} added to cart!`);
     }
 
     const averageRating = product.rating.reduce((acc, item) => acc + item.rating, 0) / product.rating.length;
@@ -30,14 +32,20 @@ const ProductDetails = ({ product }) => {
         <div className="flex max-lg:flex-col gap-12">
             <div className="flex max-sm:flex-col-reverse gap-3">
                 <div className="flex sm:flex-col gap-3">
-                    {product.images.map((image, index) => (
-                        <div key={index} onClick={() => setMainImage(product.images[index])} className="bg-slate-100 flex items-center justify-center size-26 rounded-lg group cursor-pointer">
-                            <Image src={image} className="group-hover:scale-103 group-active:scale-95 transition" alt="" width={45} height={45} />
-                        </div>
+                    {product.images && product.images.length > 0 && product.images.map((image, index) => (
+                        image && (
+                            <div key={index} onClick={() => setMainImage(product.images[index])} className="bg-slate-100 flex items-center justify-center size-26 rounded-lg group cursor-pointer">
+                                <Image src={image} className="group-hover:scale-103 group-active:scale-95 transition" alt="" width={45} height={45} />
+                            </div>
+                        )
                     ))}
                 </div>
                 <div className="flex justify-center items-center h-100 sm:size-113 bg-slate-100 rounded-lg ">
-                    <Image src={mainImage} alt="" width={250} height={250} />
+                    {mainImage ? (
+                        <Image src={mainImage} alt="" width={250} height={250} />
+                    ) : (
+                        <div className="text-slate-400">No image</div>
+                    )}
                 </div>
             </div>
             <div className="flex-1">

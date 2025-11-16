@@ -1,19 +1,29 @@
 'use client'
 import { addToCart, removeFromCart } from "@/lib/features/cart/cartSlice";
 import { useDispatch, useSelector } from "react-redux";
+import toast from "react-hot-toast";
 
 const Counter = ({ productId }) => {
 
     const { cartItems } = useSelector(state => state.cart);
+    const products = useSelector(state => state.product.list);
 
     const dispatch = useDispatch();
 
     const addToCartHandler = () => {
         dispatch(addToCart({ productId }))
+        const product = products.find(p => p.id === productId);
+        if (product) {
+            toast.success(`${product.name} added to cart!`);
+        }
     }
 
     const removeFromCartHandler = () => {
         dispatch(removeFromCart({ productId }))
+        const product = products.find(p => p.id === productId);
+        if (product) {
+            toast.success(`${product.name} removed from cart!`);
+        }
     }
 
     return (

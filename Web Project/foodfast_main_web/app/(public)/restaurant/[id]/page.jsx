@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, use } from 'react'
+import { useDispatch } from 'react-redux'
 import { doc, getDoc } from 'firebase/firestore'
 import { db } from '@/lib/FirebaseConfig'
 import RestaurantHero from '@/components/Restaurants/RestaurantHero'
@@ -10,9 +11,11 @@ import RestaurantMap from '@/components/Restaurants/RestaurantMap'
 import PageTitle from '@/components/PageTitle'
 import useDishesByRestaurant from '@/hooks/useDishesByRestaurant'
 import toast from 'react-hot-toast'
+import { addToCart } from '@/lib/features/cart/cartSlice'
 
 export default function RestaurantDetailPage({ params: paramsPromise }) {
     const params = use(paramsPromise)
+    const dispatch = useDispatch()
     const [restaurant, setRestaurant] = useState(null)
     const [loadingRestaurant, setLoadingRestaurant] = useState(true)
     const [activeCategory, setActiveCategory] = useState('offers')
@@ -57,9 +60,8 @@ export default function RestaurantDetailPage({ params: paramsPromise }) {
     }, {})
 
     const handleAddToCart = (orderData) => {
+        dispatch(addToCart({ productId: orderData.dishId, quantity: orderData.quantity }))
         toast.success(`${orderData.dishName} added to cart!`)
-        // TODO: Dispatch to Redux cart state
-        console.log('Added to cart:', orderData)
     }
 
     // Get unique categories from dishes
