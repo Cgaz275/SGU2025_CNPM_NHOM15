@@ -1,13 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Mail } from 'lucide-react';
+import { Mail, MapPin } from 'lucide-react';
 import useCurrentUser from '@/hooks/useCurrentUser';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, collection, addDoc, query, where, getDocs, GeoPoint } from 'firebase/firestore';
 import { db } from '@/config/FirebaseConfig';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
 import { useRouter } from 'next/navigation';
+import AddressPickerModal from '@/components/Modals/AddressPickerModal';
 
 export default function ProfilePage() {
   const { user, isAuthenticated, loading } = useCurrentUser();
@@ -20,6 +21,8 @@ export default function ProfilePage() {
     phone: ''
   });
   const [saving, setSaving] = useState(false);
+  const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
+  const [selectedAddressData, setSelectedAddressData] = useState(null);
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
@@ -52,20 +55,67 @@ export default function ProfilePage() {
     setSaving(true);
     try {
       const userRef = doc(db, 'user', user.uid);
-      await updateDoc(userRef, {
+
+      const updateData = {
         name: formData.name,
-        defaultAddress: formData.defaultAddress,
         phone: formData.phone
-      });
-      
+      };
+
+      // If address data was selected from map, save it to address collection
+      if (selectedAddressData) {
+        const addressCollectionRef = collection(db, 'address');
+
+        // Check if address already exists for this user
+        const q = query(addressCollectionRef, where('userId', '==', user.uid));
+        const querySnapshot = await getDocs(q);
+
+        if (querySnapshot.size > 0) {
+          // Update existing address
+          const existingDoc = querySnapshot.docs[0];
+          await updateDoc(doc(db, 'address', existingDoc.id), {
+            address: selectedAddressData.address,
+            latlong: new GeoPoint(selectedAddressData.lat, selectedAddressData.lng),
+            name: formData.name,
+            phone: formData.phone,
+            userId: user.uid
+          });
+        } else {
+          // Create new address
+          const newAddressRef = await addDoc(addressCollectionRef, {
+            address: selectedAddressData.address,
+            latlong: new GeoPoint(selectedAddressData.lat, selectedAddressData.lng),
+            name: formData.name,
+            phone: formData.phone,
+            userId: user.uid,
+            createdAt: new Date()
+          });
+          updateData.defaultAddressId = newAddressRef.id;
+        }
+
+        updateData.defaultAddress = selectedAddressData.address;
+      } else {
+        updateData.defaultAddress = formData.defaultAddress;
+      }
+
+      await updateDoc(userRef, updateData);
+
       toast.success('Profile updated successfully!');
       setIsEditing(false);
+      setSelectedAddressData(null);
     } catch (error) {
       console.error('Error updating profile:', error);
       toast.error('Failed to update profile');
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleSelectAddress = (addressData) => {
+    setSelectedAddressData(addressData);
+    setFormData(prev => ({
+      ...prev,
+      defaultAddress: addressData.address
+    }));
   };
 
   const formatDate = (timestamp) => {
@@ -163,15 +213,28 @@ export default function ProfilePage() {
               <label className="block text-sm sm:text-base text-black opacity-80 mb-2">
                 Default Address
               </label>
-              <input
-                type="text"
-                name="defaultAddress"
-                value={formData.defaultAddress}
-                onChange={handleInputChange}
-                disabled={!isEditing}
-                placeholder="Your Address"
-                className="w-full px-4 sm:px-6 py-3 sm:py-4 rounded-lg bg-[#F9F9F9] text-sm sm:text-base text-black placeholder-black/40 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-[#366055]"
-              />
+              <div className="flex gap-3">
+                <input
+                  type="text"
+                  name="defaultAddress"
+                  value={formData.defaultAddress}
+                  onChange={handleInputChange}
+                  disabled={!isEditing}
+                  placeholder="Your Address"
+                  className="flex-1 px-4 sm:px-6 py-3 sm:py-4 rounded-lg bg-[#F9F9F9] text-sm sm:text-base text-black placeholder-black/40 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-[#366055]"
+                />
+                {isEditing && (
+                  <button
+                    type="button"
+                    onClick={() => setIsAddressModalOpen(true)}
+                    className="px-4 sm:px-6 py-3 sm:py-4 bg-[#366055] text-white rounded-lg font-medium hover:bg-[#2b4c44] transition flex items-center gap-2 whitespace-nowrap"
+                  >
+                    <MapPin size={18} />
+                    <span className="hidden sm:inline">Pick on Map</span>
+                    <span className="sm:hidden">Map</span>
+                  </button>
+                )}
+              </div>
             </div>
 
             <div>
@@ -215,6 +278,14 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
+
+      <AddressPickerModal
+        isOpen={isAddressModalOpen}
+        onClose={() => setIsAddressModalOpen(false)}
+        onSelectAddress={handleSelectAddress}
+        initialLat={selectedAddressData?.lat || user?.defaultLat}
+        initialLng={selectedAddressData?.lng || user?.defaultLng}
+      />
     </div>
   );
 }

@@ -1,13 +1,18 @@
 'use client'
 import Counter from "@/components/Counter";
 import PageTitle from "@/components/PageTitle";
-import { deleteItemFromCart } from "@/lib/features/cart/cartSlice";
-import { XIcon } from "lucide-react";
+import { deleteItemFromCart, clearCart } from "@/lib/features/cart/cartSlice";
+import { XIcon, MapPin } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, collection, addDoc, serverTimestamp, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/config/FirebaseConfig";
+import useCurrentUser from "@/hooks/useCurrentUser";
+import AuthModal from "@/components/Modals/AuthModal";
+import AddressPickerModal from "@/components/Modals/AddressPickerModal";
+import toast from 'react-hot-toast';
+import { useRouter } from 'next/navigation';
 
 export default function Cart() {
 
@@ -16,6 +21,8 @@ export default function Cart() {
     const { cartItems } = useSelector(state => state.cart);
     const products = useSelector(state => state.product.list);
     const addressList = useSelector(state => state.address.list);
+    const { user, isAuthenticated } = useCurrentUser();
+    const router = useRouter();
 
     const dispatch = useDispatch();
 
@@ -28,6 +35,10 @@ export default function Cart() {
     const [phoneNumber, setPhoneNumber] = useState('');
     const [discountApplied, setDiscountApplied] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [placingOrder, setPlacingOrder] = useState(false);
+    const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+    const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
+    const [selectedAddressData, setSelectedAddressData] = useState(null);
 
     const createCartArray = async () => {
         setLoading(true);
@@ -73,13 +84,129 @@ export default function Cart() {
         console.log('Applying promo code:', promoCode);
     }
 
+    const handleSelectAddress = (addressData) => {
+        setSelectedAddressData(addressData);
+        setAddress(addressData.address);
+    };
+
     useEffect(() => {
         createCartArray();
     }, [cartItems, products]);
 
-    const shippingFee = 30000;
+    useEffect(() => {
+        if (user) {
+            setReceiverName(user.name || '');
+            setPhoneNumber(user.phone || '');
+            setAddress(user.defaultAddress || '');
+        }
+    }, [user]);
+
+    const shippingFee = 0;
     const discount = discountApplied ? 0 : 0;
     const finalTotal = totalPrice + shippingFee - discount;
+
+    const handlePlaceOrder = async () => {
+        // Check if user is logged in
+        if (!isAuthenticated) {
+            setIsAuthModalOpen(true);
+            toast.error('Please login to place an order');
+            return;
+        }
+
+        // Validate required fields
+        if (!address || !receiverName || !phoneNumber) {
+            toast.error('Please fill in all delivery information');
+            return;
+        }
+
+        if (cartArray.length === 0) {
+            toast.error('Your cart is empty');
+            return;
+        }
+
+        setPlacingOrder(true);
+
+        try {
+            // Get restaurant ID from the first item (assuming single restaurant per order)
+            const restaurantId = cartArray[0]?.restaurant || cartArray[0]?.restaurantId;
+
+            // Prepare order data with only defined values
+            const orderData = {
+                userId: user.uid,
+                items: cartArray.map(item => {
+                    const itemData = {
+                        id: item.id,
+                        name: item.name,
+                        price: item.price,
+                        quantity: item.quantity,
+                        size: item.size || 'Standard',
+                    };
+
+                    // Add optional fields only if they have values
+                    const imageUrl = item.imageUrl || item.images?.[0];
+                    if (imageUrl) itemData.image = imageUrl;
+
+                    if (item.category) itemData.category = item.category;
+                    if (item.restaurantId) itemData.restaurantId = item.restaurantId;
+                    if (item.restaurant) itemData.restaurant = item.restaurant;
+                    if (item.address) itemData.address = item.address;
+
+                    return itemData;
+                }),
+                total: finalTotal,
+                subtotal: totalPrice,
+                deliveryFee: shippingFee,
+                discount: discount,
+                discountPercent: 0,
+                paymentMethod: paymentMethod,
+                address: address,
+                receiverName: receiverName,
+                phoneNumber: phoneNumber,
+                status: 'pending',
+                isPaid: paymentMethod !== 'COD',
+                createdAt: serverTimestamp(),
+                estimatedDelivery: new Date(Date.now() + 20 * 60 * 1000),
+            };
+
+            // Add latlong if available from address picker
+            if (selectedAddressData) {
+                orderData.latlong = {
+                    latitude: selectedAddressData.lat,
+                    longitude: selectedAddressData.lng
+                };
+            }
+
+            // Add restaurantId if available
+            if (restaurantId) {
+                orderData.restaurantId = restaurantId;
+            }
+
+            // Only add promoCode if it exists
+            if (promoCode) {
+                orderData.promotionCode = promoCode;
+            }
+
+            // Save to Firebase
+            const ordersRef = collection(db, 'orders');
+            const docRef = await addDoc(ordersRef, orderData);
+
+            // Clear cart
+            dispatch(clearCart());
+
+            toast.success('Order placed successfully!');
+
+            // Redirect to orders page
+            setTimeout(() => {
+                router.push('/orders');
+            }, 1000);
+
+        } catch (error) {
+            console.error('Error placing order:', error);
+            toast.error('Failed to place order. Please try again.');
+        } finally {
+            setPlacingOrder(false);
+        }
+    };
 
     return cartArray.length > 0 ? (
         <div className="min-h-screen bg-white px-4 sm:px-6 lg:px-20 py-12">
@@ -194,13 +321,23 @@ export default function Cart() {
                                     <label className="text-white text-sm md:text-base block mb-2">
                                         Address
                                     </label>
-                                    <input
-                                        type="text"
-                                        value={address}
-                                        onChange={(e) => setAddress(e.target.value)}
-                                        placeholder="Address Placeholder"
-                                        className="w-full h-[47px] px-3 bg-[#FDFDFD] rounded-md text-base laceholder:text-[#C4C4C4] outline-none"
-                                    />
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="text"
+                                            value={address}
+                                            onChange={(e) => setAddress(e.target.value)}
+                                            placeholder="Address Placeholder"
+                                            className="flex-1 h-[47px] px-3 bg-[#FDFDFD] rounded-md text-base placeholder:text-[#C4C4C4] outline-none"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsAddressModalOpen(true)}
+                                            className="h-[47px] px-3 md:px-4 bg-[#FDFDFD] text-[#366055] rounded-md hover:bg-white transition flex items-center gap-2 font-medium"
+                                        >
+                                            <MapPin size={18} />
+                                            <span className="hidden sm:inline text-sm">Map</span>
+                                        </button>
+                                    </div>
                                 </div>
 
                                 <div>
@@ -331,13 +468,28 @@ export default function Cart() {
                             </div>
 
                             {/* Place Order Button */}
-                            <button className="w-full bg-white text-[#366055] py-4 md:py-5 rounded-lg font-bold text-lg md:text-xl hover:bg-gray-100 transition">
-                                Place Order
+                            <button
+                                onClick={handlePlaceOrder}
+                                disabled={placingOrder}
+                                className="w-full bg-white text-[#366055] py-4 md:py-5 rounded-lg font-bold text-lg md:text-xl hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {placingOrder ? 'Placing Order...' : 'Place Order'}
                             </button>
                         </div>
                     </div>
                 </div>
             </div>
+
+            <AuthModal
+                isOpen={isAuthModalOpen}
+                onClose={() => setIsAuthModalOpen(false)}
+            />
+
+            <AddressPickerModal
+                isOpen={isAddressModalOpen}
+                onClose={() => setIsAddressModalOpen(false)}
+                onSelectAddress={handleSelectAddress}
+            />
         </div>
     ) : loading ? (
         <div className="min-h-[80vh] mx-6 flex items-center justify-center text-slate-400">
