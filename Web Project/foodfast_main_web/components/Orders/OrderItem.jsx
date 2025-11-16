@@ -2,9 +2,9 @@
 import Image from "next/image";
 import { DotIcon, FormInput } from "lucide-react";
 import { useSelector } from "react-redux";
-import Rating from "./Rating";
+import Rating from "../Modals/Rating/Rating";
 import { useState } from "react";
-import RatingModal from "./RatingModal";
+import RatingModal from "../Modals/Rating/RatingModal";
 
 const OrderItem = ({ order }) => {
 

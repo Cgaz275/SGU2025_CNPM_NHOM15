@@ -1,13 +1,13 @@
 'use client'
 import { Suspense } from "react"
-import ProductCard from "@/components/ProductCard"
+import ProductCard from "@/components/Products/ProductCard"
 import { MoveLeftIcon } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useSelector } from "react-redux"
-import PopularRestaurants from "@/components/PopularRestaurants";
-import Hero_restaurant from "@/components/Hero_restaurant";
-import AllRestaurant from "@/components/AllRestaurant"
-import AllCategories from "@/components/AllCategories"
+import PopularRestaurants from "@/components/Restaurants/PopularRestaurants";
+import Hero_restaurant from "@/components/Hero/Hero_restaurant";
+import AllRestaurant from "@/components/Restaurants/AllRestaurant"
+import AllCategories from "@/components/Categories/AllCategories"
 
  function ShopContent() {
 

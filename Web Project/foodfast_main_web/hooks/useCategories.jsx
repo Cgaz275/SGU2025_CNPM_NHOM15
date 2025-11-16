@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
-import { db } from '../lib/firebaseConfig'; // Thay bằng đường dẫn file config của bạn
+import { db } from '../lib/FirebaseConfig'; 
 
 const useCategories = () => {
 const [data, setData] = useState([]);
@@ -10,7 +10,7 @@ const [error, setError] = useState(null);
 useEffect(() => {
  // Tạo query để truy vấn collection 'categories' và sắp xếp theo tên
 const categoriesCollectionRef = collection(db, 'categories');
- // Sắp xếp theo trường 'name' (giả định đây là trường mong muốn)
+ // Sắp xếp theo trường 
 const q = query(categoriesCollectionRef, orderBy('name', 'asc')); 
 
  // Lắng nghe thay đổi theo thời gian thực (real-time)

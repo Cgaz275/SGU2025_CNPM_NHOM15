@@ -11,7 +11,7 @@ import {
     GoogleAuthProvider,
     signInWithPopup
 } from "firebase/auth";
-import { auth, db } from '../lib/firebaseConfig.js'; 
+import { auth, db } from '../../lib/FirebaseConfig.js'; 
 
 // ------------------------
 // SignIn Form Component

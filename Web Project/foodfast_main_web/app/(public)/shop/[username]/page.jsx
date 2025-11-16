@@ -1,5 +1,5 @@
 'use client'
-import ProductCard from "@/components/ProductCard"
+import ProductCard from "@/components/Products/ProductCard"
 import { useParams } from "next/navigation"
 import { useEffect, useState } from "react"
 import { MailIcon, MapPinIcon } from "lucide-react"

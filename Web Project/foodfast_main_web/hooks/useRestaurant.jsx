@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
-import { db } from '../lib/firebaseConfig'; // Thay bằng đường dẫn file config của bạn
+import { db } from '../lib/FirebaseConfig'; 
 
-// Đổi tên hook thành useRestaurants cho rõ ràng
+
 const useRestaurants = () => {
 const [data, setData] = useState([]);
 const [loading, setLoading] = useState(true);

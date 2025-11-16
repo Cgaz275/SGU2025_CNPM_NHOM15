@@ -5,7 +5,8 @@ import { getAnalytics } from "firebase/analytics";
 import { getFirestore } from "firebase/firestore";
 
 
-// Cấu hình web app của bạn
+
+// Cấu hình web app 
 const firebaseConfig = {
   apiKey:  process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain:  process.env.NEXT_PUBLIC_AUTH_DOMAIN,
@@ -30,5 +31,6 @@ export const auth = getAuth(app);
 
 //Khởi tạo và EXPORT đối tượng Firestore
 export const db = getFirestore(app);
+
 
 export default app;

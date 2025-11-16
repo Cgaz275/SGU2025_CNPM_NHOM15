@@ -1,6 +1,7 @@
 import React from 'react';
+import Link from 'next/link';
 // 1. Import custom hook đã tạo
-import useRestaurants from '../hooks/useRestaurant'; 
+import useRestaurants from '../../hooks/useRestaurant'; 
 
 export default function PopularRestaurants() {
     // 2. Sử dụng hook để lấy dữ liệu và trạng thái
@@ -58,36 +59,39 @@ export default function PopularRestaurants() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
                     {/* Lặp qua mảng restaurants lấy từ Firestore */}
                     {restaurants.map((restaurant) => (
-                        <div 
+                        <Link
                             key={restaurant.id}
-                            className="bg-neutral-100 rounded-xl overflow-hidden hover:shadow-xl transition cursor-pointer group"
+                            href={`/restaurant/${restaurant.id}`}
+                            className="group"
                         >
-                            <div className="relative h-48 overflow-hidden">
-                                <img 
-                                    src={restaurant.image || restaurant.imageUrl} 
-                                    alt={restaurant.name}
-                                     className="bg-neutral-100 rounded-xl border border-black/10 overflow-hidden hover:shadow-lg transition cursor-pointer group"
-                                    onError={(e) => { e.target.onerror = null; e.target.src = '/placeholder.png' }}
-                                />
-                            </div>
-                            <div className="p-4 text-center">
-                                <h3 className="text-[#366055] text-lg font-bold mb-1">
-                                    {/* Hiển thị tên nhà hàng */}
-                                    {restaurant.name}
-                                </h3>
-                                <div className="flex items-center justify-center text-sm text-yellow-400">
-                                    ⭐
-                                    <span className="font-semibold text-[#FC8A06] ml-1">
-                                        {/* Đảm bảo rating là số trước khi gọi toFixed */}
-                                        {
-                                            !isNaN(parseFloat(restaurant.rating)) && restaurant.rating !== null
-                                                ? parseFloat(restaurant.rating).toFixed(1)
-                                                : 'N/A'
-                                        }
-                                    </span>
+                            <div className="bg-neutral-100 rounded-xl overflow-hidden hover:shadow-xl transition cursor-pointer h-full">
+                                <div className="relative h-48 overflow-hidden">
+                                    <img
+                                        src={restaurant.image || restaurant.imageUrl}
+                                        alt={restaurant.name}
+                                        className="w-full h-full object-cover group-hover:scale-110 transition duration-300"
+                                        onError={(e) => { e.target.onerror = null; e.target.src = '/placeholder.png' }}
+                                    />
+                                </div>
+                                <div className="p-4 text-center">
+                                    <h3 className="text-[#366055] text-lg font-bold mb-1">
+                                        {/* Hiển thị tên nhà hàng */}
+                                        {restaurant.name}
+                                    </h3>
+                                    <div className="flex items-center justify-center text-sm text-yellow-400">
+                                        ⭐
+                                        <span className="font-semibold text-[#FC8A06] ml-1">
+                                            {/* Đảm bảo rating là số trước khi gọi toFixed */}
+                                            {
+                                                !isNaN(parseFloat(restaurant.rating)) && restaurant.rating !== null
+                                                    ? parseFloat(restaurant.rating).toFixed(1)
+                                                    : 'N/A'
+                                            }
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        </Link>
                     ))}
                 </div>
             )}

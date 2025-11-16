@@ -1,6 +1,6 @@
 'use client'
 import Title from './Title'
-import ProductCard from './ProductCard'
+import ProductCard from './Products/ProductCard'
 import { useSelector } from 'react-redux'
 
 const BestSelling = () => {

@@ -7,7 +7,7 @@ import { onAuthStateChanged, signOut } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore"; 
 import { useDispatch } from "react-redux";
 // 🚨 Import 'db' từ file cấu hình
-import { auth, db } from "./firebaseConfig"; 
+import { auth, db } from "./FirebaseConfig"; 
 import { setUser, clearUser } from "./features/auth/authSlice";
 
 export default function AuthWatcher() {

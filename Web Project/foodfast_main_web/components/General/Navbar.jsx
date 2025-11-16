@@ -5,10 +5,10 @@ import Link from "next/link";
 import { useState } from "react";
 import { useSelector } from "react-redux";
 import { usePathname } from 'next/navigation';
-import AuthModal from './AuthModal'; 
+import AuthModal from '../Modals/AuthModal'; 
 
 // 🚨 Import Firebase Auth và Router
-import { auth } from "../lib/firebaseConfig";
+import { auth } from "../../lib/FirebaseConfig";
 import { signOut } from "firebase/auth";
 import { useRouter } from 'next/navigation'; // Nếu bạn muốn chuyển hướng sau khi logout
 
@@ -23,7 +23,7 @@ const Navbar = () => {
 
     const navLinks = [
         { name: 'Home', href: '/' },
-        { name: 'Restaurants', href: '/shop' },
+        { name: 'Discovery', href: '/shop' },
         { name: 'Partner With Us', href: '/create-store' },
 
     ];

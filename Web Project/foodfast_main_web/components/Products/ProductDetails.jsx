@@ -5,7 +5,7 @@ import { StarIcon, TagIcon, EarthIcon, CreditCardIcon, UserIcon } from "lucide-r
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import Image from "next/image";
-import Counter from "./Counter";
+import Counter from "../Counter";
 import { useDispatch, useSelector } from "react-redux";
 
 const ProductDetails = ({ product }) => {

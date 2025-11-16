@@ -1,8 +1,8 @@
 'use client'
-import Hero from "@/components/Hero";
+import Hero from "@/components/Hero/Hero";
 import ExclusiveDeals from "@/components/ExclusiveDeals";
-import PopularCategories from "@/components/PopularCategories";
-import PopularRestaurants from "@/components/PopularRestaurants";
+import PopularCategories from "@/components/Categories/PopularCategories";
+import PopularRestaurants from "@/components/Restaurants/PopularRestaurants";
 import AppDownload from "@/components/AppDownload";
 import PartnerWithUs from "@/components/PartnerWithUs";
 

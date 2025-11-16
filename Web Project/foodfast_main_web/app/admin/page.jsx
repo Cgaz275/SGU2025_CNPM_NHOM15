@@ -1,7 +1,7 @@
 'use client'
 import { dummyAdminDashboardData } from "@/assets/assets"
 import Loading from "@/components/Loading"
-import OrdersAreaChart from "@/components/OrdersAreaChart"
+import OrdersAreaChart from "@/components/Orders/OrdersAreaChart"
 import { CircleDollarSignIcon, ShoppingBasketIcon, StoreIcon, TagsIcon } from "lucide-react"
 import { useEffect, useState } from "react"
 
