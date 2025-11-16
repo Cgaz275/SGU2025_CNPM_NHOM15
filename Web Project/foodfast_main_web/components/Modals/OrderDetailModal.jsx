@@ -112,20 +112,31 @@ const OrderDetailModal = ({ isOpen, onClose, order }) => {
           <div className="space-y-4">
             {order.items?.map((item, index) => (
               <div key={index} className="flex items-start gap-6">
-                <img
-                  src={item.imageUrl || item.images?.[0] || 'https://placehold.co/110x110'}
-                  alt={item.name}
-                  className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl border border-[#D0D5DD] object-cover"
-                />
+                <div className="w-24 h-24 sm:w-28 sm:h-28 flex-shrink-0 rounded-2xl border border-[#D0D5DD] overflow-hidden bg-gray-100">
+                  {item.image ? (
+                    <img
+                      src={item.image}
+                      alt={item.name}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="110" height="110" viewBox="0 0 110 110"%3E%3Crect fill="%23e5e7eb" width="110" height="110"/%3E%3Ctext x="50" y="55" text-anchor="middle" dy=".3em" fill="%239ca3af" font-size="12" font-family="system-ui"%3ENo image%3C/text%3E%3C/svg%3E';
+                      }}
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">
+                      No image
+                    </div>
+                  )}
+                </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="text-lg sm:text-2xl text-[#344054] font-normal mb-2 truncate">
-                    {item.name}
+                    {item.name || 'Unknown Item'}
                   </h3>
                   <p className="text-xs sm:text-sm text-[#344054] mb-1">
-                    Restaurant: {item.restaurant || 'N/A'}
+                    Restaurant: {item.restaurantId || item.restaurant || 'N/A'}
                   </p>
                   <p className="text-xs sm:text-sm text-[#344054] line-clamp-2">
-                    Address: {item.address || order.deliveryAddress || 'N/A'}
+                    Address: {item.address || order.address || 'N/A'}
                   </p>
                 </div>
                 <div className="text-right flex-shrink-0">
@@ -157,19 +168,19 @@ const OrderDetailModal = ({ isOpen, onClose, order }) => {
                 <div>
                   <p className="text-sm text-[#FC8A06]">Address</p>
                   <p className="text-base sm:text-lg font-medium text-[#667085]">
-                    {order.deliveryAddress || 'N/A'}
+                    {order.address || order.deliveryAddress || 'N/A'}
                   </p>
                 </div>
                 <div>
                   <p className="text-sm text-[#FC8A06]">Receiver name</p>
                   <p className="text-base sm:text-lg font-medium text-[#667085]">
-                    {order.receiverName || 'N/A'}
+                    {order.receiverName || order.name || 'N/A'}
                   </p>
                 </div>
                 <div>
                   <p className="text-sm text-[#FC8A06]">Phone Number</p>
                   <p className="text-base sm:text-lg font-medium text-[#667085]">
-                    {order.phoneNumber || 'N/A'}
+                    {order.phoneNumber || order.phone || 'N/A'}
                   </p>
                 </div>
               </div>
@@ -184,7 +195,7 @@ const OrderDetailModal = ({ isOpen, onClose, order }) => {
             <div className="space-y-3">
               <div className="flex justify-between text-lg">
                 <span className="text-[#475467] font-medium">Promotion Code</span>
-                <span className="text-[#475467] font-medium">{order.promoCode || 'Not applied'}</span>
+                <span className="text-[#475467] font-medium">{order.promotionCode || order.promoCode || 'Not applied'}</span>
               </div>
               <div className="flex justify-between text-base">
                 <span className="text-[#667085] font-medium">Promotion</span>

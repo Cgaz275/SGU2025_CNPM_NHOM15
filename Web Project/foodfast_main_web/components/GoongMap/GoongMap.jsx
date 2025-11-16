@@ -4,10 +4,10 @@ import React, { useRef, useEffect, useState } from 'react';
 import goongjs from '@goongmaps/goong-js';
 import '@goongmaps/goong-js/dist/goong-js.css';
 
-import { 
-    GOONG_MAP_KEY, 
-    GOONG_MAP_STYLE, 
-    DEFAULT_VIEWPORT 
+import {
+    GOONG_MAP_TILES_KEY,
+    GOONG_MAP_STYLE,
+    DEFAULT_VIEWPORT
 } from '../../config/GoongMapConfig'; 
 
 function CustomGoongMap() {
@@ -19,12 +19,12 @@ function CustomGoongMap() {
     const [zoom, setZoom] = useState(DEFAULT_VIEWPORT.zoom);
 
     useEffect(() => {
-        if (map.current || !GOONG_MAP_KEY) return; 
+        if (map.current || !GOONG_MAP_TILES_KEY) return;
 
         map.current = new goongjs.Map({
             container: mapContainer.current,
-            accessToken: GOONG_MAP_KEY,
-            style: GOONG_MAP_STYLE, 
+            accessToken: GOONG_MAP_TILES_KEY,
+            style: GOONG_MAP_STYLE,
             center: [lng, lat],
             zoom: zoom
         });

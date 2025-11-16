@@ -45,11 +45,22 @@ export default function OrdersPage() {
     return (
       <div className="bg-[#FAFAF6] rounded-xl p-6 sm:p-8 relative">
         <div className="flex flex-col sm:flex-row gap-6">
-          <img
-            src={firstItem.imageUrl || firstItem.images?.[0] || 'https://placehold.co/113x113'}
-            alt={firstItem.name || 'Order item'}
-            className="w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover mx-auto sm:mx-0"
-          />
+          <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full mx-auto sm:mx-0 bg-gray-100 overflow-hidden flex-shrink-0">
+            {firstItem.image ? (
+              <img
+                src={firstItem.image}
+                alt={firstItem.name || 'Order item'}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="113" height="113" viewBox="0 0 113 113"%3E%3Crect fill="%23e5e7eb" width="113" height="113"/%3E%3Ctext x="56" y="56" text-anchor="middle" dy=".3em" fill="%239ca3af" font-size="12" font-family="system-ui"%3ENo image%3C/text%3E%3C/svg%3E';
+                }}
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">
+                No image
+              </div>
+            )}
+          </div>
 
           <div className="flex-1">
             <h3 className="text-xl sm:text-3xl font-bold text-[#366055] mb-2">
@@ -96,7 +107,7 @@ export default function OrdersPage() {
       <div className="min-h-screen flex items-center justify-center px-4">
         <div className="text-center">
           <h1 className="text-2xl sm:text-4xl font-semibold text-slate-400 mb-4">
-            You have no orders
+            There are no Orders yet
           </h1>
           <button
             onClick={() => router.push('/')}

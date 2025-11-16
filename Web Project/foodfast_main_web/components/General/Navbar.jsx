@@ -25,7 +25,7 @@ const Navbar = () => {
         { name: 'Home', href: '/' },
         { name: 'Discovery', href: '/shop' },
         { name: 'Partner With Us', href: '/create-store' },
-
+        { name: 'Order History', href: '/orders', requireAuth: true },
     ];
 
     // --- Chức năng Logout ---
@@ -78,15 +78,18 @@ const Navbar = () => {
                         {/* Desktop Navigation */}
                         <div className="hidden lg:flex items-center gap-8">
                             {navLinks.map((link) => {
+                                // Skip auth-only links if not logged in
+                                if (link.requireAuth && !user) return null;
+
                                 const active = isActive(link.href);
                                 return (
-                                    <div 
+                                    <div
                                         key={link.name}
                                         className={active ? 'bg-[#366055] rounded-full px-6 py-3 transition' : ''}
                                     >
-                                        <Link 
-                                            href={link.href} 
-                                            className={`text-lg font-medium transition 
+                                        <Link
+                                            href={link.href}
+                                            className={`text-lg font-medium transition
                                                 ${active ? 'text-white' : 'text-black hover:text-[#FC8A06]'}`}
                                         >
                                             {link.name}
@@ -154,16 +157,21 @@ const Navbar = () => {
                     {mobileMenuOpen && (
                         <div className="lg:hidden mt-4 pb-4 border-t border-black/10 pt-4">
                             <div className="flex flex-col gap-4">
-                                {navLinks.map((link) => (
-                                    <Link 
-                                        key={link.name} 
-                                        href={link.href} 
-                                        className={`text-lg font-medium ${isActive(link.href) ? 'text-[#FC8A06]' : 'text-black'}`}
-                                        onClick={() => setMobileMenuOpen(false)}
-                                    >
-                                        {link.name}
-                                    </Link>
-                                ))}
+                                {navLinks.map((link) => {
+                                    // Skip auth-only links if not logged in
+                                    if (link.requireAuth && !user) return null;
+
+                                    return (
+                                        <Link
+                                            key={link.name}
+                                            href={link.href}
+                                            className={`text-lg font-medium ${isActive(link.href) ? 'text-[#FC8A06]' : 'text-black'}`}
+                                            onClick={() => setMobileMenuOpen(false)}
+                                        >
+                                            {link.name}
+                                        </Link>
+                                    );
+                                })}
                             </div>
                         </div>
                     )}

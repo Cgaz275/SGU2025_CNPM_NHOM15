@@ -3,7 +3,7 @@ import { MapPin } from 'lucide-react'
 import { useRef, useEffect, useState } from 'react'
 import goongjs from '@goongmaps/goong-js'
 import '@goongmaps/goong-js/dist/goong-js.css'
-import { GOONG_MAP_KEY, GOONG_MAP_STYLE, DEFAULT_VIEWPORT } from '@/config/GoongMapConfig'
+import { GOONG_MAP_TILES_KEY, GOONG_MAP_STYLE, DEFAULT_VIEWPORT } from '@/config/GoongMapConfig'
 
 export default function RestaurantMap({ restaurant }) {
     const mapContainer = useRef(null)
@@ -14,7 +14,7 @@ export default function RestaurantMap({ restaurant }) {
     useEffect(() => {
         if (!mapContainer.current || map.current) return
 
-        if (!GOONG_MAP_KEY) {
+        if (!GOONG_MAP_TILES_KEY) {
             setError('Map API key not configured')
             console.warn('Goong Map: API key not configured')
             return
@@ -70,7 +70,7 @@ export default function RestaurantMap({ restaurant }) {
 
             map.current = new goongjs.Map({
                 container: mapContainer.current,
-                accessToken: GOONG_MAP_KEY,
+                accessToken: GOONG_MAP_TILES_KEY,
                 style: GOONG_MAP_STYLE,
                 center: [lng, lat],
                 zoom: 15
@@ -100,7 +100,7 @@ export default function RestaurantMap({ restaurant }) {
                 map.current = null
             }
         }
-    }, [restaurant?.latlong, GOONG_MAP_KEY])
+    }, [restaurant?.latlong, GOONG_MAP_TILES_KEY])
 
     return (
         <section className="w-full max-w-7xl mx-auto px-4 md:px-6 mb-12 md:mb-16">

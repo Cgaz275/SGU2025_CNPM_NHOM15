@@ -1,9 +1,7 @@
 'use client';
 
 import React, { useRef, useEffect, useState } from 'react';
-import goongjs from '@goongmaps/goong-js';
-import '@goongmaps/goong-js/dist/goong-js.css';
-import { GOONG_MAP_KEY, GOONG_MAP_STYLE, DEFAULT_VIEWPORT } from '@/config/GoongMapConfig';
+import { GOONG_MAP_TILES_KEY, GOONG_API_KEY, GOONG_MAP_STYLE, DEFAULT_VIEWPORT } from '@/config/GoongMapConfig';
 import { X, MapPin } from 'lucide-react';
 
 export default function AddressPickerModal({ isOpen, onClose, onSelectAddress, initialLat, initialLng }) {
@@ -18,62 +16,103 @@ export default function AddressPickerModal({ isOpen, onClose, onSelectAddress, i
   const [searchInput, setSearchInput] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // Load Goong CSS on client mount
   useEffect(() => {
-    if (!isOpen || !mapContainer.current || !GOONG_MAP_KEY) return;
+    if (typeof window === 'undefined') return;
 
-    if (map.current) {
-      map.current.remove();
-    }
-
-    map.current = new goongjs.Map({
-      container: mapContainer.current,
-      accessToken: GOONG_MAP_KEY,
-      style: GOONG_MAP_STYLE,
-      center: [lng, lat],
-      zoom: zoom
-    });
-
-    // Add marker for selected location
-    if (marker.current) {
-      marker.current.remove();
-    }
-
-    marker.current = new goongjs.Marker({ color: '#366055' })
-      .setLngLat([lng, lat])
-      .addTo(map.current);
-
-    // Update coordinates on map movement
-    const onMove = () => {
-      const center = map.current.getCenter();
-      setLng(center.lng);
-      setLat(center.lat);
-      setZoom(map.current.getZoom());
-
-      if (marker.current) {
-        marker.current.setLngLat([center.lng, center.lat]);
-      }
-
-      // Reverse geocode to get address
-      reverseGeocode(center.lat, center.lng);
-    };
-
-    map.current.on('move', onMove);
-
-    // Geocode initial coordinates
-    reverseGeocode(lat, lng);
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = 'https://cdn.jsdelivr.net/npm/@goongmaps/goong-js@1.0.9/dist/goong-js.css';
+    document.head.appendChild(link);
 
     return () => {
-      map.current?.off('move', onMove);
+      link.remove();
     };
+  }, []);
+
+  // Check API keys on mount
+  useEffect(() => {
+    if (!GOONG_MAP_TILES_KEY) {
+      console.error('GOONG_MAP_TILES_KEY is not configured');
+    }
+    if (!GOONG_API_KEY) {
+      console.error('GOONG_API_KEY is not configured for geocoding');
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isOpen || !mapContainer.current || !GOONG_MAP_TILES_KEY) return;
+
+    // Dynamically import goongjs only on client side
+    import('@goongmaps/goong-js').then((goongModule) => {
+      const goongjs = goongModule.default;
+
+      if (map.current) {
+        map.current.remove();
+      }
+
+      map.current = new goongjs.Map({
+        container: mapContainer.current,
+        accessToken: GOONG_MAP_TILES_KEY,
+        style: GOONG_MAP_STYLE,
+        center: [lng, lat],
+        zoom: zoom
+      });
+
+      // Add marker for selected location
+      if (marker.current) {
+        marker.current.remove();
+      }
+
+      marker.current = new goongjs.Marker({ color: '#366055' })
+        .setLngLat([lng, lat])
+        .addTo(map.current);
+
+      // Update coordinates on map movement
+      const onMove = () => {
+        const center = map.current.getCenter();
+        setLng(center.lng);
+        setLat(center.lat);
+        setZoom(map.current.getZoom());
+
+        if (marker.current) {
+          marker.current.setLngLat([center.lng, center.lat]);
+        }
+
+        // Reverse geocode to get address
+        reverseGeocode(center.lat, center.lng);
+      };
+
+      map.current.on('move', onMove);
+
+      // Geocode initial coordinates
+      reverseGeocode(lat, lng);
+
+      return () => {
+        map.current?.off('move', onMove);
+      };
+    }).catch((error) => {
+      console.error('Failed to load Goong Maps:', error);
+    });
   }, [isOpen]);
 
   const reverseGeocode = async (latitude, longitude) => {
-    if (!GOONG_MAP_KEY) return;
+    if (!GOONG_API_KEY) {
+      console.warn('Goong API key not configured for geocoding');
+      return;
+    }
 
     try {
-      const response = await fetch(
-        `https://rsapi.goong.io/Geocode?latlng=${latitude},${longitude}&api_key=${GOONG_MAP_KEY}`
-      );
+      const url = `https://rsapi.goong.io/Geocode?latlng=${latitude},${longitude}&api_key=${GOONG_API_KEY}`;
+      console.log('Reverse geocoding request to:', url.replace(GOONG_API_KEY, 'API_KEY_HIDDEN'));
+
+      const response = await fetch(url);
+
+      if (!response.ok) {
+        console.error(`Goong API error ${response.status}:`, response.statusText);
+        return;
+      }
+
       const data = await response.json();
       if (data.results && data.results.length > 0) {
         setAddress(data.results[0].formatted_address);
@@ -85,13 +124,25 @@ export default function AddressPickerModal({ isOpen, onClose, onSelectAddress, i
 
   const searchAddress = async (e) => {
     e.preventDefault();
-    if (!searchInput.trim() || !GOONG_MAP_KEY) return;
+    if (!searchInput.trim() || !GOONG_API_KEY) {
+      console.warn('Search input or API key missing');
+      return;
+    }
 
     setLoading(true);
     try {
-      const response = await fetch(
-        `https://rsapi.goong.io/geocode?address=${encodeURIComponent(searchInput)}&api_key=${GOONG_MAP_KEY}`
-      );
+      const url = `https://rsapi.goong.io/geocode?address=${encodeURIComponent(searchInput)}&api_key=${GOONG_API_KEY}`;
+      console.log('Geocoding request for:', searchInput);
+
+      const response = await fetch(url);
+
+      if (!response.ok) {
+        console.error(`Goong API error ${response.status}:`, response.statusText);
+        console.error('Please verify your Goong API key has geocoding permissions');
+        alert(`Geocoding failed: ${response.status}. Please check your API key configuration.`);
+        return;
+      }
+
       const data = await response.json();
 
       if (data.results && data.results.length > 0) {
@@ -112,9 +163,12 @@ export default function AddressPickerModal({ isOpen, onClose, onSelectAddress, i
         }
 
         setAddress(result.formatted_address);
+      } else {
+        alert('No results found for this address');
       }
     } catch (error) {
       console.error('Geocoding error:', error);
+      alert('Failed to search address. Please try again.');
     } finally {
       setLoading(false);
     }
