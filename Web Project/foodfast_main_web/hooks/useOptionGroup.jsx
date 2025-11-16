@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../lib/FirebaseConfig';
+import { db } from '../config/FirebaseConfig';
 
 const useOptionGroup = (optionGroupId) => {
     const [data, setData] = useState(null);

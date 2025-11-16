@@ -8,7 +8,7 @@ import {
     GOONG_MAP_KEY, 
     GOONG_MAP_STYLE, 
     DEFAULT_VIEWPORT 
-} from '../../lib/GoongMapConfig'; 
+} from '../../config/GoongMapConfig'; 
 
 function CustomGoongMap() {
     const mapContainer = useRef(null);

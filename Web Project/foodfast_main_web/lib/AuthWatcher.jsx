@@ -7,7 +7,7 @@ import { onAuthStateChanged, signOut } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore"; 
 import { useDispatch } from "react-redux";
 // 🚨 Import 'db' từ file cấu hình
-import { auth, db } from "./FirebaseConfig"; 
+import { auth, db } from "../config/FirebaseConfig"; 
 import { setUser, clearUser } from "./features/auth/authSlice";
 
 export default function AuthWatcher() {
@@ -32,15 +32,22 @@ export default function AuthWatcher() {
             }
             
             // --- 2. Dispatch dữ liệu kết hợp vào Redux ---
+            // Convert Firestore Timestamp to ISO string to avoid non-serializable error
+            const createdAtValue = firestoreUserData.createdAt
+              ? (firestoreUserData.createdAt.toDate?.() || firestoreUserData.createdAt).toISOString?.() || firestoreUserData.createdAt
+              : null;
+
             dispatch(
                 setUser({
                     uid: user.uid,
                     email: user.email,
                     // Dùng tên từ Firestore nếu có, nếu không thì dùng displayName từ Auth
-                    name: firestoreUserData.name || user.displayName, 
+                    name: firestoreUserData.name || user.displayName,
                     isAnonymous: user.isAnonymous,
                     // Thêm toàn bộ các trường khác từ Firestore (phone, role, defaultAddress, v.v.)
-                    ...firestoreUserData, 
+                    ...firestoreUserData,
+                    // Override createdAt with serializable string
+                    createdAt: createdAtValue,
                 })
             );
 

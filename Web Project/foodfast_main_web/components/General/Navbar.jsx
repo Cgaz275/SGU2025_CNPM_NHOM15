@@ -8,7 +8,7 @@ import { usePathname } from 'next/navigation';
 import AuthModal from '../Modals/AuthModal'; 
 
 // 🚨 Import Firebase Auth và Router
-import { auth } from "../../lib/FirebaseConfig";
+import { auth } from "../../config/FirebaseConfig";
 import { signOut } from "firebase/auth";
 import { useRouter } from 'next/navigation'; // Nếu bạn muốn chuyển hướng sau khi logout
 
@@ -101,24 +101,40 @@ const Navbar = () => {
                             <CartLink isMobile={false} />
                             <CartLink isMobile={true} />
 
-                            {/* Login / User / Logout Button */}
-                            <button 
-                                // Nếu có user, gọi handleLogout, ngược lại mở AuthModal
-                                onClick={user ? handleLogout : () => setIsAuthModalOpen(true)}
-                                className="bg-[#366055] rounded-full px-4 md:px-8 py-2 md:py-4 flex items-center gap-2 md:gap-3 hover:bg-[#e87d05] transition"
-                            >
-                                {user ? (
-                                    // 🚨 Nếu đã đăng nhập, hiển thị icon Logout
-                                    <LogOut className="w-5 h-5 md:w-8 md:h-8 text-white" />
-                                ) : (
-                                    // Nếu chưa đăng nhập, hiển thị icon User
-                                    <User className="w-5 h-5 md:w-8 md:h-8 text-white" />
-                                )}
-                                <span className="text-white text-sm md:text-lg font-medium hidden sm:inline">
-                                    {/* 🚨 Hiển thị tên người dùng hoặc nút Logout */}
-                                    {user ? (user.name || 'User') : 'Login/Signup'}
-                                </span>
-                            </button>
+                            {user ? (
+                                <>
+                                    {/* Profile Button for logged-in users */}
+                                    <Link
+                                        href="/profile"
+                                        className="bg-[#366055] rounded-full px-4 md:px-8 py-2 md:py-4 flex items-center gap-2 md:gap-3 hover:bg-[#2b4c44] transition"
+                                    >
+                                        <User className="w-5 h-5 md:w-6 md:h-6 text-white" />
+                                        <span className="text-white text-sm md:text-lg font-medium hidden sm:inline">
+                                            {user.name || 'User'}
+                                        </span>
+                                    </Link>
+
+                                    {/* Logout Button */}
+                                    <button
+                                        onClick={handleLogout}
+                                        className="p-2 md:p-3 hover:bg-gray-100 rounded-full transition"
+                                        title="Logout"
+                                    >
+                                        <LogOut className="w-5 h-5 md:w-6 md:h-6 text-[#366055]" />
+                                    </button>
+                                </>
+                            ) : (
+                                /* Login Button for non-authenticated users */
+                                <button
+                                    onClick={() => setIsAuthModalOpen(true)}
+                                    className="bg-[#366055] rounded-full px-4 md:px-8 py-2 md:py-4 flex items-center gap-2 md:gap-3 hover:bg-[#2b4c44] transition"
+                                >
+                                    <User className="w-5 h-5 md:w-6 md:h-6 text-white" />
+                                    <span className="text-white text-sm md:text-lg font-medium hidden sm:inline">
+                                        Login/Signup
+                                    </span>
+                                </button>
+                            )}
 
                             {/* Mobile Menu Button */}
                             <button

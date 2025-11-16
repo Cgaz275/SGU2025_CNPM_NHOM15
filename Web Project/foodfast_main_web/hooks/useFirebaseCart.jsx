@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
-import { db } from '../lib/FirebaseConfig';
+import { db } from '../config/FirebaseConfig';
 import { clearCart, restoreCart } from '../lib/features/cart/cartSlice';
 
 const useFirebaseCart = () => {

@@ -52,7 +52,7 @@ export default function AllRestaurant() {
                         All Restaurant ({restaurants.length} found)
                     </h2>            
                     <div className="flex items-center gap-4 md:gap-8 flex-wrap">
-                          <p className='font-semibold text-[#366055] border border-[#366055] rounded-full px-6 py-3'> See all restaur</p>
+                          <p className='font-semibold text-[#366055] border border-[#366055] rounded-full px-6 py-3'> See all restaurant</p>
                         </div>
 
             </div>

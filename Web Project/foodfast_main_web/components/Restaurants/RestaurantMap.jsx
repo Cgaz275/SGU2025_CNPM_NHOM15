@@ -3,7 +3,7 @@ import { MapPin } from 'lucide-react'
 import { useRef, useEffect, useState } from 'react'
 import goongjs from '@goongmaps/goong-js'
 import '@goongmaps/goong-js/dist/goong-js.css'
-import { GOONG_MAP_KEY, GOONG_MAP_STYLE, DEFAULT_VIEWPORT } from '@/lib/GoongMapConfig'
+import { GOONG_MAP_KEY, GOONG_MAP_STYLE, DEFAULT_VIEWPORT } from '@/config/GoongMapConfig'
 
 export default function RestaurantMap({ restaurant }) {
     const mapContainer = useRef(null)

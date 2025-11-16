@@ -2,7 +2,7 @@
 import { useState, useEffect, use } from 'react'
 import { useDispatch } from 'react-redux'
 import { doc, getDoc } from 'firebase/firestore'
-import { db } from '@/lib/FirebaseConfig'
+import { db } from '@/config/FirebaseConfig'
 import RestaurantHero from '@/components/Restaurants/RestaurantHero'
 import CategoryTabs from '@/components/Restaurants/CategoryTabs'
 import MenuSection from '@/components/Restaurants/MenuSectionV2'

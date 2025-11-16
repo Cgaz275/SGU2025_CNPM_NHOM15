@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
-import { db } from '../lib/FirebaseConfig';
+import { db } from '../config/FirebaseConfig';
 
 const useDishesByRestaurant = (restaurantId) => {
     const [data, setData] = useState([]);

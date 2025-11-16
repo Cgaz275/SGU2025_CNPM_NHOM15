@@ -11,7 +11,7 @@ import {
     GoogleAuthProvider,
     signInWithPopup
 } from "firebase/auth";
-import { auth, db } from '../../lib/FirebaseConfig.js'; 
+import { auth, db } from '../../config/FirebaseConfig.js'; 
 
 // ------------------------
 // SignIn Form Component
@@ -177,7 +177,15 @@ const AuthModal = ({ isOpen, onClose }) => {
             await signInWithPopup(auth, provider);
             onClose();
         } catch (err) {
-            console.error(err);
+            if (err.code === 'auth/popup-closed-by-user') {
+                // User closed the popup - this is expected, don't show error
+                return;
+            }
+            // For other errors, show user feedback
+            console.error('Google sign-in error:', err);
+            import('react-hot-toast').then(toast => {
+                toast.default.error('Failed to sign in with Google. Please try again.');
+            });
         }
     }
 
@@ -186,7 +194,10 @@ const AuthModal = ({ isOpen, onClose }) => {
             await signInAnonymously(auth);
             onClose();
         } catch (err) {
-            console.error(err);
+            console.error('Anonymous sign-in error:', err);
+            import('react-hot-toast').then(toast => {
+                toast.default.error('Failed to continue as guest. Please try again.');
+            });
         }
     }
 

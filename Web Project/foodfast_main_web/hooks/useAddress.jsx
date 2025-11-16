@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
-import { db } from '../lib/FirebaseConfig';
+import { db } from '../config/FirebaseConfig';
 
 const useAddress = () => {
   const [data, setData] = useState([]);

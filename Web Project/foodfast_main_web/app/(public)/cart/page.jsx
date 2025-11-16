@@ -7,7 +7,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { doc, getDoc } from "firebase/firestore";
-import { db } from "@/lib/FirebaseConfig";
+import { db } from "@/config/FirebaseConfig";
 
 export default function Cart() {
 
@@ -172,11 +172,11 @@ export default function Cart() {
                                     value={promoCode}
                                     onChange={(e) => setPromoCode(e.target.value)}
                                     placeholder="enter code"
-                                    className="flex-1 h-[47px] px-3 bg-[#FDFDFD] rounded-md text-base font-[Montserrat] placeholder:text-[#C4C4C4] outline-none"
+                                    className="flex-1 h-[47px] px-3 bg-[#FDFDFD] rounded-md text-base placeholder:text-[#C4C4C4] outline-none"
                                 />
                                 <button
                                     onClick={handleApplyPromoCode}
-                                    className="w-[87px] h-[47px] bg-[#FDFDFD] rounded-md text-[#366055] text-base font-bold font-[Montserrat] hover:bg-white transition"
+                                    className="w-[87px] h-[47px] bg-[#FDFDFD] rounded-md text-[#366055] text-base hover:bg-white transition"
                                 >
                                     Apply
                                 </button>
@@ -191,7 +191,7 @@ export default function Cart() {
 
                             <div className="space-y-4 mb-8">
                                 <div>
-                                    <label className="text-white text-sm md:text-base font-medium block mb-2">
+                                    <label className="text-white text-sm md:text-base block mb-2">
                                         Address
                                     </label>
                                     <input
@@ -199,7 +199,7 @@ export default function Cart() {
                                         value={address}
                                         onChange={(e) => setAddress(e.target.value)}
                                         placeholder="Address Placeholder"
-                                        className="w-full h-[47px] px-3 bg-[#FDFDFD] rounded-md text-base font-[Montserrat] placeholder:text-[#C4C4C4] outline-none"
+                                        className="w-full h-[47px] px-3 bg-[#FDFDFD] rounded-md text-base laceholder:text-[#C4C4C4] outline-none"
                                     />
                                 </div>
 
@@ -225,7 +225,7 @@ export default function Cart() {
                                         value={phoneNumber}
                                         onChange={(e) => setPhoneNumber(e.target.value)}
                                         placeholder="Phone placeholder"
-                                        className="w-full h-[47px] px-3 bg-[#FDFDFD] rounded-md text-base font-[Montserrat] placeholder:text-[#C4C4C4] outline-none"
+                                        className="w-full h-[47px] px-3 bg-[#FDFDFD] rounded-md text-base] placeholder:text-[#C4C4C4] outline-none"
                                     />
                                 </div>
                             </div>
@@ -268,6 +268,23 @@ export default function Cart() {
                             <div className="mb-6">
                                 <h3 className="text-white text-base md:text-lg font-semibold mb-4">Payment Method:</h3>
                                 <div className="flex items-center gap-8">
+                                        <label className="flex items-center gap-3 cursor-pointer">
+                                        <div className="relative">
+                                            <div className="w-[13px] h-[13px] rounded-full border-2 border-white bg-transparent"></div>
+                                            {paymentMethod === 'COD' && (
+                                                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[9px] h-[9px] rounded-full bg-white"></div>
+                                            )}
+                                        </div>
+                                        <input
+                                            type="radio"
+                                            name="payment"
+                                            value="COD"
+                                            checked={paymentMethod === 'COD'}
+                                            onChange={(e) => setPaymentMethod(e.target.value)}
+                                            className="sr-only"
+                                        />
+                                        <span className="text-white text-base md:text-lg">COD</span>
+                                    </label>
                                     <label className="flex items-center gap-3 cursor-pointer">
                                         <div className="relative">
                                             <div className="w-[13px] h-[13px] rounded-full border-2 border-white bg-transparent"></div>
