@@ -178,7 +178,7 @@ export default function CreateStore() {
                 name: formData.name,
                 address: formData.address,
                 bannerURL: bannerURL,
-                imageurl: logoURL,
+                imageUrl: logoURL,
                 latlong: new GeoPoint(parseFloat(formData.latitude), parseFloat(formData.longitude)),
                 is_enable: true,
                 rating: 0,

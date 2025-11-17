@@ -1,16 +1,20 @@
+'use client'
 import React from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 // 1. Import custom hook đã tạo
 import useCategories from '../../hooks/useCategories'; 
 
 export default function PopularCategories() {
+    const router = useRouter();
     // 2. Sử dụng hook để lấy dữ liệu và trạng thái
-    const { 
-        data: categories, 
-        loading, 
-        error 
+    const {
+        data: categories,
+        loading,
+        error
     } = useCategories();
 
-    // --- 3. Xử lý trạng thái Loading ---
+    // --- 3. Xử lý tr��ng thái Loading ---
     if (loading) {
         return (
             <section className="w-full max-w-7xl mx-auto px-6 my-16 text-center">
@@ -46,9 +50,11 @@ export default function PopularCategories() {
     // --- 4. Hiển thị dữ liệu khi đã tải xong ---
     return (
         <section className="w-full max-w-7xl mx-auto px-6 my-16">
-            <h2 className="text-2xl md:text-3xl font-bold mb-8">
-                FoodFast Popular Categories ({categories.length} found)
-            </h2>
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
+                <h2 className="text-2xl md:text-3xl font-bold">
+                    FoodFast Popular Categories ({Math.min(categories.length, 6)} found)
+                </h2>
+            </div>
 
             {categories.length === 0 ? (
                 <div className="text-center p-12 bg-yellow-50 rounded-xl">
@@ -56,26 +62,29 @@ export default function PopularCategories() {
                 </div>
             ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
-                    {/* Lặp qua mảng categories lấy từ Firestore */}
-                    {categories.map((category) => (
-                        <div 
+                    {/* Lặp qua mảng categories lấy từ Firestore, giới hạn 6 items */}
+                    {categories.slice(0, 6).map((category) => (
+                        <Link
                             key={category.id}
-                            className="bg-neutral-100 rounded-xl border border-black/10 overflow-hidden hover:shadow-lg transition cursor-pointer group"
+                            href={`/AllResturant?category=${category.id}`}
+                            className="group"
                         >
-                            <div className="relative h-48 overflow-hidden">
-                                <img 
-                                    src={category.imageUrl} 
-                                    alt={category.name}
-                                    className="w-full h-full object-cover group-hover:scale-110 transition duration-300"
-                                    onError={(e) => { e.target.onerror = null; e.target.src = '/placeholder.png' }}
-                                />
+                            <div className="bg-neutral-100 rounded-xl border border-black/10 overflow-hidden hover:shadow-lg transition cursor-pointer h-full">
+                                <div className="relative h-48 overflow-hidden">
+                                    <img
+                                        src={category.imageUrl}
+                                        alt={category.name}
+                                        className="w-full h-full object-cover group-hover:scale-110 transition duration-300"
+                                        onError={(e) => { e.target.onerror = null; e.target.src = '/placeholder.png' }}
+                                    />
+                                </div>
+                                <div className="p-4">
+                                    <h3 className="text-[#366055] text-lg font-bold mb-1">
+                                        {category.name}
+                                    </h3>
+                                </div>
                             </div>
-                            <div className="p-4">
-                                <h3 className="text-[#366055] text-lg font-bold mb-1">
-                                    {category.name}
-                                </h3>
-                            </div>
-                        </div>
+                        </Link>
                     ))}
                 </div>
             )}

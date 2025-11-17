@@ -29,7 +29,14 @@ export async function POST(request) {
         }
 
         const data = await response.json()
+
+        if (!data.data || !data.data.url) {
+            console.error('Invalid imgBB response:', JSON.stringify(data, null, 2))
+            throw new Error('Invalid response from imgBB: missing URL in response')
+        }
+
         const downloadURL = data.data.url
+        console.log('Successfully uploaded to imgBB:', downloadURL)
 
         return NextResponse.json({ downloadURL }, { status: 200 })
     } catch (error) {

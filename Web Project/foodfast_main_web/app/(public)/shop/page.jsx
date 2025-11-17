@@ -6,8 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { useSelector } from "react-redux"
 import PopularRestaurants from "@/components/Restaurants/PopularRestaurants";
 import Hero_restaurant from "@/components/Hero/Hero_restaurant";
-import AllRestaurant from "@/components/Restaurants/AllRestaurant"
-import AllCategories from "@/components/Categories/AllCategories"
+import PopularCategories from "@/components/Categories/PopularCategories"
 
  function ShopContent() {
 
@@ -44,9 +43,8 @@ export default function Shop() {
     // </Suspense>
        <div className="min-h-screen bg-white">
             <Hero_restaurant />
+             <PopularCategories/>
             <PopularRestaurants />
-            <AllCategories />
-            <AllRestaurant/>/
         </div>
   );
 }
