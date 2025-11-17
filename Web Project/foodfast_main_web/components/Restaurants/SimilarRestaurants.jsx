@@ -1,5 +1,6 @@
 'use client'
 import Link from 'next/link'
+import { lazyLoadProps } from '../../utils/imageUtils'
 
 export default function SimilarRestaurants({ restaurants }) {
     return (
@@ -17,10 +18,11 @@ export default function SimilarRestaurants({ restaurants }) {
                     >
                         <div className="bg-[#FC8A06] rounded-xl overflow-hidden hover:shadow-lg transition">
                             <div className="relative w-full aspect-[238/203]">
-                                <img 
+                                <img
                                     src={restaurant.image}
                                     alt={restaurant.name}
                                     className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                                    {...lazyLoadProps}
                                 />
                             </div>
                             <div className="p-3 md:p-4">

@@ -1,3 +1,5 @@
+import { lazyLoadProps } from '../../utils/imageUtils'
+
 export default function NearbyRestaurants() {
     const restaurants = [
         {
@@ -39,10 +41,11 @@ export default function NearbyRestaurants() {
                         className="bg-[#366055] rounded-xl overflow-hidden hover:shadow-xl transition cursor-pointer group"
                     >
                         <div className="relative h-48 overflow-hidden">
-                            <img 
-                                src={restaurant.image} 
+                            <img
+                                src={restaurant.image}
                                 alt={restaurant.name}
                                 className="w-full h-full object-cover group-hover:scale-110 transition duration-300"
+                                {...lazyLoadProps}
                             />
                         </div>
                         <div className="p-4 text-center">

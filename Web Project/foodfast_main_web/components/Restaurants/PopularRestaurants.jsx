@@ -3,7 +3,8 @@ import React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 // 1. Import custom hook đã tạo
-import useRestaurants from '../../hooks/useRestaurant'; 
+import useRestaurants from '../../hooks/useRestaurant';
+import { lazyLoadProps } from '../../utils/imageUtils'; 
 
 export default function PopularRestaurants() {
     const router = useRouter();
@@ -86,6 +87,7 @@ export default function PopularRestaurants() {
                                         src={restaurant.image || restaurant.imageUrl}
                                         alt={restaurant.name}
                                         className="w-full h-full object-cover group-hover:scale-110 transition duration-300"
+                                        {...lazyLoadProps}
                                         onError={(e) => { e.target.onerror = null; e.target.src = '/images/placeholder.png' }}
                                     />
                                 </div>

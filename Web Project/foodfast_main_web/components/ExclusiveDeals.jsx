@@ -1,8 +1,8 @@
 'use client'
-'use client'
 import { useRouter } from 'next/navigation';
 import usePromotionalRestaurants from '@/hooks/usePromotionalRestaurants';
 import { Star } from 'lucide-react';
+import { lazyLoadProps } from '@/utils/imageUtils';
 
 export default function ExclusiveDeals() {
     const router = useRouter();
@@ -69,6 +69,7 @@ export default function ExclusiveDeals() {
                                         src={deal.restaurantImageUrl}
                                         alt={deal.restaurantName}
                                         className="w-full h-full object-cover group-hover:scale-110 transition duration-300"
+                                        {...lazyLoadProps}
                                     />
                                 ) : (
                                     <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-300 to-gray-400">

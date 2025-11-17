@@ -1,5 +1,6 @@
 'use client'
 import { Package, Bike } from 'lucide-react'
+import { lazyLoadProps } from '../../utils/imageUtils'
 
 export default function RestaurantHero({ restaurant }) {
     return (
@@ -7,10 +8,11 @@ export default function RestaurantHero({ restaurant }) {
             <div className="relative rounded-xl overflow-hidden">
                 {/* Background Image with Overlay */}
                 <div className="relative h-[300px] md:h-[400px] lg:h-[477px]">
-                    <img 
+                    <img
                         src={restaurant?.bannerImage || 'https://api.builder.io/api/v1/image/assets/TEMP/ed772e77fe0179e004cc23209229d04c0333a152?width=3056'}
-                        alt={restaurant?.name || 'Restaurant'} 
+                        alt={restaurant?.name || 'Restaurant'}
                         className="w-full h-full object-cover"
+                        {...lazyLoadProps}
                     />
                     <div className="absolute inset-0 bg-[rgba(3,8,31,0.90)]"></div>
                 </div>
@@ -51,10 +53,11 @@ export default function RestaurantHero({ restaurant }) {
 
                     {/* Right Side - Featured Image */}
                     <div className="hidden lg:flex items-center justify-end">
-                        <img 
+                        <img
                             src={restaurant?.featuredImage || 'https://api.builder.io/api/v1/image/assets/TEMP/ea24ac34f918ce4abfef9346b54adcc6d958d4c1?width=1162'}
                             alt="Featured Food"
                             className="w-full max-w-[581px] h-auto rounded-xl object-cover"
+                            {...lazyLoadProps}
                         />
                     </div>
                 </div>

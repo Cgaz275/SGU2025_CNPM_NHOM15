@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import useRestaurants from '@/hooks/useRestaurant';
 import useCategories from '@/hooks/useCategories';
+import { lazyLoadProps } from '@/utils/imageUtils';
 
 const ITEMS_PER_PAGE = 8;
 const ITEMS_PER_ROW = 4;
@@ -156,6 +157,7 @@ export default function AllRestaurant() {
                                                         src={restaurant.image || restaurant.imageUrl}
                                                         alt={restaurant.name}
                                                         className="w-full h-full object-cover group-hover:scale-110 transition duration-300"
+                                                        {...lazyLoadProps}
                                                         onError={(e) => { e.target.onerror = null; e.target.src = '/images/placeholder.png' }}
                                                     />
                                                 </div>
