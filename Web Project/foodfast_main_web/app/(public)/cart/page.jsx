@@ -39,6 +39,7 @@ export default function Cart() {
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
     const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
     const [selectedAddressData, setSelectedAddressData] = useState(null);
+    const [defaultAddressId, setDefaultAddressId] = useState(null);
 
     const createCartArray = async () => {
         setLoading(true);
@@ -87,6 +88,9 @@ export default function Cart() {
     const handleSelectAddress = (addressData) => {
         setSelectedAddressData(addressData);
         setAddress(addressData.address);
+        setDefaultAddressId(addressData.id);
+        setReceiverName(addressData.name || '');
+        setPhoneNumber(addressData.phone || '');
     };
 
     useEffect(() => {
@@ -97,7 +101,40 @@ export default function Cart() {
         if (user) {
             setReceiverName(user.name || '');
             setPhoneNumber(user.phone || '');
-            setAddress(user.defaultAddress || '');
+
+            // Load user's default address
+            const loadDefaultAddress = async () => {
+                try {
+                    const addressCollectionRef = collection(db, 'address');
+                    const addressQuery = query(addressCollectionRef, where('userId', '==', user.uid));
+                    const addressSnapshot = await getDocs(addressQuery);
+
+                    if (addressSnapshot.size > 0) {
+                        // Get the first address as default
+                        const defaultAddr = addressSnapshot.docs[0];
+                        const defaultAddrData = defaultAddr.data();
+
+                        setDefaultAddressId(defaultAddr.id);
+                        setAddress(defaultAddrData.address || '');
+                        setReceiverName(defaultAddrData.name || user.name || '');
+                        setPhoneNumber(defaultAddrData.phone || user.phone || '');
+
+                        // Set selected address data for later use
+                        setSelectedAddressData({
+                            id: defaultAddr.id,
+                            address: defaultAddrData.address,
+                            name: defaultAddrData.name,
+                            phone: defaultAddrData.phone,
+                            lat: defaultAddrData.latlong?.latitude,
+                            lng: defaultAddrData.latlong?.longitude,
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error loading default address:', error);
+                }
+            };
+
+            loadDefaultAddress();
         }
     }, [user]);
 
@@ -130,6 +167,20 @@ export default function Cart() {
             // Get restaurant ID from the first item (assuming single restaurant per order)
             const restaurantId = cartArray[0]?.restaurantId;
 
+            // Fetch restaurant name
+            let restaurantName = '';
+            if (restaurantId) {
+                try {
+                    const restaurantRef = doc(db, 'restaurants', restaurantId);
+                    const restaurantSnap = await getDoc(restaurantRef);
+                    if (restaurantSnap.exists()) {
+                        restaurantName = restaurantSnap.data().name || '';
+                    }
+                } catch (error) {
+                    console.error('Error fetching restaurant:', error);
+                }
+            }
+
             // Fetch user's address data to include latlong
             let latlong = null;
             if (selectedAddressData) {
@@ -137,7 +188,7 @@ export default function Cart() {
                 latlong = new GeoPoint(selectedAddressData.lat, selectedAddressData.lng);
             } else {
                 // Try to get from user's default address in Firestore
-                const addressCollectionRef = collection(db, 'user_addresses');
+                const addressCollectionRef = collection(db, 'address');
                 const addressQuery = query(addressCollectionRef, where('userId', '==', user.uid));
                 const addressSnapshot = await getDocs(addressQuery);
 
@@ -155,6 +206,7 @@ export default function Cart() {
                 // User and restaurant info
                 userId: user.uid,
                 restaurantId: restaurantId || "",
+                default_address_id: defaultAddressId || "",
 
                 // Items (array of menu items)
                 items: cartArray.map(item => ({
@@ -163,11 +215,11 @@ export default function Cart() {
                     price: item.price,
                     quantity: item.quantity,
                     image: item.imageUrl || item.images?.[0] || "",
-                    restaurantId: item.restaurantId || restaurantId || ""
+                    restaurantId: item.restaurantId || restaurantId || "",
+                    restaurant: restaurantName
                 })),
 
                 // Order summary totals
-                subtotal: totalPrice,
                 deliveryFee: shippingFee,
                 discount: discount,
                 discountPercent: discountApplied ? 0 : 0,
@@ -177,12 +229,14 @@ export default function Cart() {
                 paymentMethod: paymentMethod,
                 isPaid: paymentMethod !== 'COD',
 
-                // Delivery information
-                address: address,
-                name: receiverName,
-                phone: phoneNumber,
-                note: "",
-                latlong: latlong,
+                // Delivery information (address as nested object)
+                address: {
+                    address: address,
+                    name: receiverName,
+                    phone: phoneNumber,
+                    latlong: latlong,
+                    note: ""
+                },
 
                 // Order status
                 status: 'pending',

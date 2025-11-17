@@ -30,7 +30,7 @@ const SignInForm = ({ onSuccess }) => {
             await signInWithEmailAndPassword(auth, email, password);
             onSuccess && onSuccess();
         } catch (err) {
-            setError('Email hoặc mật khẩu không hợp lệ.');
+            setError('Email or password is invalid.');
         } finally {
             setLoading(false);
         }
@@ -60,7 +60,7 @@ const SignInForm = ({ onSuccess }) => {
                 className="w-full bg-[#FC8A06] text-white py-3 rounded-lg font-semibold text-lg hover:bg-[#e87d05] transition duration-300 shadow-md"
                 disabled={loading}
             >
-                {loading ? 'Đang Đăng Nhập...' : 'Sign In'}
+                {loading ? 'Loging in...' : 'Sign In'}
             </button>
         </form>
     );
@@ -83,7 +83,7 @@ const SignUpForm = ({ onSuccess }) => {
         setError('');
 
         if (password !== confirm) {
-            setError('Mật khẩu xác nhận không khớp!');
+            setError('Password is not compatible!');
             return;
         }
 
@@ -105,7 +105,7 @@ const SignUpForm = ({ onSuccess }) => {
                 });
 
                 // Create empty address document for the user
-                await addDoc(collection(db, "user_addresses"), {
+                await addDoc(collection(db, "address"), {
                     address: "",
                     latlong: null,
                     name: name,
@@ -118,7 +118,7 @@ const SignUpForm = ({ onSuccess }) => {
 
             onSuccess && onSuccess();
         } catch (err) {
-            setError('Đã xảy ra lỗi, vui lòng thử lại.');
+            setError('Error, try again.');
         } finally {
             setLoading(false);
         }

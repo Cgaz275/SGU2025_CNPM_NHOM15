@@ -133,10 +133,10 @@ const OrderDetailModal = ({ isOpen, onClose, order }) => {
                     {item.name || 'Unknown Item'}
                   </h3>
                   <p className="text-xs sm:text-sm text-[#344054] mb-1">
-                    Restaurant: {item.restaurantId || item.restaurant || 'N/A'}
+                    Restaurant: {item.restaurant || item.restaurantId || 'N/A'}
                   </p>
                   <p className="text-xs sm:text-sm text-[#344054] line-clamp-2">
-                    Address: {item.address || order.address || 'N/A'}
+                    Address: {item.address || (typeof order.address === 'object' ? order.address?.address : order.address) || 'N/A'}
                   </p>
                 </div>
                 <div className="text-right flex-shrink-0">
@@ -168,26 +168,26 @@ const OrderDetailModal = ({ isOpen, onClose, order }) => {
                 <div>
                   <p className="text-sm text-[#FC8A06]">Address</p>
                   <p className="text-base sm:text-lg font-medium text-[#667085]">
-                    {order.address || order.deliveryAddress || 'N/A'}
+                    {typeof order.address === 'object' ? order.address?.address : order.address || order.deliveryAddress || 'N/A'}
                   </p>
                 </div>
                 <div>
                   <p className="text-sm text-[#FC8A06]">Receiver name</p>
                   <p className="text-base sm:text-lg font-medium text-[#667085]">
-                    {order.name || order.receiverName || 'N/A'}
+                    {typeof order.address === 'object' ? order.address?.name : order.name || order.receiverName || 'N/A'}
                   </p>
                 </div>
                 <div>
                   <p className="text-sm text-[#FC8A06]">Phone Number</p>
                   <p className="text-base sm:text-lg font-medium text-[#667085]">
-                    {order.phone || order.phoneNumber || 'N/A'}
+                    {typeof order.address === 'object' ? order.address?.phone : order.phone || order.phoneNumber || 'N/A'}
                   </p>
                 </div>
-                {order.note && (
+                {(typeof order.address === 'object' ? order.address?.note : order.note) && (
                   <div>
                     <p className="text-sm text-[#FC8A06]">Notes</p>
                     <p className="text-base sm:text-lg font-medium text-[#667085]">
-                      {order.note}
+                      {typeof order.address === 'object' ? order.address?.note : order.note}
                     </p>
                   </div>
                 )}

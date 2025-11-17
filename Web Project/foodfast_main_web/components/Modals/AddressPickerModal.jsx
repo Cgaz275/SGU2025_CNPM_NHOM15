@@ -8,6 +8,8 @@ export default function AddressPickerModal({ isOpen, onClose, onSelectAddress, i
   const mapContainer = useRef(null);
   const map = useRef(null);
   const marker = useRef(null);
+  const reverseGeocodeTimeoutRef = useRef(null);
+  const lastReverseGeocodeTimeRef = useRef(0);
 
   const [lng, setLng] = useState(initialLng || DEFAULT_VIEWPORT.lng);
   const [lat, setLat] = useState(initialLat || DEFAULT_VIEWPORT.lat);
@@ -79,8 +81,8 @@ export default function AddressPickerModal({ isOpen, onClose, onSelectAddress, i
           marker.current.setLngLat([center.lng, center.lat]);
         }
 
-        // Reverse geocode to get address
-        reverseGeocode(center.lat, center.lng);
+        // Debounce reverse geocode to prevent rate limiting
+        debouncedReverseGeocode(center.lat, center.lng);
       };
 
       map.current.on('move', onMove);
@@ -90,6 +92,9 @@ export default function AddressPickerModal({ isOpen, onClose, onSelectAddress, i
 
       return () => {
         map.current?.off('move', onMove);
+        if (reverseGeocodeTimeoutRef.current) {
+          clearTimeout(reverseGeocodeTimeoutRef.current);
+        }
       };
     }).catch((error) => {
       console.error('Failed to load Goong Maps:', error);
@@ -102,13 +107,24 @@ export default function AddressPickerModal({ isOpen, onClose, onSelectAddress, i
       return;
     }
 
+    // Rate limiting: minimum 1 second between requests
+    const now = Date.now();
+    if (now - lastReverseGeocodeTimeRef.current < 1000) {
+      return;
+    }
+
+    lastReverseGeocodeTimeRef.current = now;
+
     try {
       const url = `https://rsapi.goong.io/Geocode?latlng=${latitude},${longitude}&api_key=${GOONG_API_KEY}`;
-      console.log('Reverse geocoding request to:', url.replace(GOONG_API_KEY, 'API_KEY_HIDDEN'));
 
       const response = await fetch(url);
 
       if (!response.ok) {
+        if (response.status === 429) {
+          // Rate limit error - silently ignore on map movement
+          return;
+        }
         console.error(`Goong API error ${response.status}:`, response.statusText);
         return;
       }
@@ -120,6 +136,18 @@ export default function AddressPickerModal({ isOpen, onClose, onSelectAddress, i
     } catch (error) {
       console.error('Reverse geocoding error:', error);
     }
+  };
+
+  const debouncedReverseGeocode = (latitude, longitude) => {
+    // Clear previous timeout
+    if (reverseGeocodeTimeoutRef.current) {
+      clearTimeout(reverseGeocodeTimeoutRef.current);
+    }
+
+    // Set new timeout with 500ms debounce
+    reverseGeocodeTimeoutRef.current = setTimeout(() => {
+      reverseGeocode(latitude, longitude);
+    }, 500);
   };
 
   const searchAddress = async (e) => {

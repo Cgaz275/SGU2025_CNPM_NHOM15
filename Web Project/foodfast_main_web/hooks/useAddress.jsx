@@ -8,19 +8,19 @@ const useAddress = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Truy vấn collection 'user_addresses'
-    const addressCollectionRef = collection(db, 'user_addresses');
+    // Query collection 'address'
+    const addressCollectionRef = collection(db, 'address');
 
-    // Sắp xếp theo trường 'name'
+    // Sort by 'name' field
     const q = query(addressCollectionRef, orderBy('name', 'asc'));
 
-    // Lắng nghe real-time Firestore
+    // Listen to real-time Firestore updates
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
         const addressData = snapshot.docs.map((doc) => ({
           id: doc.id,
-          ...doc.data(), 
+          ...doc.data(),
         }));
 
         setData(addressData);

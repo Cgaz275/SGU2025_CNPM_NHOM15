@@ -61,7 +61,7 @@ export default function ProfilePage() {
         phone: formData.phone
       };
 
-      const addressCollectionRef = collection(db, 'user_addresses');
+      const addressCollectionRef = collection(db, 'address');
       const q = query(addressCollectionRef, where('userId', '==', user.uid));
       const querySnapshot = await getDocs(q);
 
@@ -75,7 +75,7 @@ export default function ProfilePage() {
             latlong: new GeoPoint(selectedAddressData.lat, selectedAddressData.lng),
             name: formData.name,
             phone: formData.phone,
-            note: formData.name,
+            note: "",
             userId: user.uid
           });
         } else {
@@ -85,7 +85,7 @@ export default function ProfilePage() {
             latlong: new GeoPoint(selectedAddressData.lat, selectedAddressData.lng),
             name: formData.name,
             phone: formData.phone,
-            note: formData.name,
+            note: "",
             userId: user.uid,
             createdAt: new Date()
           });
@@ -99,7 +99,7 @@ export default function ProfilePage() {
           await updateDoc(doc(db, 'address', existingDoc.id), {
             name: formData.name,
             phone: formData.phone,
-            note: formData.name,
+            note: "",
             address: formData.defaultAddress || existingData.address || "",
             latlong: existingData.latlong || null,
             userId: user.uid
@@ -111,7 +111,7 @@ export default function ProfilePage() {
             latlong: null,
             name: formData.name,
             phone: formData.phone,
-            note: formData.name,
+            note: "",
             userId: user.uid,
             createdAt: new Date()
           });
