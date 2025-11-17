@@ -161,9 +161,16 @@ export default function RestaurantMap({ restaurant }) {
                     <div className="space-y-2 text-white text-base md:text-lg">
                         <p>{restaurant?.address || 'Address not available'}</p>
                         <p className="font-bold">Rating</p>
-                        <p className="text-[#FC8A06] text-xl md:text-2xl">
-                            {restaurant?.rating || 'N/A'} ⭐
-                        </p>
+                        <div className="flex items-baseline gap-2">
+                            <p className="text-[#FC8A06] text-xl md:text-2xl">
+                                {restaurant?.rating || 'N/A'} ⭐
+                            </p>
+                            {restaurant?.ratingCount > 0 && (
+                                <p className="text-gray-300 text-sm md:text-base">
+                                    ({restaurant?.ratingCount} {restaurant?.ratingCount === 1 ? 'reviewer' : 'reviewers'})
+                                </p>
+                            )}
+                        </div>
                     </div>
                 </div>
 
@@ -193,9 +200,16 @@ export default function RestaurantMap({ restaurant }) {
                 <div className="space-y-2 text-white text-sm">
                     <p>{restaurant?.address || 'Address not available'}</p>
                     <p className="font-bold">Rating</p>
-                    <p className="text-[#FC8A06] text-lg">
-                        {restaurant?.rating || 'N/A'} ⭐
-                    </p>
+                    <div className="flex items-baseline gap-2">
+                        <p className="text-[#FC8A06] text-lg">
+                            {restaurant?.rating || 'N/A'} ⭐
+                        </p>
+                        {restaurant?.ratingCount > 0 && (
+                            <p className="text-gray-300 text-xs">
+                                ({restaurant?.ratingCount} {restaurant?.ratingCount === 1 ? 'reviewer' : 'reviewers'})
+                            </p>
+                        )}
+                    </div>
                 </div>
             </div>
         </section>

@@ -3,14 +3,43 @@
 import { useState, useEffect } from 'react';
 import { X, MapPin, Truck } from 'lucide-react';
 import { format } from 'date-fns';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/config/FirebaseConfig';
 import { formatPrice } from '@/utils/currencyFormatter';
+import toast from 'react-hot-toast';
+import RatingModal from './Rating/RatingModal';
 
 const OrderDetailModal = ({ isOpen, onClose, order }) => {
   const [restaurantAddress, setRestaurantAddress] = useState('');
   const [loadingAddress, setLoadingAddress] = useState(false);
+  const [cancelLoading, setCancelLoading] = useState(false);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [ratingModal, setRatingModal] = useState(null);
   const currency = process.env.NEXT_PUBLIC_CURRENCY_SYMBOL || 'VND ';
+
+  const handleCancelOrder = async () => {
+    if (!order?.id) {
+      toast.error('Order ID not found');
+      return;
+    }
+
+    setCancelLoading(true);
+    try {
+      const orderRef = doc(db, 'orders', order.id);
+      await updateDoc(orderRef, {
+        status: 'cancelled',
+        cancelledAt: new Date(),
+      });
+      toast.success('Order cancelled successfully');
+      setShowCancelConfirm(false);
+      onClose();
+    } catch (error) {
+      console.error('Error cancelling order:', error);
+      toast.error('Failed to cancel order. Please try again.');
+    } finally {
+      setCancelLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (!isOpen || !order?.restaurantId) {
@@ -35,6 +64,12 @@ const OrderDetailModal = ({ isOpen, onClose, order }) => {
 
     fetchRestaurantAddress();
   }, [isOpen, order?.restaurantId]);
+
+  useEffect(() => {
+    if (isOpen && order?.status?.toLowerCase() === 'completed' && !ratingModal) {
+      setRatingModal(order);
+    }
+  }, [isOpen, order?.status, order?.id]);
 
   if (!isOpen || !order) return null;
 
@@ -100,13 +135,32 @@ const OrderDetailModal = ({ isOpen, onClose, order }) => {
                 </div>
               </div>
             </div>
-            <button
-              onClick={onClose}
-              className="self-end sm:self-auto px-6 py-3 bg-[#366055] text-white rounded-lg hover:bg-[#2b4c44] transition flex items-center gap-2"
-            >
-              <MapPin className="w-4 h-4" />
-              Track order
-            </button>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button
+                onClick={onClose}
+                className="px-6 py-3 bg-[#366055] text-white rounded-lg hover:bg-[#2b4c44] transition flex items-center gap-2"
+              >
+                <MapPin className="w-4 h-4" />
+                Track order
+              </button>
+              {order?.status?.toLowerCase() === 'pending' && (
+                <button
+                  onClick={() => setShowCancelConfirm(true)}
+                  disabled={cancelLoading}
+                  className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  {cancelLoading ? 'Cancelling...' : 'Cancel Order'}
+                </button>
+              )}
+              {order?.status?.toLowerCase() === 'completed' && (
+                <button
+                  onClick={() => setRatingModal(order)}
+                  className="px-6 py-3 bg-[#FC8A06] text-white rounded-lg hover:bg-[#e87d05] transition flex items-center gap-2"
+                >
+                  Rate Order
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="h-px bg-[#D0D5DD]"></div>
@@ -279,6 +333,44 @@ const OrderDetailModal = ({ isOpen, onClose, order }) => {
             </div>
           </div>
         </div>
+
+        {/* Cancel Confirmation Modal */}
+        {showCancelConfirm && (
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3 className="text-xl font-semibold text-[#366055] mb-2">
+                Cancel Order?
+              </h3>
+              <p className="text-gray-600 mb-6">
+                Are you sure you want to cancel this order? This action cannot be undone.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowCancelConfirm(false)}
+                  disabled={cancelLoading}
+                  className="flex-1 px-4 py-3 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                >
+                  Keep Order
+                </button>
+                <button
+                  onClick={handleCancelOrder}
+                  disabled={cancelLoading}
+                  className="flex-1 px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                >
+                  {cancelLoading ? 'Cancelling...' : 'Yes, Cancel'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Rating Modal */}
+        {ratingModal && (
+          <RatingModal ratingModal={ratingModal} setRatingModal={setRatingModal} />
+        )}
       </div>
     </div>
   );

@@ -6,7 +6,7 @@ import { signInWithEmailAndPassword } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '@/config/FirebaseConfig';
 import { useDispatch, useSelector } from 'react-redux';
-import { setUser } from '@/lib/features/auth/authSlice';
+import { setAdmin } from '@/lib/features/auth/adminAuthSlice';
 import toast from 'react-hot-toast';
 
 export default function AdminAuthPage() {
@@ -15,13 +15,13 @@ export default function AdminAuthPage() {
     const [loading, setLoading] = useState(false);
     const router = useRouter();
     const dispatch = useDispatch();
-    const user = useSelector(state => state.auth.user);
+    const admin = useSelector(state => state.adminAuth.admin);
 
     useEffect(() => {
-        if (user?.role === 'admin') {
+        if (admin?.role === 'admin') {
             router.push('/admin');
         }
-    }, [user, router]);
+    }, [admin, router]);
 
     const handleSignIn = async (e) => {
         e.preventDefault();
@@ -53,7 +53,7 @@ export default function AdminAuthPage() {
                     return;
                 }
 
-                dispatch(setUser({
+                dispatch(setAdmin({
                     uid: result.user.uid,
                     email: result.user.email,
                     name: userData.name,

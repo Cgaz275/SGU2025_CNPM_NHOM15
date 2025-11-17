@@ -5,7 +5,7 @@ import { useDispatch } from 'react-redux';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '@/config/FirebaseConfig';
-import { setUser } from '@/lib/features/auth/authSlice';
+import { setAdmin } from '@/lib/features/auth/adminAuthSlice';
 import toast from 'react-hot-toast';
 
 export default function AdminSignIn() {
@@ -48,7 +48,7 @@ export default function AdminSignIn() {
                     ? (userData.createdAt.toDate?.() || userData.createdAt).toISOString?.() || userData.createdAt
                     : null;
 
-                dispatch(setUser({
+                dispatch(setAdmin({
                     uid: result.user.uid,
                     email: result.user.email,
                     name: userData.name,

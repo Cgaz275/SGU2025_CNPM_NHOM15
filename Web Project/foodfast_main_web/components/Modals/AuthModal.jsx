@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { X } from 'lucide-react';
-import { doc, setDoc, serverTimestamp, collection, addDoc, GeoPoint } from "firebase/firestore"; 
+import { doc, setDoc, serverTimestamp, collection, addDoc, GeoPoint, getDoc } from "firebase/firestore"; 
 import { 
     createUserWithEmailAndPassword, 
     signInWithEmailAndPassword,
@@ -27,7 +27,23 @@ const SignInForm = ({ onSuccess }) => {
         setError('');
         setLoading(true);
         try {
-            await signInWithEmailAndPassword(auth, email, password);
+            const result = await signInWithEmailAndPassword(auth, email, password);
+
+            // Check if user has admin role
+            const userRef = doc(db, 'user', result.user.uid);
+            const userSnap = await getDoc(userRef);
+
+            if (userSnap.exists()) {
+                const userData = userSnap.data();
+
+                if (userData.role === 'admin') {
+                    setError('Admin accounts cannot sign in here. Please use the admin portal.');
+                    await auth.signOut();
+                    setLoading(false);
+                    return;
+                }
+            }
+
             onSuccess && onSuccess();
         } catch (err) {
             setError('Email or password is invalid.');

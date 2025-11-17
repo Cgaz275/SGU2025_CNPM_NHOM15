@@ -30,7 +30,14 @@ export default function AuthWatcher() {
             } else {
                 console.warn("Not found documents for user with UID:", user.uid);
             }
-            
+
+            // Skip syncing admin users to normal auth state
+            // Admins should only be in adminAuth state (handled separately)
+            if (firestoreUserData.role === 'admin') {
+                dispatch(clearUser());
+                return;
+            }
+
             // --- 2. Dispatch dữ liệu kết hợp vào Redux ---
             // Convert Firestore Timestamp to ISO string to avoid non-serializable error
             const createdAtValue = firestoreUserData.createdAt

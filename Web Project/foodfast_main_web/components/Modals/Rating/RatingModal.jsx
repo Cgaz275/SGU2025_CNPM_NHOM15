@@ -4,21 +4,45 @@ import { Star } from 'lucide-react';
 import React, { useState } from 'react'
 import { XIcon } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useSelector } from 'react-redux';
+import { submitOrderRating } from '@/utils/ratingUtils';
 
 const RatingModal = ({ ratingModal, setRatingModal }) => {
 
     const [rating, setRating] = useState(0);
     const [review, setReview] = useState('');
+    const [loading, setLoading] = useState(false);
+    const user = useSelector(state => state.auth.user);
 
     const handleSubmit = async () => {
-        if (rating < 0 || rating > 5) {
-            return toast('Please select a rating');
+        if (rating < 1 || rating > 5) {
+            return toast.error('Please select a rating');
         }
-        if (review.length < 5) {
-            return toast('write a short review');
+        if (review.trim().length < 5) {
+            return toast.error('Please write at least 5 characters for your review');
         }
 
-        setRatingModal(null);
+        if (!ratingModal?.id || !ratingModal?.restaurantId || !user?.uid) {
+            return toast.error('Order information is missing');
+        }
+
+        setLoading(true);
+        try {
+            await submitOrderRating(
+                ratingModal.id,
+                ratingModal.restaurantId,
+                user.uid,
+                rating,
+                review.trim()
+            );
+            toast.success('Thank you for your rating!');
+            setRatingModal(null);
+        } catch (error) {
+            console.error('Error submitting rating:', error);
+            toast.error('Failed to submit rating. Please try again.');
+        } finally {
+            setLoading(false);
+        }
     }
 
     return (
@@ -39,13 +63,21 @@ const RatingModal = ({ ratingModal, setRatingModal }) => {
                 </div>
                 <textarea
                     className='w-full p-2 border border-gray-300 rounded-md mb-4 focus:outline-none focus:ring-2 focus:ring-green-400'
-                    placeholder='Write your review (optional)'
+                    placeholder='Write your review (minimum 5 characters)'
                     rows='4'
                     value={review}
                     onChange={(e) => setReview(e.target.value)}
+                    disabled={loading}
                 ></textarea>
-                <button onClick={e => toast.promise(handleSubmit(), { loading: 'Submitting...' })} className='w-full bg-[#366055] text-white py-2 rounded-md hover:bg-green-600 transition'>
-                    Submit Rating
+                <div className='text-xs text-gray-500 mb-4'>
+                    {review.trim().length}/5 characters minimum
+                </div>
+                <button
+                    onClick={handleSubmit}
+                    disabled={loading || rating === 0}
+                    className='w-full bg-[#366055] text-white py-2 rounded-md hover:bg-[#2b4c44] transition disabled:opacity-50 disabled:cursor-not-allowed'
+                >
+                    {loading ? 'Submitting...' : 'Submit Rating'}
                 </button>
             </div>
         </div>

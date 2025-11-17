@@ -11,21 +11,21 @@ import AdminSignIn from "./AdminSignIn"
 const AdminLayout = ({ children }) => {
 
     const [loading, setLoading] = useState(true)
-    const user = useSelector(state => state.auth.user)
+    const admin = useSelector(state => state.adminAuth.admin)
 
     useEffect(() => {
         setLoading(false)
-    }, [user])
+    }, [admin])
 
     if (loading) {
         return <Loading />
     }
 
-    if (!user || !user.uid) {
+    if (!admin || !admin.uid) {
         return <AdminSignIn />
     }
 
-    if (user.role !== 'admin') {
+    if (admin.role !== 'admin') {
         return (
             <div className="min-h-screen flex flex-col items-center justify-center text-center px-6 bg-gray-50">
                 <h1 className="text-2xl sm:text-4xl font-semibold text-slate-400">You are not authorized to access this page</h1>

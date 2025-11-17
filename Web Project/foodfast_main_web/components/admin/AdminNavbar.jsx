@@ -2,7 +2,7 @@
 import Link from "next/link"
 import { useDispatch, useSelector } from "react-redux"
 import { useRouter } from "next/navigation"
-import { clearUser } from "@/lib/features/auth/authSlice"
+import { clearAdmin } from "@/lib/features/auth/adminAuthSlice"
 import { signOut } from "firebase/auth"
 import { auth } from "@/config/FirebaseConfig"
 import { LogOut } from "lucide-react"
@@ -11,12 +11,12 @@ import toast from "react-hot-toast"
 const AdminNavbar = () => {
     const dispatch = useDispatch()
     const router = useRouter()
-    const user = useSelector(state => state.auth.user)
+    const admin = useSelector(state => state.adminAuth.admin)
 
     const handleLogout = async () => {
         try {
             await signOut(auth)
-            dispatch(clearUser())
+            dispatch(clearAdmin())
             toast.success('Signed out successfully')
             router.push('/admin/auth')
         } catch (error) {
@@ -36,7 +36,7 @@ const AdminNavbar = () => {
             <div className="flex items-center gap-6">
                 <div className="flex items-center gap-2">
                     <p className="text-slate-700 font-medium">
-                        Hi, {user?.name || 'Admin'}
+                        Hi, {admin?.name || 'Admin'}
                     </p>
                 </div>
                 <button
