@@ -6,6 +6,15 @@ import { db } from '@/config/FirebaseConfig'
 import toast from 'react-hot-toast'
 import { Trash2, Plus, Edit2, X } from 'lucide-react'
 
+// Generate a random UUID-like string
+const generateId = () => {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        const r = (Math.random() * 16) | 0
+        const v = c === 'x' ? r : (r & 0x3) | 0x8
+        return v.toString(16)
+    })
+}
+
 export default function DishManagement({ restaurantId }) {
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
@@ -19,6 +28,7 @@ export default function DishManagement({ restaurantId }) {
     const [editingOptionGroup, setEditingOptionGroup] = useState(null)
     const [optionGroupFormData, setOptionGroupFormData] = useState({
         name: '',
+        type: 'single',
         choices: []
     })
     const [newChoiceInput, setNewChoiceInput] = useState({ name: '', price: '' })
@@ -29,6 +39,12 @@ export default function DishManagement({ restaurantId }) {
         price: '',
         categoryId: '',
         imageUrl: ''
+    })
+
+    const initializeOptionGroupFormData = () => ({
+        name: '',
+        type: 'single',
+        choices: []
     })
 
     // Fetch categories
@@ -250,7 +266,7 @@ export default function DishManagement({ restaurantId }) {
         }
 
         const newChoice = {
-            id: Date.now().toString(),
+            id: generateId(),
             name: newChoiceInput.name,
             price: parseFloat(newChoiceInput.price)
         }
@@ -274,6 +290,7 @@ export default function DishManagement({ restaurantId }) {
     const resetOptionGroupForm = () => {
         setOptionGroupFormData({
             name: '',
+            type: 'single',
             choices: []
         })
         setEditingOptionGroup(null)
@@ -301,6 +318,7 @@ export default function DishManagement({ restaurantId }) {
         try {
             const optionGroupData = {
                 name: optionGroupFormData.name,
+                type: optionGroupFormData.type || 'single',
                 dishId: editingDish.id,
                 restaurantId: restaurantId,
                 choices: optionGroupFormData.choices,
@@ -374,6 +392,7 @@ export default function DishManagement({ restaurantId }) {
     const handleEditOptionGroup = (optionGroup) => {
         setOptionGroupFormData({
             name: optionGroup.name,
+            type: optionGroup.type || 'single',
             choices: optionGroup.choices || []
         })
         setEditingOptionGroup(optionGroup)
@@ -762,6 +781,43 @@ function OptionGroupsSection({
                     </div>
 
                     <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-3">
+                            Selection Type *
+                        </label>
+                        <div className="space-y-2">
+                            <label className="flex items-center gap-3 p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition">
+                                <input
+                                    type="radio"
+                                    name="optionType"
+                                    value="single"
+                                    checked={formData.type === 'single'}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, type: e.target.value }))}
+                                    className="w-4 h-4 cursor-pointer"
+                                />
+                                <div className="flex-1">
+                                    <p className="text-sm font-medium text-gray-900">Single Choice</p>
+                                    <p className="text-xs text-gray-600">Customer can select one option (e.g., Size)</p>
+                                </div>
+                            </label>
+
+                            <label className="flex items-center gap-3 p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition">
+                                <input
+                                    type="radio"
+                                    name="optionType"
+                                    value="multiple"
+                                    checked={formData.type === 'multiple'}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, type: e.target.value }))}
+                                    className="w-4 h-4 cursor-pointer"
+                                />
+                                <div className="flex-1">
+                                    <p className="text-sm font-medium text-gray-900">Multiple Choices</p>
+                                    <p className="text-xs text-gray-600">Customer can select multiple options (e.g., Add-ons)</p>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                             Choices
                         </label>
@@ -841,7 +897,12 @@ function OptionGroupsSection({
                     {optionGroups.map(group => (
                         <div key={group.id} className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
                             <div className="flex items-start justify-between mb-2">
-                                <h6 className="font-medium text-gray-900">{group.name}</h6>
+                                <div className="flex-1">
+                                    <h6 className="font-medium text-gray-900">{group.name}</h6>
+                                    <p className="text-xs text-gray-500 mt-1">
+                                        Type: {group.type === 'single' ? '📌 Single Choice' : '✓ Multiple Choices'}
+                                    </p>
+                                </div>
                                 <div className="flex gap-1">
                                     <button
                                         onClick={() => onEdit(group)}

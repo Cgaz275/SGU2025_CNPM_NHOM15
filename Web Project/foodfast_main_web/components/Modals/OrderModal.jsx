@@ -48,11 +48,29 @@ export default function OrderModal({ isOpen, dish, optionGroupId, onClose, onAdd
 
     if (!isOpen || !dish) return null
 
-    const handleChoiceChange = (groupId, groupName, choiceName) => {
-        setSelectedChoices(prev => ({
-            ...prev,
-            [groupId]: { groupName, choiceName }
-        }))
+    const handleChoiceChange = (groupId, groupName, choiceName, isMultiple) => {
+        if (isMultiple) {
+            // For multiple selection, store as an array
+            setSelectedChoices(prev => {
+                const currentChoices = prev[groupId]?.choiceNames || []
+                const isSelected = currentChoices.includes(choiceName)
+                return {
+                    ...prev,
+                    [groupId]: {
+                        groupName,
+                        choiceNames: isSelected
+                            ? currentChoices.filter(c => c !== choiceName)
+                            : [...currentChoices, choiceName]
+                    }
+                }
+            })
+        } else {
+            // For single selection, store as a string
+            setSelectedChoices(prev => ({
+                ...prev,
+                [groupId]: { groupName, choiceName }
+            }))
+        }
     }
 
     const handleAddToCart = () => {
@@ -80,9 +98,20 @@ export default function OrderModal({ isOpen, dish, optionGroupId, onClose, onAdd
         optionGroups.forEach(group => {
             const selectedChoice = selectedChoices[group.id]
             if (selectedChoice && group.choices) {
-                const choice = group.choices.find(c => c.name === selectedChoice.choiceName)
-                if (choice && choice.price) {
-                    total += choice.price * quantity
+                if (group.type === 'multiple' && selectedChoice.choiceNames) {
+                    // For multiple selections, add price of all selected choices
+                    selectedChoice.choiceNames.forEach(choiceName => {
+                        const choice = group.choices.find(c => c.name === choiceName)
+                        if (choice && choice.price) {
+                            total += choice.price * quantity
+                        }
+                    })
+                } else if (group.type !== 'multiple' && selectedChoice.choiceName) {
+                    // For single selection
+                    const choice = group.choices.find(c => c.name === selectedChoice.choiceName)
+                    if (choice && choice.price) {
+                        total += choice.price * quantity
+                    }
                 }
             }
         })
@@ -132,42 +161,60 @@ export default function OrderModal({ isOpen, dish, optionGroupId, onClose, onAdd
                         </div>
                     ) : optionGroups.length > 0 ? (
                         <div className="space-y-6">
-                            {optionGroups.map((group) => (
-                                <div key={group.id} className="space-y-3">
-                                    <h3 className="font-bold text-black text-lg">
-                                        {group.name || 'Choose Options'}
-                                    </h3>
-                                    {group.choices ? (
-                                        <div className="space-y-2">
-                                            {group.choices.map((choice, index) => (
-                                                <label
-                                                    key={index}
-                                                    className="flex items-center gap-3 p-3 border border-black/10 rounded-lg cursor-pointer hover:bg-gray-50 transition"
-                                                >
-                                                    <input
-                                                        type="radio"
-                                                        name={group.id}
-                                                        value={choice.name}
-                                                        checked={selectedChoices[group.id]?.choiceName === choice.name}
-                                                        onChange={() => handleChoiceChange(group.id, group.name, choice.name)}
-                                                        className="w-4 h-4 cursor-pointer"
-                                                    />
-                                                    <div className="flex-1">
-                                                        <p className="text-black font-medium">
-                                                            {choice.name}
-                                                        </p>
-                                                    </div>
-                                                    {choice.price > 0 && (
-                                                        <p className="text-[#366055] font-bold">
-                                                            +{choice.price.toLocaleString()}đ
-                                                        </p>
-                                                    )}
-                                                </label>
-                                            ))}
+                            {optionGroups.map((group) => {
+                                const isMultiple = group.type === 'multiple'
+                                const selectedChoices_ = selectedChoices[group.id]
+                                return (
+                                    <div key={group.id} className="space-y-3">
+                                        <div className="flex items-center justify-between">
+                                            <h3 className="font-bold text-black text-lg">
+                                                {group.name || 'Choose Options'}
+                                            </h3>
+                                            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                                                {isMultiple ? 'Multiple' : 'Single'}
+                                            </span>
                                         </div>
-                                    ) : null}
-                                </div>
-                            ))}
+                                        {group.choices ? (
+                                            <div className="space-y-2">
+                                                {group.choices.map((choice, index) => {
+                                                    const isSelected = isMultiple
+                                                        ? selectedChoices_?.choiceNames?.includes(choice.name) || false
+                                                        : selectedChoices_?.choiceName === choice.name
+                                                    return (
+                                                        <label
+                                                            key={index}
+                                                            className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition ${
+                                                                isSelected
+                                                                    ? 'border-[#366055] bg-[#366055]/5'
+                                                                    : 'border-black/10 hover:bg-gray-50'
+                                                            }`}
+                                                        >
+                                                            <input
+                                                                type={isMultiple ? 'checkbox' : 'radio'}
+                                                                name={group.id}
+                                                                value={choice.name}
+                                                                checked={isSelected}
+                                                                onChange={() => handleChoiceChange(group.id, group.name, choice.name, isMultiple)}
+                                                                className="w-4 h-4 cursor-pointer"
+                                                            />
+                                                            <div className="flex-1">
+                                                                <p className="text-black font-medium">
+                                                                    {choice.name}
+                                                                </p>
+                                                            </div>
+                                                            {choice.price > 0 && (
+                                                                <p className="text-[#366055] font-bold">
+                                                                    +{choice.price.toLocaleString()}đ
+                                                                </p>
+                                                            )}
+                                                        </label>
+                                                    )
+                                                })}
+                                            </div>
+                                        ) : null}
+                                    </div>
+                                )
+                            })}
                         </div>
                     ) : null}
 

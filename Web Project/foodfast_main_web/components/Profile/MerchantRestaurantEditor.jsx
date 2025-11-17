@@ -13,9 +13,9 @@ export default function MerchantRestaurantEditor({ user }) {
     }
 
     const tabs = [
-        { id: 'basic', label: 'Restaurant Info', icon: '🏪' },
-        { id: 'categories', label: 'Categories', icon: '📂' },
-        { id: 'dishes', label: 'Dishes', icon: '🍽��' }
+        { id: 'basic', label: 'Restaurant Info' },
+        { id: 'categories', label: 'Categories'},
+        { id: 'dishes', label: 'Dishes'}
     ]
 
     return (

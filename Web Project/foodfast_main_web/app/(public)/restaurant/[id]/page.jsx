@@ -10,22 +10,29 @@ import SimilarRestaurants from '@/components/Restaurants/SimilarRestaurants'
 import RestaurantMap from '@/components/Restaurants/RestaurantMap'
 import PageTitle from '@/components/PageTitle'
 import useDishesByRestaurant from '@/hooks/useDishesByRestaurant'
+import useCurrentUser from '@/hooks/useCurrentUser'
 import toast from 'react-hot-toast'
 import { addToCart, clearCart } from '@/lib/features/cart/cartSlice'
 import ClearCartConfirmModal from '@/components/Modals/ClearCartConfirmModal'
+import MerchantOwnRestaurantModal from '@/components/Modals/MerchantOwnRestaurantModal'
 
 export default function RestaurantDetailPage({ params: paramsPromise }) {
     const params = use(paramsPromise)
     const dispatch = useDispatch()
+    const { user } = useCurrentUser()
     const [restaurant, setRestaurant] = useState(null)
     const [loadingRestaurant, setLoadingRestaurant] = useState(true)
     const [activeCategory, setActiveCategory] = useState('offers')
     const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false)
     const [pendingOrderData, setPendingOrderData] = useState(null)
+    const [isMerchantOwnRestaurantModalOpen, setIsMerchantOwnRestaurantModalOpen] = useState(false)
 
     const { data: dishes, loading: loadingDishes } = useDishesByRestaurant(params.id)
     const cartRestaurantId = useSelector(state => state.cart.restaurantId)
     const cartItems = useSelector(state => state.cart.cartItems)
+
+    // Check if current user owns this restaurant
+    const isUserOwnRestaurant = user?.uid === params.id
 
     // Fetch restaurant data
     useEffect(() => {
@@ -65,6 +72,12 @@ export default function RestaurantDetailPage({ params: paramsPromise }) {
     }, {})
 
     const handleAddToCart = (orderData) => {
+        // Check if current user owns this restaurant
+        if (isUserOwnRestaurant) {
+            setIsMerchantOwnRestaurantModalOpen(true)
+            return
+        }
+
         // Check if cart has items from a different restaurant
         if (cartRestaurantId && cartRestaurantId !== params.id && Object.keys(cartItems).length > 0) {
             setPendingOrderData(orderData)
@@ -219,6 +232,13 @@ export default function RestaurantDetailPage({ params: paramsPromise }) {
                 onConfirm={handleConfirmClearCart}
                 currentRestaurantName="Your Current Restaurant"
                 newRestaurantName={restaurant?.name || 'This Restaurant'}
+            />
+
+            {/* Merchant Own Restaurant Modal */}
+            <MerchantOwnRestaurantModal
+                isOpen={isMerchantOwnRestaurantModalOpen}
+                restaurantName={restaurant?.name || 'Your Restaurant'}
+                onClose={() => setIsMerchantOwnRestaurantModalOpen(false)}
             />
         </>
     )

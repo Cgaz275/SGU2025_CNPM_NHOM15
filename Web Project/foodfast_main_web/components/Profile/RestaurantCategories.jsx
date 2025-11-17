@@ -6,6 +6,15 @@ import { db } from '@/config/FirebaseConfig'
 import toast from 'react-hot-toast'
 import { Trash2, Plus } from 'lucide-react'
 
+// Generate a random UUID-like string
+const generateId = () => {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        const r = (Math.random() * 16) | 0
+        const v = c === 'x' ? r : (r & 0x3) | 0x8
+        return v.toString(16)
+    })
+}
+
 export default function RestaurantCategories({ restaurantId }) {
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
@@ -50,7 +59,7 @@ export default function RestaurantCategories({ restaurantId }) {
         setSaving(true)
         try {
             const newCat = {
-                id: Date.now().toString(),
+                id: generateId(),
                 name: newCategory
             }
 
