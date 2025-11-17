@@ -52,7 +52,7 @@ export default function PopularCategories() {
         <section className="w-full max-w-7xl mx-auto px-6 my-16">
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
                 <h2 className="text-2xl md:text-3xl font-bold">
-                    FoodFast Popular Categories ({Math.min(categories.length, 6)} found)
+                    FoodFast Popular Categories 
                 </h2>
             </div>
 
@@ -63,7 +63,7 @@ export default function PopularCategories() {
             ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
                     {/* Lặp qua mảng categories lấy từ Firestore, giới hạn 6 items */}
-                    {categories.slice(0, 6).map((category) => (
+                    {categories.map((category) => (
                         <Link
                             key={category.id}
                             href={`/AllResturant?category=${category.id}`}

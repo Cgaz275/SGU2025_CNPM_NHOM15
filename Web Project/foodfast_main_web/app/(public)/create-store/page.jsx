@@ -4,7 +4,7 @@ import toast from "react-hot-toast"
 import Loading from "@/components/Loading"
 import AddressPickerModal from "@/components/Modals/AddressPickerModal"
 import { db, auth } from "@/config/FirebaseConfig"
-import { doc, setDoc, serverTimestamp, GeoPoint } from "firebase/firestore"
+import { doc, setDoc, serverTimestamp, GeoPoint, collection, onSnapshot } from "firebase/firestore"
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth"
 import { useRouter } from "next/navigation"
 import { MapPin, Upload } from "lucide-react"
@@ -14,6 +14,8 @@ export default function CreateStore() {
     const [showAddressPicker, setShowAddressPicker] = useState(false)
     const [loading, setLoading] = useState(true)
     const [submitting, setSubmitting] = useState(false)
+    const [categories, setCategories] = useState([])
+    const [categoriesLoading, setCategoriesLoading] = useState(true)
 
     // Unified form state
     const [formData, setFormData] = useState({
@@ -24,7 +26,8 @@ export default function CreateStore() {
         confirm: "",
         address: "",
         latitude: "",
-        longitude: ""
+        longitude: "",
+        category: ""
     })
 
     const [files, setFiles] = useState({
@@ -41,10 +44,36 @@ export default function CreateStore() {
         setLoading(false)
     }, [])
 
+    // Fetch categories from Firestore
+    useEffect(() => {
+        const categoriesRef = collection(db, 'categories')
+        const unsubscribe = onSnapshot(categoriesRef, (snapshot) => {
+            const categoriesData = snapshot.docs.map(doc => ({
+                id: doc.id,
+                name: doc.data().name,
+                imageUrl: doc.data().imageUrl
+            }))
+            setCategories(categoriesData)
+            setCategoriesLoading(false)
+        }, (error) => {
+            console.error('Error fetching categories:', error)
+            setCategoriesLoading(false)
+        })
+        return () => unsubscribe()
+    }, [])
+
     // Handle text input changes
     const handleInputChange = (e) => {
         const { name, value } = e.target
         setFormData({ ...formData, [name]: value })
+    }
+
+    // Handle category selection
+    const handleCategorySelect = (categoryId) => {
+        setFormData(prev => ({
+            ...prev,
+            category: categoryId
+        }))
     }
 
     // Handle address selection
@@ -138,6 +167,11 @@ export default function CreateStore() {
             return
         }
 
+        if (!formData.category) {
+            toast.error('Please select a category')
+            return
+        }
+
         setSubmitting(true)
         try {
             console.log('Starting registration process...')
@@ -183,6 +217,7 @@ export default function CreateStore() {
                 is_enable: true,
                 rating: 0,
                 status: "pending",
+                category: formData.category,
                 createdAt: serverTimestamp(),
             })
             console.log('Restaurant document saved')
@@ -290,6 +325,53 @@ export default function CreateStore() {
                     />
                 </div>
 
+                {/* Category Section */}
+                <div className="w-full border-t pt-8">
+                    <h2 className="text-2xl font-semibold text-slate-800 mb-6">Category *</h2>
+                    <p className="text-slate-600 mb-4">Select the category that best describes your restaurant</p>
+
+                    {categoriesLoading ? (
+                        <div className="flex items-center justify-center py-8">
+                            <p className="text-slate-600">Loading categories...</p>
+                        </div>
+                    ) : categories.length === 0 ? (
+                        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-yellow-700">
+                            No categories available
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-6">
+                            {categories.map((category) => (
+                                <label
+                                    key={category.id}
+                                    className={`flex items-center gap-3 p-4 border rounded-lg cursor-pointer transition ${
+                                        formData.category === category.id
+                                            ? 'border-[#366055] bg-[#366055]/5'
+                                            : 'border-slate-300 hover:bg-slate-50'
+                                    }`}
+                                >
+                                    <input
+                                        type="radio"
+                                        name="category"
+                                        value={category.id}
+                                        checked={formData.category === category.id}
+                                        onChange={() => handleCategorySelect(category.id)}
+                                        className="w-5 h-5 text-[#366055] border-slate-300 cursor-pointer"
+                                    />
+                                    <div className="flex flex-col flex-1">
+                                        <span className="text-slate-800 font-medium text-sm">{category.name}</span>
+                                    </div>
+                                </label>
+                            ))}
+                        </div>
+                    )}
+
+                    {formData.category && (
+                        <p className="text-sm text-slate-600 mb-6">
+                            Selected: <span className="font-semibold text-[#366055]">{categories.find(c => c.id === formData.category)?.name || 'Unknown'}</span>
+                        </p>
+                    )}
+                </div>
+
                 {/* Restaurant Information Section */}
                 <div className="w-full border-t pt-8">
                     <h2 className="text-2xl font-semibold text-slate-800 mb-6">Restaurant Information</h2>
@@ -343,7 +425,7 @@ export default function CreateStore() {
                         </label>
                     </div>
 
-                    <p className="font-medium text-slate-700 text-lg mb-2">Restaurant Logo *</p>
+                    <p className="font-medium text-slate-700 text-lg mb-2" style={{marginTop: '1.5rem'}}>Restaurant Logo *</p>
                     <div className="w-full mb-6">
                         <label className="flex flex-col gap-3 cursor-pointer">
                             <div className="relative border-2 border-dashed border-slate-300 rounded-lg p-6 hover:border-slate-400 transition">
