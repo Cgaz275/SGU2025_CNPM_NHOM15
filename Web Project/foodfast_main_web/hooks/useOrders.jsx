@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '../config/FirebaseConfig';
 import useCurrentUser from './useCurrentUser';
+import { sortDesc } from '@/utils/sortUtils';
 
 const useOrders = () => {
   const { user, isAuthenticated } = useCurrentUser();
@@ -20,8 +21,7 @@ const useOrders = () => {
     const ordersRef = collection(db, 'orders');
     const q = query(
       ordersRef,
-      where('userId', '==', user.uid),
-      orderBy('createdAt', 'desc')
+      where('userId', '==', user.uid)
     );
 
     const unsubscribe = onSnapshot(
@@ -32,7 +32,10 @@ const useOrders = () => {
           ...doc.data(),
         }));
 
-        setOrders(ordersData);
+        // Sort by createdAt in descending order (newest first) on client-side
+        const sortedOrders = sortDesc(ordersData, 'createdAt');
+
+        setOrders(sortedOrders);
         setLoading(false);
         setError(null);
       },

@@ -1,8 +1,9 @@
 // Import các hàm cần thiết từ SDK
 import { initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth"; 
+import { getAuth } from "firebase/auth";
 import { getAnalytics } from "firebase/analytics";
 import { getFirestore } from "firebase/firestore";
+import { getStorage } from "firebase/storage";
 
 
 
@@ -32,5 +33,7 @@ export const auth = getAuth(app);
 //Khởi tạo và EXPORT đối tượng Firestore
 export const db = getFirestore(app);
 
+//Khởi tạo và EXPORT đối tượng Storage
+export const storage = getStorage(app);
 
 export default app;

@@ -24,7 +24,7 @@ const Navbar = () => {
     const navLinks = [
         { name: 'Home', href: '/' },
         { name: 'Discovery', href: '/shop' },
-        { name: 'Partner With Us', href: '/create-store' },
+        { name: 'Partner With Us', href: '/create-store', hideMerchant: true },
         { name: 'Order History', href: '/orders', requireAuth: true },
     ];
 
@@ -80,6 +80,8 @@ const Navbar = () => {
                             {navLinks.map((link) => {
                                 // Skip auth-only links if not logged in
                                 if (link.requireAuth && !user) return null;
+                                // Skip "Partner With Us" if user is a merchant
+                                if (link.hideMerchant && user?.role === 'merchant') return null;
 
                                 const active = isActive(link.href);
                                 return (
@@ -160,6 +162,8 @@ const Navbar = () => {
                                 {navLinks.map((link) => {
                                     // Skip auth-only links if not logged in
                                     if (link.requireAuth && !user) return null;
+                                    // Skip "Partner With Us" if user is a merchant
+                                    if (link.hideMerchant && user?.role === 'merchant') return null;
 
                                     return (
                                         <Link
