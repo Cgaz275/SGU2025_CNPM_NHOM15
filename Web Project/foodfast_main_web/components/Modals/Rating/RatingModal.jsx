@@ -46,8 +46,8 @@ const RatingModal = ({ ratingModal, setRatingModal }) => {
     }
 
     return (
-        <div className='fixed inset-0 z-120 flex items-center justify-center bg-black/10'>
-            <div className='bg-white p-8 rounded-lg shadow-lg w-96 relative'>
+        <div className='fixed inset-0 z-120 flex items-center justify-center bg-black/10 p-4 overflow-y-auto'>
+            <div className='bg-white p-8 rounded-lg shadow-lg w-96 max-h-[90vh] overflow-y-auto relative my-8'>
                 <button onClick={() => setRatingModal(null)} className='absolute top-3 right-3 text-gray-500 hover:text-gray-700'>
                     <XIcon size={20} />
                 </button>

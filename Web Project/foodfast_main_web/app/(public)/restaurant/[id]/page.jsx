@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, use } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { doc, getDoc } from 'firebase/firestore'
+import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore'
 import { db } from '@/config/FirebaseConfig'
 import RestaurantHero from '@/components/Restaurants/RestaurantHero'
 import CategoryTabs from '@/components/Restaurants/CategoryTabs'
@@ -22,7 +22,10 @@ export default function RestaurantDetailPage({ params: paramsPromise }) {
     const { user } = useCurrentUser()
     const [restaurant, setRestaurant] = useState(null)
     const [categoryList, setCategoryList] = useState([])
+    const [similarRestaurants, setSimilarRestaurants] = useState([])
+    const [selectedCategoryId, setSelectedCategoryId] = useState(null)
     const [loadingRestaurant, setLoadingRestaurant] = useState(true)
+    const [loadingSimilar, setLoadingSimilar] = useState(false)
     const [activeCategory, setActiveCategory] = useState('offers')
     const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false)
     const [pendingOrderData, setPendingOrderData] = useState(null)
@@ -43,10 +46,30 @@ export default function RestaurantDetailPage({ params: paramsPromise }) {
                 const docSnap = await getDoc(docRef)
 
                 if (docSnap.exists()) {
-                    setRestaurant({
+                    const restaurantData = {
                         id: docSnap.id,
                         ...docSnap.data()
-                    })
+                    }
+                    setRestaurant(restaurantData)
+
+                    console.log('Restaurant data:', restaurantData)
+
+                    // Try to get category from multiple sources
+                    let categoryId = null
+
+                    // First, check if restaurant has categories array
+                    if (restaurantData.categories && Array.isArray(restaurantData.categories) && restaurantData.categories.length > 0) {
+                        categoryId = restaurantData.categories[0]
+                    }
+                    // Second, check if restaurant has a single category field
+                    else if (restaurantData.category) {
+                        categoryId = restaurantData.category
+                    }
+
+                    if (categoryId) {
+                        setSelectedCategoryId(categoryId)
+                        console.log('Selected category ID:', categoryId)
+                    }
                 } else {
                     console.error('Restaurant not found')
                 }
@@ -57,6 +80,7 @@ export default function RestaurantDetailPage({ params: paramsPromise }) {
                 if (catDocSnap.exists()) {
                     const data = catDocSnap.data()
                     setCategoryList(data.category_list || [])
+                    console.log('Category list:', data.category_list)
                 }
             } catch (error) {
                 console.error('Error fetching restaurant:', error)
@@ -69,6 +93,66 @@ export default function RestaurantDetailPage({ params: paramsPromise }) {
             fetchRestaurant()
         }
     }, [params.id])
+
+    // Fetch similar restaurants by category
+    useEffect(() => {
+        const fetchSimilarRestaurants = async () => {
+            if (!params.id) {
+                setSimilarRestaurants([])
+                return
+            }
+
+            setLoadingSimilar(true)
+            try {
+                const restaurantsRef = collection(db, 'restaurants')
+                const querySnapshot = await getDocs(restaurantsRef)
+
+                const allRestaurants = []
+
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data()
+
+                    // Skip current restaurant
+                    if (doc.id === params.id) return
+
+                    if (!data.name) return
+
+                    let hasMatchingCategory = false
+
+                    if (selectedCategoryId) {
+                        // Use same logic as AllRestaurant page
+                        hasMatchingCategory = data.category === selectedCategoryId ||
+                                           data.categories?.includes(selectedCategoryId)
+                    } else {
+                        // If no category selected, include all restaurants
+                        hasMatchingCategory = true
+                    }
+
+                    // Add restaurant if it matches the category
+                    if (hasMatchingCategory) {
+                        allRestaurants.push({
+                            id: doc.id,
+                            ...data
+                        })
+                    }
+                })
+
+                console.log('Found similar restaurants:', allRestaurants.length, 'for category:', selectedCategoryId)
+
+                // Sort by rating descending
+                allRestaurants.sort((a, b) => (parseFloat(b.rating) || 0) - (parseFloat(a.rating) || 0))
+
+                setSimilarRestaurants(allRestaurants)
+            } catch (error) {
+                console.error('Error fetching similar restaurants:', error)
+                setSimilarRestaurants([])
+            } finally {
+                setLoadingSimilar(false)
+            }
+        }
+
+        fetchSimilarRestaurants()
+    }, [params.id, selectedCategoryId])
 
     // Group dishes by category
     const groupedDishes = dishes.reduce((acc, dish) => {
@@ -153,38 +237,6 @@ export default function RestaurantDetailPage({ params: paramsPromise }) {
         )
     }
 
-    const similarRestaurants = [
-        {
-            id: 1,
-            name: "McDonald's London",
-            image: 'https://api.builder.io/api/v1/image/assets/TEMP/74bc30f073608985a75282e391fa71fa0632b74a?width=476'
-        },
-        {
-            id: 2,
-            name: 'Papa Johns',
-            image: 'https://api.builder.io/api/v1/image/assets/TEMP/2c6abd496ed1aaf3d3a5d50641504bd08c7267e8?width=476'
-        },
-        {
-            id: 3,
-            name: 'KFC West London',
-            image: 'https://api.builder.io/api/v1/image/assets/TEMP/10c184839f607d9bcfadeeec99186afd373ac726?width=476'
-        },
-        {
-            id: 4,
-            name: 'Texas Chicken',
-            image: 'https://api.builder.io/api/v1/image/assets/TEMP/97e33e77de602323414921ad13c780bc5dd264a4?width=476'
-        },
-        {
-            id: 5,
-            name: 'Burger King',
-            image: 'https://api.builder.io/api/v1/image/assets/TEMP/6ecdd4fee68dd0afc09ee17e93e3ec1d2ac0e2ad?width=476'
-        },
-        {
-            id: 6,
-            name: 'Shaurma 1',
-            image: 'https://api.builder.io/api/v1/image/assets/TEMP/32d344eecd2c5adfb2987658e1a6649065145c35?width=476'
-        }
-    ]
 
     return (
         <>
@@ -241,7 +293,10 @@ export default function RestaurantDetailPage({ params: paramsPromise }) {
             <RestaurantMap restaurant={restaurant} />
 
             {/* Similar Restaurants */}
-            <SimilarRestaurants restaurants={similarRestaurants} />
+            <SimilarRestaurants
+                restaurants={similarRestaurants}
+                categoryId={selectedCategoryId}
+            />
 
             {/* Clear Cart Confirmation Modal */}
             <ClearCartConfirmModal

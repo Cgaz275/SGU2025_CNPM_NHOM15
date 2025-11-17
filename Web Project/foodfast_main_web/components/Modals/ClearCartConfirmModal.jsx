@@ -12,8 +12,8 @@ export default function ClearCartConfirmModal({
     if (!isOpen) return null
 
     return (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-xl max-w-md w-full">
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 overflow-y-auto">
+            <div className="bg-white rounded-xl max-w-md w-full max-h-[90vh] overflow-y-auto my-8">
                 {/* Header */}
                 <div className="border-b border-gray-200 p-6 flex items-center justify-between">
                     <div className="flex items-center gap-3">

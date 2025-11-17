@@ -114,7 +114,16 @@ const OrderDetailModal = ({ isOpen, onClose, order }) => {
         className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto my-8"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="p-6 sm:p-8 space-y-6">
+        <div className="p-6 sm:p-8 space-y-6 relative">
+          {/* Close Button */}
+          <button
+            onClick={onClose}
+            className="absolute top-6 right-6 sm:top-8 sm:right-8 p-2 hover:bg-gray-100 rounded-lg transition"
+            aria-label="Close modal"
+          >
+            <X className="w-6 h-6 text-gray-600 hover:text-gray-900" />
+          </button>
+
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
@@ -167,14 +176,6 @@ const OrderDetailModal = ({ isOpen, onClose, order }) => {
 
           {/* Order Status Timeline */}
           <div className="relative">
-            <div className="absolute top-11 left-12 right-12 h-1.5 bg-[#D0D5DD] rounded"></div>
-            <div 
-              className={`absolute top-11 left-12 h-1.5 bg-[#366055] rounded transition-all duration-500`}
-              style={{ 
-                width: `${(((['pending', 'confirmed', 'shipping', 'completed'].indexOf(order.status?.toLowerCase() || 'pending')) / 3) * 100)}%` 
-              }}
-            ></div>
-            
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-8 relative">
               {['pending', 'confirmed', 'shipping', 'completed'].map((status, index) => (
                 <div key={status} className="flex flex-col items-center">

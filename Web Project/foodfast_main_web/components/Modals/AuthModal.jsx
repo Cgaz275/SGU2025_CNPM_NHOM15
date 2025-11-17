@@ -344,7 +344,7 @@ const AuthModal = ({ isOpen, onClose, mode = 'user' }) => {
             onClick={onClose}
         >
             <div
-                className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 relative transform transition-all duration-300 scale-100"
+                className="bg-white rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto p-6 relative transform transition-all duration-300 scale-100"
                 onClick={e => e.stopPropagation()}
             >
                 <button
