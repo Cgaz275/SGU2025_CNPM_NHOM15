@@ -167,14 +167,17 @@ export default function Cart() {
             // Get restaurant ID from the first item (assuming single restaurant per order)
             const restaurantId = cartArray[0]?.restaurantId;
 
-            // Fetch restaurant name
+            // Fetch restaurant name and pickup location
             let restaurantName = '';
+            let pickupLatlong = null;
             if (restaurantId) {
                 try {
                     const restaurantRef = doc(db, 'restaurants', restaurantId);
                     const restaurantSnap = await getDoc(restaurantRef);
                     if (restaurantSnap.exists()) {
-                        restaurantName = restaurantSnap.data().name || '';
+                        const restaurantData = restaurantSnap.data();
+                        restaurantName = restaurantData.name || '';
+                        pickupLatlong = restaurantData.latlong || null;
                     }
                 } catch (error) {
                     console.error('Error fetching restaurant:', error);
@@ -228,6 +231,13 @@ export default function Cart() {
                 // Payment information
                 paymentMethod: paymentMethod,
                 isPaid: paymentMethod !== 'COD',
+
+                // Pickup location (restaurant coordinates)
+                pickup_latlong: pickupLatlong,
+
+                // Package and promotion info
+                package_weight_kg: 0.2,
+                promotionCode: "",
 
                 // Delivery information (address as nested object)
                 address: {

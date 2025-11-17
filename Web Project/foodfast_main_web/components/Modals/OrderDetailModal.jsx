@@ -1,12 +1,42 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { X, MapPin, Truck } from 'lucide-react';
 import { format } from 'date-fns';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '@/config/FirebaseConfig';
 
 const OrderDetailModal = ({ isOpen, onClose, order }) => {
-  if (!isOpen || !order) return null;
+  const [restaurantAddress, setRestaurantAddress] = useState('');
+  const [loadingAddress, setLoadingAddress] = useState(false);
 
   const currency = process.env.NEXT_PUBLIC_CURRENCY_SYMBOL || 'VND ';
+
+  useEffect(() => {
+    if (!isOpen || !order?.restaurantId) {
+      setRestaurantAddress('');
+      return;
+    }
+
+    const fetchRestaurantAddress = async () => {
+      setLoadingAddress(true);
+      try {
+        const restaurantRef = doc(db, 'restaurants', order.restaurantId);
+        const restaurantSnap = await getDoc(restaurantRef);
+        if (restaurantSnap.exists()) {
+          setRestaurantAddress(restaurantSnap.data().address || '');
+        }
+      } catch (error) {
+        console.error('Error fetching restaurant address:', error);
+      } finally {
+        setLoadingAddress(false);
+      }
+    };
+
+    fetchRestaurantAddress();
+  }, [isOpen, order?.restaurantId]);
+
+  if (!isOpen || !order) return null;
 
   const formatDate = (timestamp) => {
     if (!timestamp) return 'N/A';
@@ -136,7 +166,7 @@ const OrderDetailModal = ({ isOpen, onClose, order }) => {
                     Restaurant: {item.restaurant || item.restaurantId || 'N/A'}
                   </p>
                   <p className="text-xs sm:text-sm text-[#344054] line-clamp-2">
-                    Address: {item.address || (typeof order.address === 'object' ? order.address?.address : order.address) || 'N/A'}
+                    Address: {restaurantAddress|| 'N/A'}
                   </p>
                 </div>
                 <div className="text-right flex-shrink-0">
@@ -151,8 +181,8 @@ const OrderDetailModal = ({ isOpen, onClose, order }) => {
 
           <div className="h-px bg-[#D0D5DD]"></div>
 
-          {/* Payment & Delivery Info */}
-          <div className="grid sm:grid-cols-2 gap-8">
+          {/* Payment & Location Info */}
+          <div className="grid sm:grid-cols-3 gap-8">
             {/* Payment */}
             <div>
               <h3 className="text-lg sm:text-xl font-medium text-black mb-4">Payment</h3>
@@ -161,14 +191,33 @@ const OrderDetailModal = ({ isOpen, onClose, order }) => {
               </div>
             </div>
 
-            {/* Delivery */}
+            {/* Restaurant Pickup Location */}
+            <div>
+              <h3 className="text-lg sm:text-xl font-medium text-black mb-4">Pickup Location</h3>
+              <div className="space-y-3">
+                <div>
+                  <p className="text-sm text-[#FC8A06]">Address</p>
+                  <p className="text-base sm:text-lg font-medium text-[#667085]">
+                    {loadingAddress ? 'Loading...' : restaurantAddress || 'N/A'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-[#FC8A06]">Restaurant</p>
+                  <p className="text-base sm:text-lg font-medium text-[#667085]">
+                    {order.items?.[0]?.restaurant || order.restaurantId || 'N/A'}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Delivery Address */}
             <div>
               <h3 className="text-lg sm:text-xl font-medium text-black mb-4">Delivery</h3>
               <div className="space-y-3">
                 <div>
                   <p className="text-sm text-[#FC8A06]">Address</p>
                   <p className="text-base sm:text-lg font-medium text-[#667085]">
-                    {typeof order.address === 'object' ? order.address?.address : order.address || order.deliveryAddress || 'N/A'}
+                    {typeof order.address === 'object' ? order.address?.address : order.address || 'N/A'}
                   </p>
                 </div>
                 <div>
@@ -183,14 +232,6 @@ const OrderDetailModal = ({ isOpen, onClose, order }) => {
                     {typeof order.address === 'object' ? order.address?.phone : order.phone || order.phoneNumber || 'N/A'}
                   </p>
                 </div>
-                {(typeof order.address === 'object' ? order.address?.note : order.note) && (
-                  <div>
-                    <p className="text-sm text-[#FC8A06]">Notes</p>
-                    <p className="text-base sm:text-lg font-medium text-[#667085]">
-                      {typeof order.address === 'object' ? order.address?.note : order.note}
-                    </p>
-                  </div>
-                )}
               </div>
             </div>
           </div>

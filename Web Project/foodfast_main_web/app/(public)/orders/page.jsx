@@ -26,18 +26,7 @@ export default function OrdersPage() {
     }
   }, [isAuthenticated, router]);
 
-  // If not authenticated, show loading (the effect will redirect)
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#366055] mx-auto"></div>
-          <p className="mt-4 text-gray-600">Redirecting...</p>
-        </div>
-      </div>
-    );
-  }
-
+  // Memoize order categorization - MUST be before early return
   const { todayOrders, pastOrders } = useMemo(() => {
     const today = [];
     const past = [];
@@ -53,6 +42,18 @@ export default function OrdersPage() {
 
     return { todayOrders: today, pastOrders: past };
   }, [orders]);
+
+  // If not authenticated, show loading (the effect will redirect)
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#366055] mx-auto"></div>
+          <p className="mt-4 text-gray-600">Redirecting...</p>
+        </div>
+      </div>
+    );
+  }
 
   const OrderCard = ({ order }) => {
     const firstItem = order.items?.[0] || {};

@@ -4,13 +4,14 @@ import { db } from '../config/FirebaseConfig';
 import useCurrentUser from './useCurrentUser';
 
 const useOrders = () => {
-  const { user } = useCurrentUser();
+  const { user, isAuthenticated } = useCurrentUser();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (!user || user.isAnonymous) {
+    // Only set up the listener if user is authenticated and has a valid uid
+    if (!isAuthenticated || !user?.uid) {
       setOrders([]);
       setLoading(false);
       return;
@@ -43,7 +44,7 @@ const useOrders = () => {
     );
 
     return () => unsubscribe();
-  }, [user]);
+  }, [user, isAuthenticated]);
 
   return { orders, loading, error };
 };
