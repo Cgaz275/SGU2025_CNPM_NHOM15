@@ -27,6 +27,7 @@ const nextConfig = {
                 hostname: '**.firebasestorage.googleapis.com',
             },
         ],
+        unoptimized: process.env.NODE_ENV === 'development',
     },
 };
 

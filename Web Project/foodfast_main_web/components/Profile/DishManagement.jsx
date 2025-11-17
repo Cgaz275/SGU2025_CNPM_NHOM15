@@ -5,6 +5,7 @@ import { collection, query, where, getDocs, doc, setDoc, updateDoc, deleteDoc, g
 import { db } from '@/config/FirebaseConfig'
 import toast from 'react-hot-toast'
 import { Trash2, Plus, Edit2, X } from 'lucide-react'
+import { formatPrice } from '@/utils/currencyFormatter'
 
 // Generate a random UUID-like string
 const generateId = () => {
@@ -636,10 +637,7 @@ export default function DishManagement({ restaurantId }) {
                                     <div className="flex items-center justify-between mb-4">
                                         <div className="flex-1">
                                             <p className="text-lg font-semibold text-[#366055]">
-                                                {dish.price.toLocaleString('en-US', {
-                                                    style: 'currency',
-                                                    currency: 'USD'
-                                                })}
+                                                {formatPrice(dish.price)}
                                             </p>
                                             <div className="text-xs text-gray-500 space-y-1">
                                                 {category && <p>{category.name}</p>}

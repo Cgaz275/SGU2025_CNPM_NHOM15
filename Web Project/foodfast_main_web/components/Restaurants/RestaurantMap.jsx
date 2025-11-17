@@ -32,10 +32,15 @@ export default function RestaurantMap({ restaurant }) {
             return
         }
 
+        let isMounted = true
+
         const initializeMap = async () => {
             try {
                 const goongjs = (await import('@goongmaps/goong-js')).default
                 await import('@goongmaps/goong-js/dist/goong-js.css')
+
+                // Check if component is still mounted after async operations
+                if (!isMounted || !mapContainer.current) return
 
                 let lng, lat
 
@@ -70,6 +75,9 @@ export default function RestaurantMap({ restaurant }) {
                     return
                 }
 
+                // Check again before creating map
+                if (!isMounted || !mapContainer.current) return
+
                 map.current = new goongjs.Map({
                     container: mapContainer.current,
                     accessToken: GOONG_MAP_TILES_KEY,
@@ -79,19 +87,26 @@ export default function RestaurantMap({ restaurant }) {
                 })
 
                 map.current.on('load', () => {
+                    // Check if component is still mounted before updating state
+                    if (!isMounted || !map.current) return
+
                     setMapLoaded(true)
                     setError(null)
 
-                    new goongjs.Marker()
-                        .setLngLat([lng, lat])
-                        .addTo(map.current)
+                    if (map.current && mapContainer.current) {
+                        new goongjs.Marker()
+                            .setLngLat([lng, lat])
+                            .addTo(map.current)
+                    }
                 })
 
                 map.current.on('error', (e) => {
+                    if (!isMounted) return
                     setError(`Map error: ${e.error?.message || 'Unknown error'}`)
                     console.error('Goong Map Error:', e)
                 })
             } catch (err) {
+                if (!isMounted) return
                 setError(`Failed to initialize map: ${err.message}`)
                 console.error('Map initialization error:', err)
             }
@@ -100,6 +115,7 @@ export default function RestaurantMap({ restaurant }) {
         initializeMap()
 
         return () => {
+            isMounted = false
             if (map.current) {
                 map.current.remove()
                 map.current = null

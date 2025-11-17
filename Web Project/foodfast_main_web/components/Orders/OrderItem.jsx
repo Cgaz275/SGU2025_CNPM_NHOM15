@@ -5,6 +5,7 @@ import { useSelector } from "react-redux";
 import Rating from "../Modals/Rating/Rating";
 import { useState } from "react";
 import RatingModal from "../Modals/Rating/RatingModal";
+import { formatPrice } from "@/utils/currencyFormatter";
 
 const OrderItem = ({ order }) => {
 
@@ -35,7 +36,7 @@ const OrderItem = ({ order }) => {
                                 </div>
                                 <div className="flex flex-col justify-center text-sm">
                                     <p className="font-medium text-slate-600 text-base">{item.product.name}</p>
-                                    <p>{currency}{item.price} Qty : {item.quantity} </p>
+                                    <p>{formatPrice(item.price)} Qty : {item.quantity} </p>
                                     <p className="mb-1">{new Date(order.createdAt).toDateString()}</p>
                                     <div>
                                         {ratings.find(rating => order.id === rating.orderId && item.product.id === rating.productId)

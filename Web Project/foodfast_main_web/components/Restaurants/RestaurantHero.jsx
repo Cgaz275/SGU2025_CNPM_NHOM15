@@ -9,7 +9,7 @@ export default function RestaurantHero({ restaurant }) {
                 {/* Background Image with Overlay */}
                 <div className="relative h-[300px] md:h-[400px] lg:h-[477px]">
                     <img
-                        src={restaurant?.bannerImage || 'https://api.builder.io/api/v1/image/assets/TEMP/ed772e77fe0179e004cc23209229d04c0333a152?width=3056'}
+                        src={restaurant?.bannerURL || 'https://api.builder.io/api/v1/image/assets/TEMP/ed772e77fe0179e004cc23209229d04c0333a152?width=3056'}
                         alt={restaurant?.name || 'Restaurant'}
                         className="w-full h-full object-cover"
                         {...lazyLoadProps}
@@ -42,19 +42,19 @@ export default function RestaurantHero({ restaurant }) {
                             </div>
 
                             {/* Delivery Time Badge */}
-                            <div className="flex items-center gap-3 px-6 py-3 md:py-4 rounded-full border border-white w-fit">
+                            {/* <div className="flex items-center gap-3 px-6 py-3 md:py-4 rounded-full border border-white w-fit">
                                 <Bike className="w-6 h-6 md:w-8 md:h-8 text-white" />
                                 <span className="text-white text-sm md:text-lg font-semibold whitespace-nowrap">
                                     Delivery in 5-15 Minutes
                                 </span>
-                            </div>
+                            </div> */}
                         </div>
                     </div>
 
                     {/* Right Side - Featured Image */}
                     <div className="hidden lg:flex items-center justify-end">
                         <img
-                            src={restaurant?.featuredImage || 'https://api.builder.io/api/v1/image/assets/TEMP/ea24ac34f918ce4abfef9346b54adcc6d958d4c1?width=1162'}
+                            src={restaurant?.imageUrl || 'https://api.builder.io/api/v1/image/assets/TEMP/ea24ac34f918ce4abfef9346b54adcc6d958d4c1?width=1162'}
                             alt="Featured Food"
                             className="w-full max-w-[581px] h-auto rounded-xl object-cover"
                             {...lazyLoadProps}

@@ -18,7 +18,7 @@ import { useRouter } from 'next/navigation';
 export default function Cart() {
     const currency = process.env.NEXT_PUBLIC_CURRENCY_SYMBOL || 'VND ';
 
-    const { cartItems } = useSelector(state => state.cart);
+    const { cartItems, itemMetadata } = useSelector(state => state.cart);
     const products = useSelector(state => state.product.list);
     const { user, isAuthenticated } = useCurrentUser();
     const router = useRouter();
@@ -38,6 +38,7 @@ export default function Cart() {
     const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
     const [selectedAddressData, setSelectedAddressData] = useState(null);
     const [defaultAddressId, setDefaultAddressId] = useState(null);
+    const [selectedAddressCreatedAt, setSelectedAddressCreatedAt] = useState(null);
 
     const createCartArray = async () => {
         setLoading(true);
@@ -61,12 +62,22 @@ export default function Cart() {
                 }
             }
 
-            if (item) {
-                cartArray.push({
+            if (item || itemMetadata[key]) {
+                const metadata = itemMetadata[key];
+                const finalItem = {
+                    id: key,
+                    name: item?.name || metadata?.name || 'Unknown Item',
+                    price: item?.price || metadata?.price || 0,
+                    imageUrl: item?.imageUrl || metadata?.imageUrl,
+                    images: item?.images,
+                    category: item?.category,
+                    size: item?.size,
+                    restaurantId: item?.restaurantId,
                     ...item,
                     quantity: value,
-                });
-                setTotalPrice(prev => prev + item.price * value);
+                };
+                cartArray.push(finalItem);
+                setTotalPrice(prev => prev + (finalItem.price * value));
             }
         }
         setCartArray(cartArray);
@@ -81,12 +92,28 @@ export default function Cart() {
         console.log('Applying promo code:', promoCode);
     }
 
-    const handleSelectAddress = (addressData) => {
+    const handleSelectAddress = async (addressData) => {
         setSelectedAddressData(addressData);
         setAddress(addressData.address);
-        setDefaultAddressId(addressData.id);
+        setDefaultAddressId(addressData.id || '');
         setReceiverName(addressData.name || '');
         setPhoneNumber(addressData.phone || '');
+
+        // If address has an id, fetch createdAt from Firebase
+        if (addressData.id) {
+            try {
+                const addressRef = doc(db, 'address', addressData.id);
+                const addressSnap = await getDoc(addressRef);
+                if (addressSnap.exists()) {
+                    setSelectedAddressCreatedAt(addressSnap.data().createdAt || null);
+                }
+            } catch (error) {
+                console.error('Error fetching address details:', error);
+                setSelectedAddressCreatedAt(null);
+            }
+        } else {
+            setSelectedAddressCreatedAt(null);
+        }
     };
 
     useEffect(() => {
@@ -112,6 +139,7 @@ export default function Cart() {
                         setAddress(defaultAddrData.address || '');
                         setReceiverName(defaultAddrData.name || user.name || '');
                         setPhoneNumber(defaultAddrData.phone || user.phone || '');
+                        setSelectedAddressCreatedAt(defaultAddrData.createdAt || null);
 
                         setSelectedAddressData({
                             id: defaultAddr.id,
@@ -216,7 +244,10 @@ export default function Cart() {
                     name: receiverName,
                     phone: phoneNumber,
                     latlong: latlong,
-                    note: ""
+                    note: "",
+                    user_id: user.uid,
+                    id: defaultAddressId || "",
+                    createdAt: selectedAddressCreatedAt || ""
                 },
                 status: 'pending',
                 createdAt: serverTimestamp(),

@@ -70,14 +70,39 @@ export default function RestaurantBasicInfo({ restaurantId }) {
         }))
     }
 
-    const handleSelectAddress = (addressData) => {
-        setFormData(prev => ({
-            ...prev,
+    const handleSelectAddress = async (addressData) => {
+        const updatedData = {
             address: addressData.address,
             latitude: addressData.lat,
             longitude: addressData.lng
+        }
+
+        setFormData(prev => ({
+            ...prev,
+            ...updatedData
         }))
-        toast.success('Location updated')
+
+        // Auto-save the location changes
+        setSaving(true)
+        try {
+            const updatePayload = {
+                address: addressData.address,
+                latlong: new GeoPoint(
+                    parseFloat(addressData.lat),
+                    parseFloat(addressData.lng)
+                )
+            }
+
+            const docRef = doc(db, 'restaurants', restaurantId)
+            await updateDoc(docRef, updatePayload)
+
+            toast.success('Location updated successfully!')
+        } catch (error) {
+            console.error('Error updating location:', error)
+            toast.error('Failed to update location')
+        } finally {
+            setSaving(false)
+        }
     }
 
     const uploadFile = async (file) => {

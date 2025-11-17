@@ -21,6 +21,7 @@ export default function RestaurantDetailPage({ params: paramsPromise }) {
     const dispatch = useDispatch()
     const { user } = useCurrentUser()
     const [restaurant, setRestaurant] = useState(null)
+    const [categoryList, setCategoryList] = useState([])
     const [loadingRestaurant, setLoadingRestaurant] = useState(true)
     const [activeCategory, setActiveCategory] = useState('offers')
     const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false)
@@ -34,7 +35,7 @@ export default function RestaurantDetailPage({ params: paramsPromise }) {
     // Check if current user owns this restaurant
     const isUserOwnRestaurant = user?.uid === params.id
 
-    // Fetch restaurant data
+    // Fetch restaurant data and categories
     useEffect(() => {
         const fetchRestaurant = async () => {
             try {
@@ -48,6 +49,14 @@ export default function RestaurantDetailPage({ params: paramsPromise }) {
                     })
                 } else {
                     console.error('Restaurant not found')
+                }
+
+                // Fetch categories from restaurant_categories collection
+                const catDocRef = doc(db, 'restaurant_categories', params.id)
+                const catDocSnap = await getDoc(catDocRef)
+                if (catDocSnap.exists()) {
+                    const data = catDocSnap.data()
+                    setCategoryList(data.category_list || [])
                 }
             } catch (error) {
                 console.error('Error fetching restaurant:', error)
@@ -89,7 +98,10 @@ export default function RestaurantDetailPage({ params: paramsPromise }) {
         dispatch(addToCart({
             productId: orderData.dishId,
             quantity: orderData.quantity,
-            restaurantId: params.id
+            restaurantId: params.id,
+            imageUrl: orderData.imageUrl,
+            name: orderData.dishName,
+            price: orderData.price
         }))
         toast.success(`${orderData.dishName} added to cart!`)
     }
@@ -100,7 +112,10 @@ export default function RestaurantDetailPage({ params: paramsPromise }) {
             dispatch(addToCart({
                 productId: pendingOrderData.dishId,
                 quantity: pendingOrderData.quantity,
-                restaurantId: params.id
+                restaurantId: params.id,
+                imageUrl: pendingOrderData.imageUrl,
+                name: pendingOrderData.dishName,
+                price: pendingOrderData.price
             }))
             toast.success(`${pendingOrderData.dishName} added to cart!`)
             setIsConfirmModalOpen(false)
@@ -108,12 +123,14 @@ export default function RestaurantDetailPage({ params: paramsPromise }) {
         }
     }
 
-    // Get unique categories from dishes
-    const categories = Array.from(new Set(dishes.map(d => d.categoryId || 'other'))).map((categoryId, index) => ({
-        id: index,
-        name: categoryId.charAt(0).toUpperCase() + categoryId.slice(1),
-        slug: categoryId
-    }))
+    // Get categories from restaurant_categories collection
+    const categories = categoryList && Array.isArray(categoryList)
+        ? categoryList.map((category, index) => ({
+            id: category.id || index,
+            name: category.name || category,
+            slug: category.id || category
+        }))
+        : []
 
     if (loadingRestaurant) {
         return (
@@ -204,15 +221,19 @@ export default function RestaurantDetailPage({ params: paramsPromise }) {
                 </div>
             ) : (
                 <div className="mt-8 md:mt-12">
-                    {Object.entries(groupedDishes).map(([categoryId, categoryDishes]) => (
-                        <MenuSection
-                            key={categoryId}
-                            title={categoryId.charAt(0).toUpperCase() + categoryId.slice(1)}
-                            items={categoryDishes}
-                            sectionId={categoryId}
-                            onAddToCart={handleAddToCart}
-                        />
-                    ))}
+                    {Object.entries(groupedDishes).map(([categoryId, categoryDishes]) => {
+                        // Find the category name from categoryList
+                        const categoryName = categoryList.find(cat => cat.id === categoryId)?.name || categoryId.charAt(0).toUpperCase() + categoryId.slice(1)
+                        return (
+                            <MenuSection
+                                key={categoryId}
+                                title={categoryName}
+                                items={categoryDishes}
+                                sectionId={categoryId}
+                                onAddToCart={handleAddToCart}
+                            />
+                        )
+                    })}
                 </div>
             )}
 

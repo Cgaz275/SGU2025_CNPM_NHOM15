@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { Plus } from 'lucide-react'
 import OrderModal from '../Modals/OrderModal'
 import { lazyLoadProps } from '../../utils/imageUtils'
+import { formatPrice } from '../../utils/currencyFormatter'
 
 export default function MenuItemCard({ item, onAddToCart }) {
     const [isModalOpen, setIsModalOpen] = useState(false)
@@ -19,6 +20,7 @@ export default function MenuItemCard({ item, onAddToCart }) {
                 price: item.price,
                 quantity: quantity,
                 selectedChoices: {},
+                imageUrl: item.imageUrl || item.image,
             })
             setQuantity(1)
         }
@@ -45,7 +47,7 @@ export default function MenuItemCard({ item, onAddToCart }) {
                             </p>
                         </div>
                         <p className="text-[#366055] text-base md:text-lg font-bold">
-                            {item.price?.toLocaleString?.() || item.price}đ
+                            {formatPrice(item.price)}
                         </p>
                     </div>
 

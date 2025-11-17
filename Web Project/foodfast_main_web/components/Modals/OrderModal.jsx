@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { X, Plus, Minus } from 'lucide-react'
 import { doc, getDoc } from 'firebase/firestore'
 import { db } from '@/config/FirebaseConfig'
+import { formatPrice } from '@/utils/currencyFormatter'
 
 export default function OrderModal({ isOpen, dish, optionGroupId, onClose, onAddToCart }) {
     const [optionGroups, setOptionGroups] = useState([])
@@ -80,7 +81,8 @@ export default function OrderModal({ isOpen, dish, optionGroupId, onClose, onAdd
             price: dish.price,
             quantity,
             selectedChoices,
-            optionGroups: optionGroups.map(g => g.name)
+            optionGroups: optionGroups.map(g => g.name),
+            imageUrl: dish.imageUrl || dish.image
         }
         onAddToCart(orderData)
         handleClose()
@@ -144,6 +146,7 @@ export default function OrderModal({ isOpen, dish, optionGroupId, onClose, onAdd
                             src={dish.imageUrl}
                             alt={dish.name}
                             className="w-full h-48 object-cover rounded-lg"
+                            onError={(e) => { e.target.style.display = 'none' }}
                         />
                     )}
 
@@ -203,10 +206,10 @@ export default function OrderModal({ isOpen, dish, optionGroupId, onClose, onAdd
                                                                 </p>
                                                             </div>
                                                             {choice.price > 0 && (
-                                                                <p className="text-[#366055] font-bold">
-                                                                    +{choice.price.toLocaleString()}đ
-                                                                </p>
-                                                            )}
+                                                <p className="text-[#366055] font-bold">
+                                                    +{formatPrice(choice.price)}
+                                                </p>
+                                            )}
                                                         </label>
                                                     )
                                                 })}
@@ -248,7 +251,7 @@ export default function OrderModal({ isOpen, dish, optionGroupId, onClose, onAdd
                     <div className="flex justify-between items-center">
                         <p className="text-gray-600">Total price:</p>
                         <p className="text-2xl font-bold text-[#366055]">
-                            {calculateTotal()} VND
+                            {formatPrice(calculateTotal())}
                         </p>
                     </div>
                     <button

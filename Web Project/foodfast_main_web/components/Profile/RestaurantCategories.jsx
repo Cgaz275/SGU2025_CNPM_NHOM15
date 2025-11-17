@@ -6,13 +6,9 @@ import { db } from '@/config/FirebaseConfig'
 import toast from 'react-hot-toast'
 import { Trash2, Plus } from 'lucide-react'
 
-// Generate a random UUID-like string
-const generateId = () => {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-        const r = (Math.random() * 16) | 0
-        const v = c === 'x' ? r : (r & 0x3) | 0x8
-        return v.toString(16)
-    })
+// Generate a simple string ID from category name
+const generateId = (name) => {
+    return name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
 }
 
 export default function RestaurantCategories({ restaurantId }) {
@@ -59,7 +55,7 @@ export default function RestaurantCategories({ restaurantId }) {
         setSaving(true)
         try {
             const newCat = {
-                id: generateId(),
+                id: generateId(newCategory),
                 name: newCategory
             }
 

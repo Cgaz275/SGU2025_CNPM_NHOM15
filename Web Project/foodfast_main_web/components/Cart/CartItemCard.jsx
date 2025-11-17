@@ -2,8 +2,24 @@
 import Counter from "@/components/Counter";
 import { XIcon } from "lucide-react";
 import Image from "next/image";
+import { formatPrice } from "@/utils/currencyFormatter";
+import { useState } from "react";
 
 export default function CartItemCard({ item, onDelete, currency }) {
+    const [imageLoadError, setImageLoadError] = useState(false);
+
+    const handleImageError = () => {
+        setImageLoadError(true);
+    };
+
+    const getImageUrl = () => {
+        if (item.images && item.images[0]) return item.images[0];
+        if (item.imageUrl) return item.imageUrl;
+        return null;
+    };
+
+    const imageUrl = getImageUrl();
+
     return (
         <div className="relative bg-[#FAFAF6] rounded-xl p-8 shadow-sm">
             {/* Remove Button */}
@@ -16,25 +32,19 @@ export default function CartItemCard({ item, onDelete, currency }) {
 
             <div className="flex flex-col sm:flex-row gap-6">
                 {/* Product Image */}
-                <div className="w-28 h-28 bg-white rounded-full flex items-center justify-center flex-shrink-0">
-                    {item.images && item.images[0] ? (
+                <div className="w-28 h-28 bg-white rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden">
+                    {imageUrl && !imageLoadError ? (
                         <Image
-                            src={item.images[0]}
-                            className="w-auto h-20 object-contain"
+                            src={imageUrl}
+                            className="w-full h-full object-cover"
                             alt={item.name}
-                            width={113}
-                            height={113}
-                        />
-                    ) : item.imageUrl ? (
-                        <Image
-                            src={item.imageUrl}
-                            className="w-auto h-20 object-contain"
-                            alt={item.name}
-                            width={113}
-                            height={113}
+                            width={112}
+                            height={112}
+                            onError={handleImageError}
+                            priority={false}
                         />
                     ) : (
-                        <div className="text-slate-400 text-xs">No image</div>
+                        <div className="text-slate-400 text-xs text-center">No image</div>
                     )}
                 </div>
 
@@ -48,7 +58,7 @@ export default function CartItemCard({ item, onDelete, currency }) {
                             {item.category || 'Product Category'}
                         </p>
                         <p className="text-[#03081F] text-sm md:text-base">
-                            Unit price: {item.price.toLocaleString()} {currency}
+                            Unit price: {formatPrice(item.price)}
                         </p>
                         <p className="text-[#03081F] text-sm md:text-base">
                             Size: {item.size || 'Standard'}
@@ -58,7 +68,7 @@ export default function CartItemCard({ item, onDelete, currency }) {
                         <p className="text-sm md:text-base">
                             <span className="text-[#03081F]">Total: </span>
                             <span className="text-[#FC8A06] text-xl md:text-2xl font-bold">
-                                {(item.price * item.quantity).toLocaleString()} {currency}
+                                {formatPrice(item.price * item.quantity)}
                             </span>
                         </p>
                     </div>

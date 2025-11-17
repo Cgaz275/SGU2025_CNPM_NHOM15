@@ -28,6 +28,7 @@ const useFirebaseCart = () => {
         const cartData = {
           cartItems: cartState.cartItems,
           total: cartState.total,
+          itemMetadata: cartState.itemMetadata,
           lastUpdated: new Date().toISOString(),
         };
 
@@ -63,8 +64,8 @@ const useFirebaseCart = () => {
         const cartSnapshot = await getDoc(userCartRef);
 
         if (cartSnapshot.exists()) {
-          const { cartItems, total, restaurantId } = cartSnapshot.data();
-          dispatch(restoreCart({ cartItems, total, restaurantId }));
+          const { cartItems, total, restaurantId, itemMetadata } = cartSnapshot.data();
+          dispatch(restoreCart({ cartItems, total, restaurantId, itemMetadata }));
         }
       } catch (error) {
         console.error('Error loading cart from Firebase:', error);

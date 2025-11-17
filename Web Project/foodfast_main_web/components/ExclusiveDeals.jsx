@@ -70,6 +70,7 @@ export default function ExclusiveDeals() {
                                         alt={deal.restaurantName}
                                         className="w-full h-full object-cover group-hover:scale-110 transition duration-300"
                                         {...lazyLoadProps}
+                                        onError={(e) => { e.target.style.display = 'none' }}
                                     />
                                 ) : (
                                     <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-300 to-gray-400">

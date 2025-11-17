@@ -5,11 +5,11 @@ import { X, MapPin, Truck } from 'lucide-react';
 import { format } from 'date-fns';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/config/FirebaseConfig';
+import { formatPrice } from '@/utils/currencyFormatter';
 
 const OrderDetailModal = ({ isOpen, onClose, order }) => {
   const [restaurantAddress, setRestaurantAddress] = useState('');
   const [loadingAddress, setLoadingAddress] = useState(false);
-
   const currency = process.env.NEXT_PUBLIC_CURRENCY_SYMBOL || 'VND ';
 
   useEffect(() => {
@@ -171,7 +171,7 @@ const OrderDetailModal = ({ isOpen, onClose, order }) => {
                 </div>
                 <div className="text-right flex-shrink-0">
                   <div className="text-lg sm:text-xl font-semibold text-[#1D2939] whitespace-nowrap">
-                    {currency}{(item.price * item.quantity).toLocaleString()}
+                    {formatPrice(item.price * item.quantity)}
                   </div>
                   <div className="text-sm text-[#667085]">Qty: {item.quantity}</div>
                 </div>

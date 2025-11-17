@@ -1,4 +1,5 @@
 'use client'
+import { formatPrice } from '@/utils/currencyFormatter'
 
 export default function OrderSummaryCard({
     totalPrice,
@@ -22,21 +23,21 @@ export default function OrderSummaryCard({
                 <div className="flex justify-between text-white">
                     <span className="text-base md:text-lg font-semibold">Sub-total:</span>
                     <span className="text-base md:text-lg font-normal">
-                        {totalPrice.toLocaleString()} {currency}
+                        {formatPrice(totalPrice)}
                     </span>
                 </div>
 
                 <div className="flex justify-between text-white">
                     <span className="text-base md:text-lg font-semibold">Discount Applied:</span>
                     <span className="text-base md:text-lg font-normal">
-                        {discountApplied ? `${discount.toLocaleString()} ${currency}` : 'No promotion applied'}
+                        {discountApplied ? formatPrice(discount) : 'No promotion applied'}
                     </span>
                 </div>
 
                 <div className="flex justify-between text-white">
                     <span className="text-base md:text-lg font-semibold">Shipping Fee:</span>
                     <span className="text-base md:text-lg font-normal">
-                        {shippingFee.toLocaleString()} {currency}
+                        {formatPrice(shippingFee)}
                     </span>
                 </div>
             </div>
@@ -71,7 +72,7 @@ export default function OrderSummaryCard({
 
             {/* Total */}
             <div className="text-white text-2xl md:text-3xl font-semibold mb-8">
-                Total: {finalTotal.toLocaleString()} {currency}
+                Total: {formatPrice(finalTotal)}
             </div>
 
             {/* Place Order Button */}
