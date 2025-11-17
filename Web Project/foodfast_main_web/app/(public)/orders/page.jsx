@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { format, isToday, parseISO } from 'date-fns';
 import useOrders from '@/hooks/useOrders';
 import useCurrentUser from '@/hooks/useCurrentUser';
@@ -13,13 +13,29 @@ export default function OrdersPage() {
   const { user, isAuthenticated } = useCurrentUser();
   const router = useRouter();
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const hasRedirected = useRef(false);
 
   const currency = process.env.NEXT_PUBLIC_CURRENCY_SYMBOL || 'VND ';
 
-  if (!isAuthenticated && !loading) {
-    router.push('/');
-    toast.error('Please login to view your orders');
-    return null;
+  // Handle redirect to home when user logs out
+  useEffect(() => {
+    if (!isAuthenticated && !hasRedirected.current) {
+      hasRedirected.current = true;
+      toast.error('Please login to view your orders');
+      router.push('/');
+    }
+  }, [isAuthenticated, router]);
+
+  // If not authenticated, show loading (the effect will redirect)
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#366055] mx-auto"></div>
+          <p className="mt-4 text-gray-600">Redirecting...</p>
+        </div>
+      </div>
+    );
   }
 
   const { todayOrders, pastOrders } = useMemo(() => {
