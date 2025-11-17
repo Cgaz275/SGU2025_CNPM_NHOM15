@@ -99,6 +99,7 @@ const SignUpForm = ({ onSuccess }) => {
                     name,
                     email,
                     phone,
+                    is_enable: true,
                     role: "user",
                     defaultAddress: "",
                     createdAt: serverTimestamp(),
