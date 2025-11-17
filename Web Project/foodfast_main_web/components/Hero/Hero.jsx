@@ -1,6 +1,7 @@
 'use client'
 import { Search } from 'lucide-react';
 import { useState } from 'react';
+import { lazyLoadProps } from '../../utils/imageUtils';
 
 export default function Hero() {
     const [location, setLocation] = useState('');
@@ -15,10 +16,11 @@ export default function Hero() {
             <div className="relative rounded-xl border border-black/20 overflow-hidden">
                 {/* Background Image */}
                 <div className="relative h-[400px] md:h-[500px] lg:h-[600px]">
-                    <img 
-                        src="https://api.builder.io/api/v1/image/assets/TEMP/bf0976056c427ef734d611f6a1e604c1d394dcd7?width=3056" 
-                        alt="Drone Delivery" 
+                    <img
+                        src="https://api.builder.io/api/v1/image/assets/TEMP/bf0976056c427ef734d611f6a1e604c1d394dcd7?width=3056"
+                        alt="Drone Delivery"
                         className="w-full h-full object-cover"
+                        {...lazyLoadProps}
                     />
                     {/* Overlay for better text readability */}
                     <div className="absolute inset-0 bg-gradient-to-r from-black/50 to-transparent"></div>

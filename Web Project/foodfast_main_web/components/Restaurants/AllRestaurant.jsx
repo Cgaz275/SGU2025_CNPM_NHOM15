@@ -2,7 +2,8 @@ import React from 'react';
 import Link from 'next/link';
 // 1. Import custom hook của bạn (đảm bảo đúng đường dẫn)
 // Nếu bạn sử dụng hook đã sửa đổi trong câu trả lời trước, hãy đổi tên import thành useRestaurants
-import useRestaurants from '../../hooks/useRestaurant'; 
+import useRestaurants from '../../hooks/useRestaurant';
+import { lazyLoadProps } from '../../utils/imageUtils'; 
 
 export default function AllRestaurant() {
     // 2. Sử dụng hook để lấy dữ liệu
@@ -75,7 +76,8 @@ export default function AllRestaurant() {
                                         src={restaurants.imageUrl}
                                         alt={restaurants.name}
                                         className="w-full h-full object-cover group-hover:scale-110 transition duration-300"
-                                        onError={(e) => { e.target.onerror = null; e.target.src = '/placeholder.png' }}
+                                        {...lazyLoadProps}
+                                        onError={(e) => { e.target.onerror = null; e.target.src = '/images/placeholder.png' }}
                                     />
                                 </div>
                                 <div className="p-4">

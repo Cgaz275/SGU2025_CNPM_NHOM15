@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { Plus } from 'lucide-react'
 import OrderModal from '../Modals/OrderModal'
+import { lazyLoadProps } from '../../utils/imageUtils'
 
 export default function MenuItemCard({ item, onAddToCart }) {
     const [isModalOpen, setIsModalOpen] = useState(false)
@@ -54,6 +55,7 @@ export default function MenuItemCard({ item, onAddToCart }) {
                             src={item.imageUrl || item.image}
                             alt={item.name}
                             className="w-full h-full object-cover rounded-xl"
+                            {...lazyLoadProps}
                             onError={(e) => { e.target.src = 'https://via.placeholder.com/200' }}
                         />
 

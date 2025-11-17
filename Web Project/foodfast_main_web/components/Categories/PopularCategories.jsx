@@ -75,7 +75,7 @@ export default function PopularCategories() {
                                         src={category.imageUrl}
                                         alt={category.name}
                                         className="w-full h-full object-cover group-hover:scale-110 transition duration-300"
-                                        onError={(e) => { e.target.onerror = null; e.target.src = '/placeholder.png' }}
+                                        onError={(e) => { e.target.onerror = null; e.target.src = '/images/placeholder.png' }}
                                     />
                                 </div>
                                 <div className="p-4">

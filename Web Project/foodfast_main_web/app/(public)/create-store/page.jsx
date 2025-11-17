@@ -218,6 +218,7 @@ export default function CreateStore() {
                 rating: 0,
                 status: "pending",
                 category: formData.category,
+                userId: user.uid,
                 createdAt: serverTimestamp(),
             })
             console.log('Restaurant document saved')
