@@ -1,6 +1,6 @@
 'use client'
 
-import { addToCart } from "@/lib/features/cart/cartSlice";
+import { addToCart, clearCart } from "@/lib/features/cart/cartSlice";
 import { StarIcon, TagIcon, EarthIcon, CreditCardIcon, UserIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -8,6 +8,7 @@ import Image from "next/image";
 import Counter from "../Counter";
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
+import ClearCartConfirmModal from "../Modals/ClearCartConfirmModal";
 
 const ProductDetails = ({ product }) => {
 
@@ -15,15 +16,42 @@ const ProductDetails = ({ product }) => {
     const currency = process.env.NEXT_PUBLIC_CURRENCY_SYMBOL || '$';
 
     const cart = useSelector(state => state.cart.cartItems);
+    const cartRestaurantId = useSelector(state => state.cart.restaurantId);
     const dispatch = useDispatch();
 
     const router = useRouter()
 
     const [mainImage, setMainImage] = useState(product.images && product.images[0] ? product.images[0] : null);
+    const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+    const [pendingProduct, setPendingProduct] = useState(null);
 
-    const addToCartHandler = () => {
-        dispatch(addToCart({ productId }))
+    const handleAddToCart = () => {
+        // If product has restaurantId and cart has items from different restaurant
+        if (product.restaurantId && cartRestaurantId && cartRestaurantId !== product.restaurantId && Object.keys(cart).length > 0) {
+            setPendingProduct(product);
+            setIsConfirmModalOpen(true);
+            return;
+        }
+
+        // Add to cart
+        dispatch(addToCart({
+            productId,
+            restaurantId: product.restaurantId || null
+        }));
         toast.success(`${product.name} added to cart!`);
+    }
+
+    const handleConfirmClearCart = () => {
+        if (pendingProduct) {
+            dispatch(clearCart());
+            dispatch(addToCart({
+                productId: pendingProduct.id,
+                restaurantId: pendingProduct.restaurantId || null
+            }));
+            toast.success(`${pendingProduct.name} added to cart!`);
+            setIsConfirmModalOpen(false);
+            setPendingProduct(null);
+        }
     }
 
     const averageRating = product.rating.reduce((acc, item) => acc + item.rating, 0) / product.rating.length;
@@ -73,7 +101,7 @@ const ProductDetails = ({ product }) => {
                             </div>
                         )
                     }
-                    <button onClick={() => !cart[productId] ? addToCartHandler() : router.push('/cart')} className="bg-slate-800 text-white px-10 py-3 text-sm font-medium rounded hover:bg-slate-900 active:scale-95 transition">
+                    <button onClick={() => !cart[productId] ? handleAddToCart() : router.push('/cart')} className="bg-slate-800 text-white px-10 py-3 text-sm font-medium rounded hover:bg-slate-900 active:scale-95 transition">
                         {!cart[productId] ? 'Add to Cart' : 'View Cart'}
                     </button>
                 </div>
@@ -85,6 +113,18 @@ const ProductDetails = ({ product }) => {
                 </div>
 
             </div>
+
+            {/* Clear Cart Confirmation Modal */}
+            <ClearCartConfirmModal
+                isOpen={isConfirmModalOpen}
+                onClose={() => {
+                    setIsConfirmModalOpen(false)
+                    setPendingProduct(null)
+                }}
+                onConfirm={handleConfirmClearCart}
+                currentRestaurantName="Your Current Order"
+                newRestaurantName={product.name}
+            />
         </div>
     )
 }

@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, use } from 'react'
-import { useDispatch } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import { doc, getDoc } from 'firebase/firestore'
 import { db } from '@/config/FirebaseConfig'
 import RestaurantHero from '@/components/Restaurants/RestaurantHero'
@@ -11,7 +11,8 @@ import RestaurantMap from '@/components/Restaurants/RestaurantMap'
 import PageTitle from '@/components/PageTitle'
 import useDishesByRestaurant from '@/hooks/useDishesByRestaurant'
 import toast from 'react-hot-toast'
-import { addToCart } from '@/lib/features/cart/cartSlice'
+import { addToCart, clearCart } from '@/lib/features/cart/cartSlice'
+import ClearCartConfirmModal from '@/components/Modals/ClearCartConfirmModal'
 
 export default function RestaurantDetailPage({ params: paramsPromise }) {
     const params = use(paramsPromise)
@@ -19,8 +20,12 @@ export default function RestaurantDetailPage({ params: paramsPromise }) {
     const [restaurant, setRestaurant] = useState(null)
     const [loadingRestaurant, setLoadingRestaurant] = useState(true)
     const [activeCategory, setActiveCategory] = useState('offers')
+    const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false)
+    const [pendingOrderData, setPendingOrderData] = useState(null)
 
     const { data: dishes, loading: loadingDishes } = useDishesByRestaurant(params.id)
+    const cartRestaurantId = useSelector(state => state.cart.restaurantId)
+    const cartItems = useSelector(state => state.cart.cartItems)
 
     // Fetch restaurant data
     useEffect(() => {
@@ -60,8 +65,34 @@ export default function RestaurantDetailPage({ params: paramsPromise }) {
     }, {})
 
     const handleAddToCart = (orderData) => {
-        dispatch(addToCart({ productId: orderData.dishId, quantity: orderData.quantity }))
+        // Check if cart has items from a different restaurant
+        if (cartRestaurantId && cartRestaurantId !== params.id && Object.keys(cartItems).length > 0) {
+            setPendingOrderData(orderData)
+            setIsConfirmModalOpen(true)
+            return
+        }
+
+        // If cart is empty or from same restaurant, add the item
+        dispatch(addToCart({
+            productId: orderData.dishId,
+            quantity: orderData.quantity,
+            restaurantId: params.id
+        }))
         toast.success(`${orderData.dishName} added to cart!`)
+    }
+
+    const handleConfirmClearCart = () => {
+        if (pendingOrderData) {
+            dispatch(clearCart())
+            dispatch(addToCart({
+                productId: pendingOrderData.dishId,
+                quantity: pendingOrderData.quantity,
+                restaurantId: params.id
+            }))
+            toast.success(`${pendingOrderData.dishName} added to cart!`)
+            setIsConfirmModalOpen(false)
+            setPendingOrderData(null)
+        }
     }
 
     // Get unique categories from dishes
@@ -177,6 +208,18 @@ export default function RestaurantDetailPage({ params: paramsPromise }) {
 
             {/* Similar Restaurants */}
             <SimilarRestaurants restaurants={similarRestaurants} />
+
+            {/* Clear Cart Confirmation Modal */}
+            <ClearCartConfirmModal
+                isOpen={isConfirmModalOpen}
+                onClose={() => {
+                    setIsConfirmModalOpen(false)
+                    setPendingOrderData(null)
+                }}
+                onConfirm={handleConfirmClearCart}
+                currentRestaurantName="Your Current Restaurant"
+                newRestaurantName={restaurant?.name || 'This Restaurant'}
+            />
         </>
     )
 }

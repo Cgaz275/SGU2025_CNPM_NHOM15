@@ -1,8 +1,6 @@
 'use client'
 import { MapPin } from 'lucide-react'
 import { useRef, useEffect, useState } from 'react'
-import goongjs from '@goongmaps/goong-js'
-import '@goongmaps/goong-js/dist/goong-js.css'
 import { GOONG_MAP_TILES_KEY, GOONG_MAP_STYLE, DEFAULT_VIEWPORT } from '@/config/GoongMapConfig'
 
 export default function RestaurantMap({ restaurant }) {
@@ -34,65 +32,72 @@ export default function RestaurantMap({ restaurant }) {
             return
         }
 
-        try {
-            let lng, lat
+        const initializeMap = async () => {
+            try {
+                const goongjs = (await import('@goongmaps/goong-js')).default
+                await import('@goongmaps/goong-js/dist/goong-js.css')
 
-            if (Array.isArray(latlong)) {
-                let coord0 = parseFloat(latlong[0])
-                let coord1 = parseFloat(latlong[1])
+                let lng, lat
 
-                if (isNaN(coord0) || isNaN(coord1)) {
-                    setError('Invalid restaurant coordinates')
+                if (Array.isArray(latlong)) {
+                    let coord0 = parseFloat(latlong[0])
+                    let coord1 = parseFloat(latlong[1])
+
+                    if (isNaN(coord0) || isNaN(coord1)) {
+                        setError('Invalid restaurant coordinates')
+                        return
+                    }
+
+                    if (Math.abs(coord0) > 90) {
+                        lng = coord0
+                        lat = coord1
+                    } else {
+                        lng = coord1
+                        lat = coord0
+                    }
+                } else if (typeof latlong === 'object' && (latlong.latitude !== undefined || latlong._latitude !== undefined)) {
+                    lat = latlong.latitude || latlong._latitude
+                    lng = latlong.longitude || latlong._longitude
+                    console.log('Goong Map: Converted GeoPoint to coordinates - lat:', lat, 'lng:', lng)
+                } else {
+                    setError(`Restaurant coordinates invalid format: ${typeof latlong}`)
+                    console.warn('Goong Map: latlong is not an array or GeoPoint, it is:', typeof latlong, latlong)
                     return
                 }
 
-                if (Math.abs(coord0) > 90) {
-                    lng = coord0
-                    lat = coord1
-                } else {
-                    lng = coord1
-                    lat = coord0
+                if (isNaN(lng) || isNaN(lat)) {
+                    setError('Invalid restaurant coordinate values')
+                    return
                 }
-            } else if (typeof latlong === 'object' && (latlong.latitude !== undefined || latlong._latitude !== undefined)) {
-                lat = latlong.latitude || latlong._latitude
-                lng = latlong.longitude || latlong._longitude
-                console.log('Goong Map: Converted GeoPoint to coordinates - lat:', lat, 'lng:', lng)
-            } else {
-                setError(`Restaurant coordinates invalid format: ${typeof latlong}`)
-                console.warn('Goong Map: latlong is not an array or GeoPoint, it is:', typeof latlong, latlong)
-                return
+
+                map.current = new goongjs.Map({
+                    container: mapContainer.current,
+                    accessToken: GOONG_MAP_TILES_KEY,
+                    style: GOONG_MAP_STYLE,
+                    center: [lng, lat],
+                    zoom: 15
+                })
+
+                map.current.on('load', () => {
+                    setMapLoaded(true)
+                    setError(null)
+
+                    new goongjs.Marker()
+                        .setLngLat([lng, lat])
+                        .addTo(map.current)
+                })
+
+                map.current.on('error', (e) => {
+                    setError(`Map error: ${e.error?.message || 'Unknown error'}`)
+                    console.error('Goong Map Error:', e)
+                })
+            } catch (err) {
+                setError(`Failed to initialize map: ${err.message}`)
+                console.error('Map initialization error:', err)
             }
-
-            if (isNaN(lng) || isNaN(lat)) {
-                setError('Invalid restaurant coordinate values')
-                return
-            }
-
-            map.current = new goongjs.Map({
-                container: mapContainer.current,
-                accessToken: GOONG_MAP_TILES_KEY,
-                style: GOONG_MAP_STYLE,
-                center: [lng, lat],
-                zoom: 15
-            })
-
-            map.current.on('load', () => {
-                setMapLoaded(true)
-                setError(null)
-
-                new goongjs.Marker()
-                    .setLngLat([lng, lat])
-                    .addTo(map.current)
-            })
-
-            map.current.on('error', (e) => {
-                setError(`Map error: ${e.error?.message || 'Unknown error'}`)
-                console.error('Goong Map Error:', e)
-            })
-        } catch (err) {
-            setError(`Failed to initialize map: ${err.message}`)
-            console.error('Map initialization error:', err)
         }
+
+        initializeMap()
 
         return () => {
             if (map.current) {

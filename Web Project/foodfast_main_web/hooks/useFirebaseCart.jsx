@@ -23,13 +23,21 @@ const useFirebaseCart = () => {
     syncTimeoutRef.current = setTimeout(async () => {
       try {
         const userCartRef = doc(db, 'user', user.uid, 'cart', 'items');
-        
-        // Save the current cart state to Firebase
-        await setDoc(userCartRef, {
+
+        // Build data object, only including restaurantId if it's defined
+        const cartData = {
           cartItems: cartState.cartItems,
           total: cartState.total,
           lastUpdated: new Date().toISOString(),
-        }, { merge: true });
+        };
+
+        // Only include restaurantId if it's not null/undefined
+        if (cartState.restaurantId !== null && cartState.restaurantId !== undefined) {
+          cartData.restaurantId = cartState.restaurantId;
+        }
+
+        // Save the current cart state to Firebase
+        await setDoc(userCartRef, cartData, { merge: true });
       } catch (error) {
         console.error('Error syncing cart to Firebase:', error);
       }
@@ -55,8 +63,8 @@ const useFirebaseCart = () => {
         const cartSnapshot = await getDoc(userCartRef);
 
         if (cartSnapshot.exists()) {
-          const { cartItems, total } = cartSnapshot.data();
-          dispatch(restoreCart({ cartItems, total }));
+          const { cartItems, total, restaurantId } = cartSnapshot.data();
+          dispatch(restoreCart({ cartItems, total, restaurantId }));
         }
       } catch (error) {
         console.error('Error loading cart from Firebase:', error);
