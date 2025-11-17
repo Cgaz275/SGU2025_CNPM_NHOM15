@@ -1,14 +1,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Mail, MapPin } from 'lucide-react';
 import useCurrentUser from '@/hooks/useCurrentUser';
 import { doc, updateDoc, collection, addDoc, query, where, getDocs, GeoPoint } from 'firebase/firestore';
 import { db } from '@/config/FirebaseConfig';
 import toast from 'react-hot-toast';
-import { format } from 'date-fns';
 import { useRouter } from 'next/navigation';
 import AddressPickerModal from '@/components/Modals/AddressPickerModal';
+import ProfileHeader from '@/components/Profile/ProfileHeader';
+import ProfileForm from '@/components/Profile/ProfileForm';
+import AccountInfo from '@/components/Profile/AccountInfo';
 
 export default function ProfilePage() {
   const { user, isAuthenticated, loading } = useCurrentUser();
@@ -65,10 +66,8 @@ export default function ProfilePage() {
       const q = query(addressCollectionRef, where('userId', '==', user.uid));
       const querySnapshot = await getDocs(q);
 
-      // If address data was selected from map, save it to address collection
       if (selectedAddressData) {
         if (querySnapshot.size > 0) {
-          // Update existing address
           const existingDoc = querySnapshot.docs[0];
           await updateDoc(doc(db, 'address', existingDoc.id), {
             address: selectedAddressData.address,
@@ -79,7 +78,6 @@ export default function ProfilePage() {
             userId: user.uid
           });
         } else {
-          // Create new address if doesn't exist
           await addDoc(addressCollectionRef, {
             address: selectedAddressData.address,
             latlong: new GeoPoint(selectedAddressData.lat, selectedAddressData.lng),
@@ -92,7 +90,6 @@ export default function ProfilePage() {
         }
         updateData.defaultAddress = selectedAddressData.address;
       } else {
-        // Update address even if no map selection (sync name and phone)
         if (querySnapshot.size > 0) {
           const existingDoc = querySnapshot.docs[0];
           const existingData = existingDoc.data();
@@ -105,7 +102,6 @@ export default function ProfilePage() {
             userId: user.uid
           });
         } else {
-          // Create address if it doesn't exist
           await addDoc(addressCollectionRef, {
             address: formData.defaultAddress || "",
             latlong: null,
@@ -140,17 +136,13 @@ export default function ProfilePage() {
     }));
   };
 
-  const formatDate = (timestamp) => {
-    if (!timestamp) return 'N/A';
-    
-    try {
-      if (timestamp.toDate) {
-        return format(timestamp.toDate(), 'dd/MM/yyyy \'at\' HH:mm');
-      }
-      return format(new Date(timestamp), 'dd/MM/yyyy \'at\' HH:mm');
-    } catch (error) {
-      return 'N/A';
-    }
+  const handleCancel = () => {
+    setIsEditing(false);
+    setFormData({
+      name: user.name || '',
+      defaultAddress: user.defaultAddress || '',
+      phone: user.phone || ''
+    });
   };
 
   if (loading || !user) {
@@ -172,132 +164,23 @@ export default function ProfilePage() {
             Personal Profile
           </h1>
 
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-            <div>
-              <h2 className="text-lg sm:text-xl font-medium text-black mb-1">
-                {user.name || 'User'}
-              </h2>
-              <p className="text-sm sm:text-base text-black opacity-50">
-                {user.email}
-              </p>
-            </div>
+          <ProfileHeader
+            user={user}
+            isEditing={isEditing}
+            onEdit={() => setIsEditing(true)}
+            onCancel={handleCancel}
+            onSave={handleSave}
+            isSaving={saving}
+          />
 
-            {isEditing ? (
-              <div className="flex gap-3">
-                <button
-                  onClick={() => {
-                    setIsEditing(false);
-                    setFormData({
-                      name: user.name || '',
-                      defaultAddress: user.defaultAddress || '',
-                      phone: user.phone || ''
-                    });
-                  }}
-                  className="px-6 py-3 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSave}
-                  disabled={saving}
-                  className="px-6 py-3 rounded-lg bg-[#366055] text-white font-medium hover:bg-[#2b4c44] transition-colors disabled:opacity-50"
-                >
-                  {saving ? 'Saving...' : 'Save'}
-                </button>
-              </div>
-            ) : (
-              <button
-                onClick={() => setIsEditing(true)}
-                className="px-6 py-3 rounded-lg bg-[#366055] text-white font-medium hover:bg-[#2b4c44] transition-colors self-start sm:self-auto"
-              >
-                Edit
-              </button>
-            )}
-          </div>
+          <ProfileForm
+            formData={formData}
+            onInputChange={handleInputChange}
+            isEditing={isEditing}
+            onMapClick={() => setIsAddressModalOpen(true)}
+          />
 
-          <div className="space-y-6">
-            <div>
-              <label className="block text-sm sm:text-base text-black opacity-80 mb-2">
-                Full Name
-              </label>
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleInputChange}
-                disabled={!isEditing}
-                placeholder="Your First Name"
-                className="w-full px-4 sm:px-6 py-3 sm:py-4 rounded-lg bg-[#F9F9F9] text-sm sm:text-base text-black placeholder-black/40 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-[#366055]"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm sm:text-base text-black opacity-80 mb-2">
-                Default Address
-              </label>
-              <div className="flex gap-3">
-                <input
-                  type="text"
-                  name="defaultAddress"
-                  value={formData.defaultAddress}
-                  onChange={handleInputChange}
-                  disabled={!isEditing}
-                  placeholder="Your Address"
-                  className="flex-1 px-4 sm:px-6 py-3 sm:py-4 rounded-lg bg-[#F9F9F9] text-sm sm:text-base text-black placeholder-black/40 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-[#366055]"
-                />
-                {isEditing && (
-                  <button
-                    type="button"
-                    onClick={() => setIsAddressModalOpen(true)}
-                    className="px-4 sm:px-6 py-3 sm:py-4 bg-[#366055] text-white rounded-lg font-medium hover:bg-[#2b4c44] transition flex items-center gap-2 whitespace-nowrap"
-                  >
-                    <MapPin size={18} />
-                    <span className="hidden sm:inline">Pick on Map</span>
-                    <span className="sm:hidden">Map</span>
-                  </button>
-                )}
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm sm:text-base text-black opacity-80 mb-2">
-                Phone number
-              </label>
-              <input
-                type="tel"
-                name="phone"
-                value={formData.phone}
-                onChange={handleInputChange}
-                disabled={!isEditing}
-                placeholder="Your phone number"
-                className="w-full px-4 sm:px-6 py-3 sm:py-4 rounded-lg bg-[#F9F9F9] text-sm sm:text-base text-black placeholder-black/40 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-[#366055]"
-              />
-            </div>
-          </div>
-
-          <div className="mt-12">
-            <h3 className="text-base sm:text-lg font-medium text-black mb-6">
-              Your account
-            </h3>
-
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-[#4182F9]/10 flex items-center justify-center flex-shrink-0">
-                <Mail className="w-6 h-6 sm:w-7 sm:h-7 text-[#366055]" />
-              </div>
-
-              <div>
-                <p className="text-sm sm:text-base text-black mb-1">
-                  {user.email}
-                </p>
-                <p className="text-sm sm:text-base text-black opacity-50 mb-2">
-                  Created at: {formatDate(user.createdAt)}
-                </p>
-                <button className="text-xs sm:text-sm text-black opacity-50 underline hover:opacity-70 transition-opacity">
-                  Change password?
-                </button>
-              </div>
-            </div>
-          </div>
+          <AccountInfo user={user} />
         </div>
       </div>
 
