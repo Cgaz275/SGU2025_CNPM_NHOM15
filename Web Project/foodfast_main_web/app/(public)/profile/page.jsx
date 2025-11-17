@@ -10,6 +10,7 @@ import AddressPickerModal from '@/components/Modals/AddressPickerModal';
 import ProfileHeader from '@/components/Profile/ProfileHeader';
 import ProfileForm from '@/components/Profile/ProfileForm';
 import AccountInfo from '@/components/Profile/AccountInfo';
+import MerchantRestaurantEditor from '@/components/Profile/MerchantRestaurantEditor';
 
 export default function ProfilePage() {
   const { user, isAuthenticated, loading } = useCurrentUser();
@@ -181,6 +182,10 @@ export default function ProfilePage() {
           />
 
           <AccountInfo user={user} />
+
+          {user?.role === 'merchant' && (
+            <MerchantRestaurantEditor user={user} />
+          )}
         </div>
       </div>
 

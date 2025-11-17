@@ -1,19 +1,57 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { X, Plus, Minus } from 'lucide-react'
-import useOptionGroup from '@/hooks/useOptionGroup'
+import { doc, getDoc } from 'firebase/firestore'
+import { db } from '@/config/FirebaseConfig'
 
 export default function OrderModal({ isOpen, dish, optionGroupId, onClose, onAddToCart }) {
-    const { data: optionGroup, loading } = useOptionGroup(optionGroupId)
+    const [optionGroups, setOptionGroups] = useState([])
+    const [loading, setLoading] = useState(true)
     const [selectedChoices, setSelectedChoices] = useState({})
     const [quantity, setQuantity] = useState(1)
 
+    // Handle both new array format and old single ID format
+    const optionGroupIds = Array.isArray(dish?.optionGroup)
+        ? dish.optionGroup
+        : (dish?.optionGroup ? [dish.optionGroup] : (optionGroupId ? [optionGroupId] : []))
+
+    useEffect(() => {
+        const fetchOptionGroups = async () => {
+            try {
+                const fetchedGroups = await Promise.all(
+                    optionGroupIds.map(async (id) => {
+                        const docRef = doc(db, 'optionGroup', id)
+                        const docSnap = await getDoc(docRef)
+                        if (docSnap.exists()) {
+                            return {
+                                id: docSnap.id,
+                                ...docSnap.data()
+                            }
+                        }
+                        return null
+                    })
+                )
+                setOptionGroups(fetchedGroups.filter(Boolean))
+                setLoading(false)
+            } catch (error) {
+                console.error('Error fetching option groups:', error)
+                setLoading(false)
+            }
+        }
+
+        if (optionGroupIds.length > 0) {
+            fetchOptionGroups()
+        } else {
+            setLoading(false)
+        }
+    }, [optionGroupIds])
+
     if (!isOpen || !dish) return null
 
-    const handleChoiceChange = (groupName, choiceName) => {
+    const handleChoiceChange = (groupId, groupName, choiceName) => {
         setSelectedChoices(prev => ({
             ...prev,
-            [groupName]: choiceName
+            [groupId]: { groupName, choiceName }
         }))
     }
 
@@ -24,7 +62,7 @@ export default function OrderModal({ isOpen, dish, optionGroupId, onClose, onAdd
             price: dish.price,
             quantity,
             selectedChoices,
-            optionGroup: optionGroup?.name
+            optionGroups: optionGroups.map(g => g.name)
         }
         onAddToCart(orderData)
         handleClose()
@@ -38,16 +76,17 @@ export default function OrderModal({ isOpen, dish, optionGroupId, onClose, onAdd
 
     const calculateTotal = () => {
         let total = dish.price * quantity
-        
-        if (optionGroup?.choices) {
-            Object.values(selectedChoices).forEach(choiceName => {
-                const choice = optionGroup.choices.find(c => c.name === choiceName)
+
+        optionGroups.forEach(group => {
+            const selectedChoice = selectedChoices[group.id]
+            if (selectedChoice && group.choices) {
+                const choice = group.choices.find(c => c.name === selectedChoice.choiceName)
                 if (choice && choice.price) {
                     total += choice.price * quantity
                 }
-            })
-        }
-        
+            }
+        })
+
         return total.toFixed(2)
     }
 
@@ -91,38 +130,44 @@ export default function OrderModal({ isOpen, dish, optionGroupId, onClose, onAdd
                         <div className="text-center py-4">
                             <p className="text-gray-500">Loading options...</p>
                         </div>
-                    ) : optionGroup?.choices ? (
-                        <div className="space-y-4">
-                            <h3 className="font-bold text-black text-lg">
-                                {optionGroup.name || 'Choose Options'}
-                            </h3>
-                            <div className="space-y-2">
-                                {optionGroup.choices.map((choice, index) => (
-                                    <label
-                                        key={index}
-                                        className="flex items-center gap-3 p-3 border border-black/10 rounded-lg cursor-pointer hover:bg-gray-50 transition"
-                                    >
-                                        <input
-                                            type="radio"
-                                            name={optionGroup.name}
-                                            value={choice.name}
-                                            checked={selectedChoices[optionGroup.name] === choice.name}
-                                            onChange={() => handleChoiceChange(optionGroup.name, choice.name)}
-                                            className="w-4 h-4 cursor-pointer"
-                                        />
-                                        <div className="flex-1">
-                                            <p className="text-black font-medium">
-                                                {choice.name}
-                                            </p>
+                    ) : optionGroups.length > 0 ? (
+                        <div className="space-y-6">
+                            {optionGroups.map((group) => (
+                                <div key={group.id} className="space-y-3">
+                                    <h3 className="font-bold text-black text-lg">
+                                        {group.name || 'Choose Options'}
+                                    </h3>
+                                    {group.choices ? (
+                                        <div className="space-y-2">
+                                            {group.choices.map((choice, index) => (
+                                                <label
+                                                    key={index}
+                                                    className="flex items-center gap-3 p-3 border border-black/10 rounded-lg cursor-pointer hover:bg-gray-50 transition"
+                                                >
+                                                    <input
+                                                        type="radio"
+                                                        name={group.id}
+                                                        value={choice.name}
+                                                        checked={selectedChoices[group.id]?.choiceName === choice.name}
+                                                        onChange={() => handleChoiceChange(group.id, group.name, choice.name)}
+                                                        className="w-4 h-4 cursor-pointer"
+                                                    />
+                                                    <div className="flex-1">
+                                                        <p className="text-black font-medium">
+                                                            {choice.name}
+                                                        </p>
+                                                    </div>
+                                                    {choice.price > 0 && (
+                                                        <p className="text-[#366055] font-bold">
+                                                            +{choice.price.toLocaleString()}đ
+                                                        </p>
+                                                    )}
+                                                </label>
+                                            ))}
                                         </div>
-                                        {choice.price > 0 && (
-                                            <p className="text-[#366055] font-bold">
-                                                +{choice.price.toLocaleString()}đ
-                                            </p>
-                                        )}
-                                    </label>
-                                ))}
-                            </div>
+                                    ) : null}
+                                </div>
+                            ))}
                         </div>
                     ) : null}
 

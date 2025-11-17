@@ -373,9 +373,9 @@ const AuthModal = ({ isOpen, onClose, mode = 'user' }) => {
                 )}
 
                 {/* Divider */}
-                <div className="my-6 flex items-center">
+                {/* <div className="my-6 flex items-center">
                     <div className="flex-grow border-t border-gray-300"></div>
-                    <span className="px-3 text-gray-400 text-sm">hoặc</span>
+                    <span className="px-3 text-gray-400 text-sm">Or</span>
                     <div className="flex-grow border-t border-gray-300"></div>
                 </div>
 
@@ -385,7 +385,7 @@ const AuthModal = ({ isOpen, onClose, mode = 'user' }) => {
 
                 <button onClick={handleAnonymous} className="w-full border border-gray-300 py-3 rounded-lg hover:bg-gray-50 transition duration-300 font-medium">
                     Continue as Guest
-                </button>
+                </button> */}
             </div>
         </div>
     );
