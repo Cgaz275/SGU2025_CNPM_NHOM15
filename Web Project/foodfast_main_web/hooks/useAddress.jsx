@@ -8,8 +8,8 @@ const useAddress = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Truy vấn collection 'address'
-    const addressCollectionRef = collection(db, 'address');
+    // Truy vấn collection 'user_addresses'
+    const addressCollectionRef = collection(db, 'user_addresses');
 
     // Sắp xếp theo trường 'name'
     const q = query(addressCollectionRef, orderBy('name', 'asc'));

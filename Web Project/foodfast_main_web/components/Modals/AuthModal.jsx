@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { X } from 'lucide-react';
-import { doc, setDoc, serverTimestamp } from "firebase/firestore"; 
+import { doc, setDoc, serverTimestamp, collection, addDoc, GeoPoint } from "firebase/firestore"; 
 import { 
     createUserWithEmailAndPassword, 
     signInWithEmailAndPassword,
@@ -94,12 +94,24 @@ const SignUpForm = ({ onSuccess }) => {
             await updateProfile(user, { displayName: name });
 
             if (db) {
+                // Create user document
                 await setDoc(doc(db, "user", user.uid), {
                     name,
                     email,
                     phone,
                     role: "user",
                     defaultAddress: "",
+                    createdAt: serverTimestamp(),
+                });
+
+                // Create empty address document for the user
+                await addDoc(collection(db, "user_addresses"), {
+                    address: "",
+                    latlong: null,
+                    name: name,
+                    note: "",
+                    phone: phone,
+                    userId: user.uid,
                     createdAt: serverTimestamp(),
                 });
             }

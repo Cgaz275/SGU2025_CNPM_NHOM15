@@ -6,7 +6,7 @@ import { XIcon, MapPin } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { doc, getDoc, collection, addDoc, serverTimestamp, query, where, getDocs } from "firebase/firestore";
+import { doc, getDoc, collection, addDoc, serverTimestamp, query, where, getDocs, GeoPoint } from "firebase/firestore";
 import { db } from "@/config/FirebaseConfig";
 import useCurrentUser from "@/hooks/useCurrentUser";
 import AuthModal from "@/components/Modals/AuthModal";
@@ -128,63 +128,69 @@ export default function Cart() {
 
         try {
             // Get restaurant ID from the first item (assuming single restaurant per order)
-            const restaurantId = cartArray[0]?.restaurant || cartArray[0]?.restaurantId;
+            const restaurantId = cartArray[0]?.restaurantId;
 
-            // Prepare order data with only defined values
+            // Fetch user's address data to include latlong
+            let latlong = null;
+            if (selectedAddressData) {
+                // Create GeoPoint from selected address data
+                latlong = new GeoPoint(selectedAddressData.lat, selectedAddressData.lng);
+            } else {
+                // Try to get from user's default address in Firestore
+                const addressCollectionRef = collection(db, 'user_addresses');
+                const addressQuery = query(addressCollectionRef, where('userId', '==', user.uid));
+                const addressSnapshot = await getDocs(addressQuery);
+
+                if (addressSnapshot.size > 0) {
+                    const addressData = addressSnapshot.docs[0].data();
+                    if (addressData.latlong) {
+                        // latlong is already a GeoPoint from Firestore
+                        latlong = addressData.latlong;
+                    }
+                }
+            }
+
+            // Prepare order data matching the exact Firestore schema
             const orderData = {
+                // User and restaurant info
                 userId: user.uid,
-                items: cartArray.map(item => {
-                    const itemData = {
-                        id: item.id,
-                        name: item.name,
-                        price: item.price,
-                        quantity: item.quantity,
-                        size: item.size || 'Standard',
-                    };
+                restaurantId: restaurantId || "",
 
-                    // Add optional fields only if they have values
-                    const imageUrl = item.imageUrl || item.images?.[0];
-                    if (imageUrl) itemData.image = imageUrl;
+                // Items (array of menu items)
+                items: cartArray.map(item => ({
+                    id: item.id,
+                    name: item.name,
+                    price: item.price,
+                    quantity: item.quantity,
+                    image: item.imageUrl || item.images?.[0] || "",
+                    restaurantId: item.restaurantId || restaurantId || ""
+                })),
 
-                    if (item.category) itemData.category = item.category;
-                    if (item.restaurantId) itemData.restaurantId = item.restaurantId;
-                    if (item.restaurant) itemData.restaurant = item.restaurant;
-                    if (item.address) itemData.address = item.address;
-
-                    return itemData;
-                }),
-                total: finalTotal,
+                // Order summary totals
                 subtotal: totalPrice,
                 deliveryFee: shippingFee,
                 discount: discount,
-                discountPercent: 0,
+                discountPercent: discountApplied ? 0 : 0,
+                total: finalTotal,
+
+                // Payment information
                 paymentMethod: paymentMethod,
-                address: address,
-                receiverName: receiverName,
-                phoneNumber: phoneNumber,
-                status: 'pending',
                 isPaid: paymentMethod !== 'COD',
+
+                // Delivery information
+                address: address,
+                name: receiverName,
+                phone: phoneNumber,
+                note: "",
+                latlong: latlong,
+
+                // Order status
+                status: 'pending',
+
+                // Timestamps
                 createdAt: serverTimestamp(),
-                estimatedDelivery: new Date(Date.now() + 20 * 60 * 1000),
+                estimatedDelivery: serverTimestamp(),
             };
-
-            // Add latlong if available from address picker
-            if (selectedAddressData) {
-                orderData.latlong = {
-                    latitude: selectedAddressData.lat,
-                    longitude: selectedAddressData.lng
-                };
-            }
-
-            // Add restaurantId if available
-            if (restaurantId) {
-                orderData.restaurantId = restaurantId;
-            }
-
-            // Only add promoCode if it exists
-            if (promoCode) {
-                orderData.promotionCode = promoCode;
-            }
 
             // Save to Firebase
             const ordersRef = collection(db, 'orders');

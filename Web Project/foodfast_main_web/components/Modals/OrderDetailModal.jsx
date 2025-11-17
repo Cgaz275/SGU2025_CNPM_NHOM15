@@ -174,15 +174,23 @@ const OrderDetailModal = ({ isOpen, onClose, order }) => {
                 <div>
                   <p className="text-sm text-[#FC8A06]">Receiver name</p>
                   <p className="text-base sm:text-lg font-medium text-[#667085]">
-                    {order.receiverName || order.name || 'N/A'}
+                    {order.name || order.receiverName || 'N/A'}
                   </p>
                 </div>
                 <div>
                   <p className="text-sm text-[#FC8A06]">Phone Number</p>
                   <p className="text-base sm:text-lg font-medium text-[#667085]">
-                    {order.phoneNumber || order.phone || 'N/A'}
+                    {order.phone || order.phoneNumber || 'N/A'}
                   </p>
                 </div>
+                {order.note && (
+                  <div>
+                    <p className="text-sm text-[#FC8A06]">Notes</p>
+                    <p className="text-base sm:text-lg font-medium text-[#667085]">
+                      {order.note}
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -193,10 +201,12 @@ const OrderDetailModal = ({ isOpen, onClose, order }) => {
           <div className="space-y-4">
             <h3 className="text-lg sm:text-xl font-medium text-black">Order Summary</h3>
             <div className="space-y-3">
-              <div className="flex justify-between text-lg">
-                <span className="text-[#475467] font-medium">Promotion Code</span>
-                <span className="text-[#475467] font-medium">{order.promotionCode || order.promoCode || 'Not applied'}</span>
-              </div>
+              {order.note && (
+                <div className="flex justify-between text-lg">
+                  <span className="text-[#475467] font-medium">Notes</span>
+                  <span className="text-[#475467] font-medium">{order.note}</span>
+                </div>
+              )}
               <div className="flex justify-between text-base">
                 <span className="text-[#667085] font-medium">Promotion</span>
                 <span className="text-[#667085] font-medium">

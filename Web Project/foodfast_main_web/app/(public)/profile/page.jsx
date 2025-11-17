@@ -61,14 +61,12 @@ export default function ProfilePage() {
         phone: formData.phone
       };
 
+      const addressCollectionRef = collection(db, 'user_addresses');
+      const q = query(addressCollectionRef, where('userId', '==', user.uid));
+      const querySnapshot = await getDocs(q);
+
       // If address data was selected from map, save it to address collection
       if (selectedAddressData) {
-        const addressCollectionRef = collection(db, 'address');
-
-        // Check if address already exists for this user
-        const q = query(addressCollectionRef, where('userId', '==', user.uid));
-        const querySnapshot = await getDocs(q);
-
         if (querySnapshot.size > 0) {
           // Update existing address
           const existingDoc = querySnapshot.docs[0];
@@ -77,23 +75,47 @@ export default function ProfilePage() {
             latlong: new GeoPoint(selectedAddressData.lat, selectedAddressData.lng),
             name: formData.name,
             phone: formData.phone,
+            note: formData.name,
             userId: user.uid
           });
         } else {
-          // Create new address
-          const newAddressRef = await addDoc(addressCollectionRef, {
+          // Create new address if doesn't exist
+          await addDoc(addressCollectionRef, {
             address: selectedAddressData.address,
             latlong: new GeoPoint(selectedAddressData.lat, selectedAddressData.lng),
             name: formData.name,
             phone: formData.phone,
+            note: formData.name,
             userId: user.uid,
             createdAt: new Date()
           });
-          updateData.defaultAddressId = newAddressRef.id;
         }
-
         updateData.defaultAddress = selectedAddressData.address;
       } else {
+        // Update address even if no map selection (sync name and phone)
+        if (querySnapshot.size > 0) {
+          const existingDoc = querySnapshot.docs[0];
+          const existingData = existingDoc.data();
+          await updateDoc(doc(db, 'address', existingDoc.id), {
+            name: formData.name,
+            phone: formData.phone,
+            note: formData.name,
+            address: formData.defaultAddress || existingData.address || "",
+            latlong: existingData.latlong || null,
+            userId: user.uid
+          });
+        } else {
+          // Create address if it doesn't exist
+          await addDoc(addressCollectionRef, {
+            address: formData.defaultAddress || "",
+            latlong: null,
+            name: formData.name,
+            phone: formData.phone,
+            note: formData.name,
+            userId: user.uid,
+            createdAt: new Date()
+          });
+        }
         updateData.defaultAddress = formData.defaultAddress;
       }
 
