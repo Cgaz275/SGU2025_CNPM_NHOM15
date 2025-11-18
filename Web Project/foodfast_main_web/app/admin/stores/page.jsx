@@ -200,7 +200,7 @@ export default function AdminStores() {
                 <div className="flex flex-col gap-2 w-full md:w-auto">
                   <Link
                     href={`/admin/stores/${restaurant.id}`}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-center font-medium text-sm"
+                    className="px-4 py-2 bg-[#366055] text-white rounded-lg hover:bg-[#32574D] transition text-center font-medium text-sm"
                   >
                     View Details
                   </Link>

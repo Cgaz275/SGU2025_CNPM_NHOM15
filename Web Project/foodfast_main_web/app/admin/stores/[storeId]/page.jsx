@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { doc, getDoc, collection, query, where, getDocs, updateDoc } from 'firebase/firestore'
 import { db } from '@/config/FirebaseConfig'
-import { MapPin, Phone, Mail, Star, ChevronLeft, AlertCircle } from 'lucide-react'
+import { MapPin, Phone, Mail, Star, ChevronLeft, AlertCircle, X } from 'lucide-react'
 import Loading from '@/components/Loading'
 import toast from 'react-hot-toast'
 import { formatPrice, convertToDate } from '@/utils/currencyFormatter'
@@ -20,6 +20,8 @@ export default function StoreDetailPage() {
   const [promotions, setPromotions] = useState([])
   const [merchant, setMerchant] = useState(null)
   const [togglingStatus, setTogglingStatus] = useState(false)
+  const [selectedPromotion, setSelectedPromotion] = useState(null)
+  const [showPromoDetail, setShowPromoDetail] = useState(false)
 
   useEffect(() => {
     const fetchRestaurantDetails = async () => {
@@ -68,7 +70,7 @@ export default function StoreDetailPage() {
         })))
 
         // Fetch promotions
-        const promotionsCollectionRef = collection(db, 'promotions')
+        const promotionsCollectionRef = collection(db, 'promotions_restaurant')
         const promotionsQuery = query(promotionsCollectionRef, where('restaurantId', '==', storeId))
         const promotionsSnap = await getDocs(promotionsQuery)
         setPromotions(promotionsSnap.docs.map(doc => ({
@@ -275,27 +277,45 @@ export default function StoreDetailPage() {
               <div className="space-y-4">
                 {promotions.map((promo) => (
                   <div key={promo.id} className="border border-slate-200 rounded-lg p-4">
-                    <div className="flex items-start justify-between">
+                    <div className="flex items-start justify-between gap-4">
                       <div className="flex-1">
-                        <h3 className="font-semibold text-slate-800">{promo.title || 'Promotion'}</h3>
-                        <p className="text-sm text-slate-600 mt-1">{promo.description || 'No description'}</p>
+                        <div className="flex items-start gap-2">
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-slate-800">{promo.title || 'Promotion'}</h3>
+                            {promo.code && (
+                              <p className="text-sm text-slate-500 mt-1">Code: <span className="font-mono font-bold text-slate-700">{promo.code}</span></p>
+                            )}
+                          </div>
+                        </div>
+                        <p className="text-sm text-slate-600 mt-2">{promo.description || 'No description'}</p>
                         {promo.discountValue && (
                           <p className="text-lg font-bold text-green-600 mt-2">
                             {promo.discountType === 'percentage' ? `${promo.discountValue}%` : formatPrice(promo.discountValue)} off
                           </p>
                         )}
+                        {promo.expiryDate && (
+                          <p className="text-xs text-slate-600 mt-2">
+                            Expires: {convertToDate(promo.expiryDate).toLocaleDateString()}
+                          </p>
+                        )}
                       </div>
-                      {promo.is_enable ? (
-                        <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded whitespace-nowrap ml-4">Active</span>
-                      ) : (
-                        <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded whitespace-nowrap ml-4">Inactive</span>
-                      )}
+                      <div className="flex flex-col gap-2 items-end">
+                        {promo.is_enable ? (
+                          <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded whitespace-nowrap">Active</span>
+                        ) : (
+                          <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded whitespace-nowrap">Inactive</span>
+                        )}
+                        <button
+                          onClick={() => {
+                            setSelectedPromotion(promo)
+                            setShowPromoDetail(true)
+                          }}
+                          className="text-xs bg-blue-100 text-blue-700 hover:bg-blue-200 px-3 py-1 rounded transition"
+                        >
+                          View Details
+                        </button>
+                      </div>
                     </div>
-                    {promo.expiryDate && (
-                      <p className="text-xs text-slate-600 mt-3">
-                        Expires: {convertToDate(promo.expiryDate).toLocaleDateString()}
-                      </p>
-                    )}
                   </div>
                 ))}
               </div>
@@ -342,6 +362,86 @@ export default function StoreDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Promotion Detail Modal */}
+      {showPromoDetail && selectedPromotion && (
+        <div className="fixed inset-0 backdrop-blur-md flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="sticky top-0 bg-white border-b border-slate-200 p-6 flex items-center justify-between">
+              <h2 className="text-2xl font-bold text-slate-800">Promotion Details</h2>
+              <button
+                onClick={() => {
+                  setShowPromoDetail(false)
+                  setSelectedPromotion(null)
+                }}
+                className="text-slate-500 hover:text-slate-700 transition"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <p className="text-xs text-slate-600 uppercase tracking-wide font-medium mb-1">Code</p>
+                  <p className="font-mono font-bold text-slate-800 text-lg">{selectedPromotion.code || 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-600 uppercase tracking-wide font-medium mb-1">Status</p>
+                  {selectedPromotion.is_enable ? (
+                    <span className="inline-block bg-green-100 text-green-700 px-3 py-1 rounded text-sm font-medium">Active</span>
+                  ) : (
+                    <span className="inline-block bg-red-100 text-red-700 px-3 py-1 rounded text-sm font-medium">Inactive</span>
+                  )}
+                </div>
+                <div className="md:col-span-2">
+                  <p className="text-xs text-slate-600 uppercase tracking-wide font-medium mb-1">Detail</p>
+                  <p className="text-slate-800">{selectedPromotion.detail || 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-600 uppercase tracking-wide font-medium mb-1">Discount</p>
+                  <p className="text-lg font-bold text-green-600">{selectedPromotion.discount_percentage ? `${selectedPromotion.discount_percentage}%` : 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-600 uppercase tracking-wide font-medium mb-1">Min Price</p>
+                  <p className="text-slate-800">{selectedPromotion.minPrice ? formatPrice(selectedPromotion.minPrice) : 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-600 uppercase tracking-wide font-medium mb-1">Expiry Date</p>
+                  <p className="text-slate-800">
+                    {selectedPromotion.expiryDate
+                      ? convertToDate(selectedPromotion.expiryDate).toLocaleDateString()
+                      : 'N/A'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-600 uppercase tracking-wide font-medium mb-1">Usage Count</p>
+                  <p className="text-slate-800">{selectedPromotion.usage_count || 0}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-600 uppercase tracking-wide font-medium mb-1">Usage Limit</p>
+                  <p className="text-slate-800">{selectedPromotion.usage_limit || 'Unlimited'}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="border-t border-slate-200 p-6 flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  setShowPromoDetail(false)
+                  setSelectedPromotion(null)
+                }}
+                className="px-4 py-2 bg-slate-200 text-slate-800 rounded-lg hover:bg-slate-300 transition font-medium"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

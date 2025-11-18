@@ -11,11 +11,10 @@ const [loading, setLoading] = useState(true);
 useEffect(() => {
  // Fetch only enabled restaurants for customer view
  const restaurantsCollectionRef = collection(db, 'restaurants');
- // Filter by is_enable = true and sort by rating
+ // Filter by is_enable = true (no orderBy to avoid composite index requirement)
 const q = query(
    restaurantsCollectionRef,
-   where('is_enable', '==', true),
-   orderBy('rating', 'desc')
+   where('is_enable', '==', true)
  );
 
  // Listen for real-time changes
@@ -27,6 +26,9 @@ const q = query(
  id: doc.id,
  ...doc.data(),
  }));
+
+ // Sort by rating client-side to avoid requiring composite index
+ restaurantsData.sort((a, b) => (b.rating || 0) - (a.rating || 0));
 
  setData(restaurantsData);
  setLoading(false);
