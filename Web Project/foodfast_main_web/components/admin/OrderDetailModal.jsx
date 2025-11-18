@@ -1,15 +1,20 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { X, MapPin, Package, CreditCard, Zap, Loader } from 'lucide-react'
+import { doc, getDoc } from 'firebase/firestore'
+import { db } from '@/config/FirebaseConfig'
 import { formatTimestampDisplay } from '@/utils/timestampUtils'
 import { updateOrderStatus, canChangeOrderStatus, getAvailableNextStatuses } from '@/utils/orderUtils'
 import toast from 'react-hot-toast'
 import AssignDroneModal from './AssignDroneModal'
+import OrderTrackingMap from '@/components/Orders/OrderTrackingMap'
 
 export default function OrderDetailModal({ isOpen, order, onClose, onStatusChange }) {
     const [isAssignDroneOpen, setIsAssignDroneOpen] = useState(false)
     const [statusChanging, setStatusChanging] = useState(false)
     const [showStatusDropdown, setShowStatusDropdown] = useState(false)
+    const [droneLocation, setDroneLocation] = useState(null)
+    const [loadingDroneLocation, setLoadingDroneLocation] = useState(false)
 
     const handleStatusChange = async (newStatus) => {
         if (!order?.id) {
@@ -30,6 +35,35 @@ export default function OrderDetailModal({ isOpen, order, onClose, onStatusChang
             setStatusChanging(false)
         }
     }
+
+    useEffect(() => {
+        if (!isOpen || !order?.assignedDroneId) {
+            setDroneLocation(null)
+            return
+        }
+
+        const fetchDroneLocation = async () => {
+            setLoadingDroneLocation(true)
+            try {
+                const droneRef = doc(db, 'drones', order.assignedDroneId)
+                const droneSnap = await getDoc(droneRef)
+                if (droneSnap.exists()) {
+                    const droneData = droneSnap.data()
+                    setDroneLocation(droneData.latlong || null)
+                }
+            } catch (error) {
+                console.error('Error fetching drone location:', error)
+            } finally {
+                setLoadingDroneLocation(false)
+            }
+        }
+
+        fetchDroneLocation()
+
+        // Poll drone location every 3 seconds
+        const interval = setInterval(fetchDroneLocation, 3000)
+        return () => clearInterval(interval)
+    }, [isOpen, order?.assignedDroneId])
 
     if (!isOpen || !order) return null
 
@@ -115,16 +149,50 @@ export default function OrderDetailModal({ isOpen, order, onClose, onStatusChang
 
                     {/* Assigned Drone Info */}
                     {order.assignedDroneName && (
-                        <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                            <div className="flex items-center gap-2 mb-2">
-                                <Zap size={16} className="text-blue-600" />
-                                <p className="text-xs text-blue-600 uppercase font-semibold">Assigned Drone</p>
+                        <>
+                            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <Zap size={16} className="text-blue-600" />
+                                    <p className="text-xs text-blue-600 uppercase font-semibold">Assigned Drone</p>
+                                </div>
+                                <p className="text-lg font-semibold text-blue-900">{order.assignedDroneName}</p>
+                                {order.assignedDroneId && (
+                                    <p className="text-xs text-blue-700 mt-1">ID: {order.assignedDroneId}</p>
+                                )}
                             </div>
-                            <p className="text-lg font-semibold text-blue-900">{order.assignedDroneName}</p>
-                            {order.assignedDroneId && (
-                                <p className="text-xs text-blue-700 mt-1">ID: {order.assignedDroneId}</p>
+
+                            {/* Drone Live Location */}
+                            {order.status?.toLowerCase() === 'shipping' && (
+                                <div className="bg-gradient-to-r from-purple-50 to-blue-50 p-4 rounded-lg border border-purple-200">
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <span className="text-lg">🚁</span>
+                                        <p className="text-xs text-purple-600 uppercase font-semibold">Drone Live Location</p>
+                                    </div>
+                                    {loadingDroneLocation ? (
+                                        <p className="text-sm text-slate-600">Loading location...</p>
+                                    ) : droneLocation ? (
+                                        <div className="space-y-2 text-sm">
+                                            <p className="text-slate-700">
+                                                <span className="font-semibold">Latitude:</span> <code className="bg-white px-2 py-1 rounded text-purple-600">{droneLocation.latitude?.toFixed(6)}</code>
+                                            </p>
+                                            <p className="text-slate-700">
+                                                <span className="font-semibold">Longitude:</span> <code className="bg-white px-2 py-1 rounded text-purple-600">{droneLocation.longitude?.toFixed(6)}</code>
+                                            </p>
+                                        </div>
+                                    ) : (
+                                        <p className="text-sm text-slate-600">Drone location not available yet</p>
+                                    )}
+                                </div>
                             )}
-                        </div>
+
+                            {/* Delivery Map for Shipping Orders */}
+                            {order.status?.toLowerCase() === 'shipping' && (
+                                <div className="mt-4">
+                                    <p className="text-xs text-slate-600 uppercase font-semibold mb-3">Delivery Route Map</p>
+                                    <OrderTrackingMap order={order} />
+                                </div>
+                            )}
+                        </>
                     )}
 
                     {/* Order Amounts */}

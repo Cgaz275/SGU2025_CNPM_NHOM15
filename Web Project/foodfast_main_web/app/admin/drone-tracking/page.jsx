@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Zap, MapPin, Clock, AlertCircle } from 'lucide-react'
 import useOrdersAdmin from '@/hooks/useOrdersAdmin'
 import { calculateDronePosition, formatFlightPhase, getDroneState, DRONE_STATES } from '@/utils/droneSimulation'
-import { doc, getDoc } from 'firebase/firestore'
+import { doc, getDoc, updateDoc } from 'firebase/firestore'
 import { db } from '@/config/FirebaseConfig'
 import { GOONG_MAP_TILES_KEY, GOONG_MAP_STYLE } from '@/config/GoongMapConfig'
 import toast from 'react-hot-toast'
@@ -25,6 +25,7 @@ export default function DroneTrackingPage() {
   const [droneLocation, setDroneLocation] = useState(null)
   const [error, setError] = useState(null)
   const [mapBounds, setMapBounds] = useState(null)
+  const [simulationSpeed, setSimulationSpeed] = useState(100)
 
   // Get orders that are in shipping status
   const shippingOrders = orders?.filter((o) => o.status?.toLowerCase() === 'shipping') || []
@@ -284,10 +285,33 @@ export default function DroneTrackingPage() {
         }
         return next
       })
-    }, 100)
+    }, simulationSpeed)
 
     return () => clearInterval(interval)
-  }, [isRunning])
+  }, [isRunning, simulationSpeed])
+
+  // Update drone location in Firestore when position changes
+  useEffect(() => {
+    if (!selectedOrderId || !droneLocation?.position || !isRunning) return
+
+    const updateDroneLocation = async () => {
+      try {
+        const order = orders?.find((o) => o.id === selectedOrderId)
+        if (!order?.assignedDroneId) return
+
+        const droneRef = doc(db, 'drones', order.assignedDroneId)
+        await updateDoc(droneRef, {
+          'latlong.latitude': droneLocation.position.latitude,
+          'latlong.longitude': droneLocation.position.longitude,
+          lastUpdated: new Date().toISOString(),
+        })
+      } catch (error) {
+        console.error('Error updating drone location:', error)
+      }
+    }
+
+    updateDroneLocation()
+  }, [droneLocation, selectedOrderId, isRunning, orders])
 
   const handleStartSimulation = () => {
     if (!selectedOrderId) {
@@ -475,6 +499,31 @@ export default function DroneTrackingPage() {
                   Pause
                 </button>
               )}
+            </div>
+
+            {/* Simulation Speed Control */}
+            <div className="mt-4 space-y-3">
+              <div className="flex items-center gap-4">
+                <label className="text-sm font-semibold text-slate-700">Simulation Speed:</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="range"
+                    min="50"
+                    max="500"
+                    step="50"
+                    value={simulationSpeed}
+                    onChange={(e) => setSimulationSpeed(Number(e.target.value))}
+                    disabled={isRunning}
+                    className="w-32"
+                  />
+                  <span className="text-sm text-slate-600 font-medium min-w-fit">
+                    {500 / simulationSpeed}x speed
+                  </span>
+                </div>
+              </div>
+              <p className="text-xs text-slate-500">
+                Adjust simulation speed (can only change when paused)
+              </p>
             </div>
 
             {droneLocation && droneLocation.progress !== undefined && (

@@ -8,6 +8,7 @@ import { formatPrice } from '@/utils/currencyFormatter';
 import { formatTimestampDisplay } from '@/utils/timestampUtils';
 import toast from 'react-hot-toast';
 import RatingModal from './Rating/RatingModal';
+import OrderTrackingMap from '@/components/Orders/OrderTrackingMap';
 
 const OrderDetailModal = ({ isOpen, onClose, order }) => {
   const [restaurantAddress, setRestaurantAddress] = useState('');
@@ -15,6 +16,7 @@ const OrderDetailModal = ({ isOpen, onClose, order }) => {
   const [cancelLoading, setCancelLoading] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [ratingModal, setRatingModal] = useState(null);
+  const [showTrackingMap, setShowTrackingMap] = useState(false);
   const currency = process.env.NEXT_PUBLIC_CURRENCY_SYMBOL || 'VND ';
 
   const handleCancelOrder = async () => {
@@ -70,6 +72,7 @@ const OrderDetailModal = ({ isOpen, onClose, order }) => {
       setRatingModal(order);
     }
   }, [isOpen, order?.status, order?.id]);
+
 
   if (!isOpen || !order) return null;
 
@@ -141,7 +144,7 @@ const OrderDetailModal = ({ isOpen, onClose, order }) => {
             <div className="flex flex-col sm:flex-row gap-3">
               {order?.status?.toLowerCase() !== 'cancelled' && (
                 <button
-                  onClick={onClose}
+                  onClick={() => setShowTrackingMap(true)}
                   className="px-6 py-3 bg-[#366055] text-white rounded-lg hover:bg-[#2b4c44] transition flex items-center gap-2"
                 >
                   <MapPin className="w-4 h-4" />
@@ -299,6 +302,8 @@ const OrderDetailModal = ({ isOpen, onClose, order }) => {
             </div>
           </div>
 
+
+
           <div className="h-px bg-[#D0D5DD]"></div>
 
           {/* Order Summary */}
@@ -379,6 +384,34 @@ const OrderDetailModal = ({ isOpen, onClose, order }) => {
         {/* Rating Modal */}
         {ratingModal && (
           <RatingModal ratingModal={ratingModal} setRatingModal={setRatingModal} />
+        )}
+
+        {/* Tracking Map Modal */}
+        {showTrackingMap && (
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[60] p-4 overflow-y-auto">
+            <div
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto my-8"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-6 sm:p-8 space-y-6 relative">
+                <button
+                  onClick={() => setShowTrackingMap(false)}
+                  className="absolute top-6 right-6 sm:top-8 sm:right-8 p-2 hover:bg-gray-100 rounded-lg transition"
+                  aria-label="Close modal"
+                >
+                  <X className="w-6 h-6 text-gray-600 hover:text-gray-900" />
+                </button>
+
+                <h2 className="text-2xl sm:text-3xl font-semibold text-[#366055] pr-10">
+                  📍 Delivery Tracking
+                </h2>
+
+                <div className="h-px bg-[#D0D5DD]"></div>
+
+                <OrderTrackingMap order={order} />
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>
