@@ -4,14 +4,14 @@ import { HomeIcon, LayoutListIcon, SquarePenIcon, SquarePlusIcon } from "lucide-
 import Image from "next/image"
 import Link from "next/link"
 
-const StoreSidebar = ({storeInfo}) => {
+const StoreSidebar = ({storeInfo, isApproved = true}) => {
 
     const pathname = usePathname()
 
     const sidebarLinks = [
         { name: 'Dashboard', href: '/store', icon: HomeIcon },
-        { name: 'Add Product', href: '/store/add-product', icon: SquarePlusIcon },
-        { name: 'Manage Product', href: '/store/manage-product', icon: SquarePenIcon },
+        { name: 'Add Product', href: '/store/add-product', icon: SquarePlusIcon, requiresApproval: true },
+        { name: 'Manage Product', href: '/store/manage-product', icon: SquarePenIcon, requiresApproval: true },
         { name: 'Orders', href: '/store/orders', icon: LayoutListIcon },
     ]
 
@@ -24,13 +24,27 @@ const StoreSidebar = ({storeInfo}) => {
 
             <div className="max-sm:mt-6">
                 {
-                    sidebarLinks.map((link, index) => (
-                        <Link key={index} href={link.href} className={`relative flex items-center gap-3 text-slate-500 hover:bg-slate-50 p-2.5 transition ${pathname === link.href && 'bg-slate-100 sm:text-slate-600'}`}>
-                            <link.icon size={18} className="sm:ml-5" />
-                            <p className="max-sm:hidden">{link.name}</p>
-                            {pathname === link.href && <span className="absolute bg-green-500 right-0 top-1.5 bottom-1.5 w-1 sm:w-1.5 rounded-l"></span>}
-                        </Link>
-                    ))
+                    sidebarLinks.map((link, index) => {
+                        const isDisabled = link.requiresApproval && !isApproved
+                        const isActive = pathname === link.href
+
+                        if (isDisabled) {
+                            return (
+                                <div key={index} className="relative flex items-center gap-3 text-slate-300 p-2.5 cursor-not-allowed opacity-50" title="Available after admin approval">
+                                    <link.icon size={18} className="sm:ml-5" />
+                                    <p className="max-sm:hidden">{link.name}</p>
+                                </div>
+                            )
+                        }
+
+                        return (
+                            <Link key={index} href={link.href} className={`relative flex items-center gap-3 text-slate-500 hover:bg-slate-50 p-2.5 transition ${isActive && 'bg-slate-100 sm:text-slate-600'}`}>
+                                <link.icon size={18} className="sm:ml-5" />
+                                <p className="max-sm:hidden">{link.name}</p>
+                                {isActive && <span className="absolute bg-green-500 right-0 top-1.5 bottom-1.5 w-1 sm:w-1.5 rounded-l"></span>}
+                            </Link>
+                        )
+                    })
                 }
             </div>
         </div>

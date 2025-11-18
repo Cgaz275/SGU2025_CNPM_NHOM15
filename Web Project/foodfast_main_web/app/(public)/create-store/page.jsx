@@ -201,7 +201,7 @@ export default function CreateStore() {
                 email: formData.email,
                 phone: formData.phone,
                 role: "merchant",
-                is_enable: true,
+                is_enable: false,
                 createdAt: serverTimestamp(),
             })
             console.log('User document saved')
@@ -214,9 +214,9 @@ export default function CreateStore() {
                 bannerURL: bannerURL,
                 imageUrl: logoURL,
                 latlong: new GeoPoint(parseFloat(formData.latitude), parseFloat(formData.longitude)),
-                is_enable: true,
+                is_enable: false,
                 rating: 0,
-                status: "pending",
+                status: "approve_await",
                 category: formData.category,
                 userId: user.uid,
                 createdAt: serverTimestamp(),
@@ -225,7 +225,7 @@ export default function CreateStore() {
             console.log('Registration completed successfully!')
 
             setTimeout(() => {
-                router.push('/')
+                router.push('/store')
             }, 1000)
         } catch (error) {
             console.error('Error submitting registration:', error)

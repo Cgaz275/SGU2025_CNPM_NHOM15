@@ -1,8 +1,9 @@
 'use client'
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { X } from 'lucide-react';
-import { doc, setDoc, serverTimestamp, collection, addDoc, GeoPoint, getDoc } from "firebase/firestore"; 
+import { doc, setDoc, serverTimestamp, collection, addDoc, GeoPoint, getDoc, query, where, getDocs } from "firebase/firestore"; 
 import { 
     createUserWithEmailAndPassword, 
     signInWithEmailAndPassword,
@@ -29,7 +30,7 @@ const SignInForm = ({ onSuccess }) => {
         try {
             const result = await signInWithEmailAndPassword(auth, email, password);
 
-            // Check if user has admin role
+            // Check user role and approval status
             const userRef = doc(db, 'user', result.user.uid);
             const userSnap = await getDoc(userRef);
 
@@ -41,6 +42,24 @@ const SignInForm = ({ onSuccess }) => {
                     await auth.signOut();
                     setLoading(false);
                     return;
+                }
+
+                // Check if merchant is approved
+                if (userData.role === 'merchant') {
+                    const restaurantRef = doc(db, 'restaurants', result.user.uid);
+                    const restaurantSnap = await getDoc(restaurantRef);
+
+                    if (restaurantSnap.exists()) {
+                        const restaurantData = restaurantSnap.data();
+
+                        // If not approved, prevent login
+                        if (restaurantData.status !== 'approved' || restaurantData.is_enable !== true) {
+                            setError('Your account is currently under review by our admin team. Please wait for approval before accessing your merchant account. This typically takes 24-48 hours.');
+                            await auth.signOut();
+                            setLoading(false);
+                            return;
+                        }
+                    }
                 }
             }
 
@@ -70,7 +89,15 @@ const SignInForm = ({ onSuccess }) => {
                 className="w-full px-4 py-2 border rounded-lg focus:ring-[#FC8A06] focus:border-[#FC8A06] outline-none"
                 required
             />
-            {error && <div className="text-red-600 text-sm">{error}</div>}
+            {error && (
+                <div className={`p-4 rounded-lg text-sm font-medium ${
+                    error.includes('under review') || error.includes('approval')
+                        ? 'bg-yellow-50 text-yellow-800 border border-yellow-200'
+                        : 'bg-red-50 text-red-800 border border-red-200'
+                }`}>
+                    {error}
+                </div>
+            )}
             <button
                 type="submit"
                 className="w-full bg-[#FC8A06] text-white py-3 rounded-lg font-semibold text-lg hover:bg-[#e87d05] transition duration-300 shadow-md"
@@ -85,7 +112,7 @@ const SignInForm = ({ onSuccess }) => {
 // ------------------------
 // SignUp Form Component
 // ------------------------
-const SignUpForm = ({ onSuccess }) => {
+const SignUpForm = ({ onSuccess, router }) => {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [phone, setPhone] = useState('');
@@ -190,123 +217,31 @@ const SignUpForm = ({ onSuccess }) => {
             >
                 {loading ? 'Signing up...' : 'Sign Up'}
             </button>
+
+            <div className="text-center mt-4 pt-4 border-t border-gray-200">
+                <p className="text-gray-600 text-sm mb-2">Interested in becoming a partner?</p>
+                <button
+                    type="button"
+                    onClick={() => {
+                        onSuccess && onSuccess()
+                        router?.push('/create-store')
+                    }}
+                    className="text-[#FC8A06] font-semibold hover:underline transition duration-300"
+                >
+                    Be our merchant
+                </button>
+            </div>
         </form>
     );
 }
 
-// ------------------------
-// Merchant SignUp Form Component
-// ------------------------
-const MerchantSignUpForm = ({ onSuccess }) => {
-    const [name, setName] = useState('');
-    const [email, setEmail] = useState('');
-    const [phone, setPhone] = useState('');
-    const [password, setPassword] = useState('');
-    const [confirm, setConfirm] = useState('');
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setError('');
-
-        if (password !== confirm) {
-            setError('Password is not compatible!');
-            return;
-        }
-
-        setLoading(true);
-        try {
-            const res = await createUserWithEmailAndPassword(auth, email, password);
-            const user = res.user;
-            await updateProfile(user, { displayName: name });
-
-            if (db) {
-                // Create merchant document in restaurants collection
-                await setDoc(doc(db, "restaurants", user.uid), {
-                    name,
-                    email,
-                    phone,
-                    is_enable: true,
-                    role: "merchant",
-                    address: "",
-                    bannerURL: "",
-                    imageurl: "",
-                    categories: [],
-                    latlong: null,
-                    rating: 0,
-                    status: "pending",
-                    createdAt: serverTimestamp(),
-                });
-            }
-
-            onSuccess && onSuccess();
-        } catch (err) {
-            setError('Error creating merchant account. Please try again.');
-        } finally {
-            setLoading(false);
-        }
-    }
-
-    return (
-        <form className="space-y-4" onSubmit={handleSubmit}>
-            <input
-                type="text"
-                placeholder="Restaurant name"
-                value={name}
-                onChange={e => setName(e.target.value)}
-                className="w-full px-4 py-2 border rounded-lg focus:ring-[#FC8A06] focus:border-[#FC8A06] outline-none"
-                required
-            />
-            <input
-                type="email"
-                placeholder="Email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                className="w-full px-4 py-2 border rounded-lg focus:ring-[#FC8A06] focus:border-[#FC8A06] outline-none"
-                required
-            />
-            <input
-                type="tel"
-                placeholder="Phone"
-                value={phone}
-                onChange={e => setPhone(e.target.value)}
-                className="w-full px-4 py-2 border rounded-lg focus:ring-[#FC8A06] focus:border-[#FC8A06] outline-none"
-                required
-            />
-            <input
-                type="password"
-                placeholder="Password"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                className="w-full px-4 py-2 border rounded-lg focus:ring-[#FC8A06] focus:border-[#FC8A06] outline-none"
-                required
-            />
-            <input
-                type="password"
-                placeholder="Confirm Password"
-                value={confirm}
-                onChange={e => setConfirm(e.target.value)}
-                className="w-full px-4 py-2 border rounded-lg focus:ring-[#FC8A06] focus:border-[#FC8A06] outline-none"
-                required
-            />
-            {error && <div className="text-red-600 text-sm">{error}</div>}
-            <button
-                type="submit"
-                className="w-full bg-[#FC8A06] text-white py-3 rounded-lg font-semibold text-lg hover:bg-[#e87d05] transition duration-300 shadow-md"
-                disabled={loading}
-            >
-                {loading ? 'Creating merchant account...' : 'Create Merchant Account'}
-            </button>
-        </form>
-    );
-}
 
 // ------------------------
 // Main Modal Component
 // ------------------------
 const AuthModal = ({ isOpen, onClose, mode = 'user' }) => {
-    const [activeTab, setActiveTab] = useState(mode === 'merchant' ? 'merchant-signup' : 'signin');
+    const router = useRouter();
+    const [activeTab, setActiveTab] = useState('signin');
 
     const handleGoogle = async () => {
         try {
@@ -355,37 +290,29 @@ const AuthModal = ({ isOpen, onClose, mode = 'user' }) => {
                 </button>
 
                 <h2 className="text-3xl font-bold text-center text-[#366055] mb-6">
-                    {activeTab === 'signin' ? 'Welcome back' : activeTab === 'merchant-signup' ? 'Register Your Restaurant' : 'Create an account'}
+                    {activeTab === 'signin' ? 'Welcome back' : 'Create an account'}
                 </h2>
 
                 {/* Tabs */}
                 <div className="flex border-b border-gray-200 mb-6">
-                    {mode === 'user' ? (
-                        <>
-                            <button
-                                className={`flex-1 py-3 text-lg font-medium transition duration-300 ${activeTab === 'signin' ? 'text-[#FC8A06] border-b-2 border-[#FC8A06]' : 'text-gray-500 hover:text-gray-700'}`}
-                                onClick={() => setActiveTab('signin')}
-                            >
-                                Sign In
-                            </button>
-                            <button
-                                className={`flex-1 py-3 text-lg font-medium transition duration-300 ${activeTab === 'signup' ? 'text-[#FC8A06] border-b-2 border-[#FC8A06]' : 'text-gray-500 hover:text-gray-700'}`}
-                                onClick={() => setActiveTab('signup')}
-                            >
-                                Sign Up
-                            </button>
-                        </>
-                    ) : (
-                        <div className="w-full py-3 text-lg font-medium text-[#FC8A06] text-center border-b-2 border-[#FC8A06]">
-                            Merchant Registration
-                        </div>
-                    )}
+                    <button
+                        className={`flex-1 py-3 text-lg font-medium transition duration-300 ${activeTab === 'signin' ? 'text-[#FC8A06] border-b-2 border-[#FC8A06]' : 'text-gray-500 hover:text-gray-700'}`}
+                        onClick={() => setActiveTab('signin')}
+                    >
+                        Sign In
+                    </button>
+                    <button
+                        className={`flex-1 py-3 text-lg font-medium transition duration-300 ${activeTab === 'signup' ? 'text-[#FC8A06] border-b-2 border-[#FC8A06]' : 'text-gray-500 hover:text-gray-700'}`}
+                        onClick={() => setActiveTab('signup')}
+                    >
+                        Sign Up
+                    </button>
                 </div>
 
-                {mode === 'merchant' ? (
-                    <MerchantSignUpForm onSuccess={onClose} />
+                {activeTab === 'signin' ? (
+                    <SignInForm onSuccess={onClose} />
                 ) : (
-                    activeTab === 'signin' ? <SignInForm onSuccess={onClose} /> : <SignUpForm onSuccess={onClose} />
+                    <SignUpForm onSuccess={onClose} router={router} />
                 )}
 
                 {/* Divider */}

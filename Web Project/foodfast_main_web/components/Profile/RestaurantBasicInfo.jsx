@@ -14,6 +14,7 @@ export default function RestaurantBasicInfo({ restaurantId }) {
     const [uploadingLogo, setUploadingLogo] = useState(false)
     const [uploadingBanner, setUploadingBanner] = useState(false)
     const [isEnabled, setIsEnabled] = useState(true)
+    const [restaurantStatus, setRestaurantStatus] = useState('pending')
 
     const [formData, setFormData] = useState({
         name: '',
@@ -52,6 +53,7 @@ export default function RestaurantBasicInfo({ restaurantId }) {
                         banner: data.bannerURL || null
                     })
                     setIsEnabled(data.is_enable !== false)
+                    setRestaurantStatus(data.status || 'pending')
                 }
             } catch (error) {
                 console.error('Error fetching restaurant:', error)
@@ -217,8 +219,30 @@ export default function RestaurantBasicInfo({ restaurantId }) {
 
     return (
         <div className="space-y-6">
-            {/* Banned Restaurant Alert */}
-            {!isEnabled && (
+            {/* Status Alerts */}
+            {restaurantStatus === 'approve_await' && (
+                <div className="bg-yellow-50 border-l-4 border-yellow-600 rounded-lg p-4 flex gap-4">
+                    <AlertCircle className="text-yellow-600 flex-shrink-0 mt-0.5" size={20} />
+                    <div>
+                        <h3 className="font-semibold text-yellow-900 mb-1">Awaiting Admin Approval</h3>
+                        <p className="text-yellow-800 text-sm">
+                            Your restaurant is currently under review by our admin team. Please wait for approval. This typically takes 24-48 hours.
+                        </p>
+                    </div>
+                </div>
+            )}
+            {restaurantStatus === 'rejected' && (
+                <div className="bg-red-50 border-l-4 border-red-600 rounded-lg p-4 flex gap-4">
+                    <AlertCircle className="text-red-600 flex-shrink-0 mt-0.5" size={20} />
+                    <div>
+                        <h3 className="font-semibold text-red-900 mb-1">Application Rejected</h3>
+                        <p className="text-red-800 text-sm">
+                            Your restaurant application has been rejected. Please contact support for more information.
+                        </p>
+                    </div>
+                </div>
+            )}
+            {restaurantStatus === 'approved' && !isEnabled && (
                 <div className="bg-red-50 border-l-4 border-red-600 rounded-lg p-4 flex gap-4">
                     <AlertCircle className="text-red-600 flex-shrink-0 mt-0.5" size={20} />
                     <div>

@@ -5,6 +5,8 @@ import { CircleDollarSignIcon, ShoppingBasketIcon, StarIcon, TagsIcon } from "lu
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
+import { db, auth } from "@/config/FirebaseConfig"
+import { doc, getDoc } from "firebase/firestore"
 
 export default function Dashboard() {
 
@@ -13,6 +15,7 @@ export default function Dashboard() {
     const router = useRouter()
 
     const [loading, setLoading] = useState(true)
+    const [isApproved, setIsApproved] = useState(true)
     const [dashboardData, setDashboardData] = useState({
         totalProducts: 0,
         totalEarnings: 0,
@@ -28,7 +31,20 @@ export default function Dashboard() {
     ]
 
     const fetchDashboardData = async () => {
-        setDashboardData(dummyStoreDashboardData)
+        try {
+            const user = auth.currentUser
+            if (user) {
+                const restaurantRef = doc(db, 'restaurants', user.uid)
+                const docSnap = await getDoc(restaurantRef)
+                if (docSnap.exists()) {
+                    const data = docSnap.data()
+                    setIsApproved(data.status === 'approved' && data.is_enable === true)
+                }
+            }
+            setDashboardData(dummyStoreDashboardData)
+        } catch (error) {
+            console.error('Error fetching dashboard data:', error)
+        }
         setLoading(false)
     }
 

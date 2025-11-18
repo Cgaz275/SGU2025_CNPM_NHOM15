@@ -1,29 +1,90 @@
 'use client'
-import { storesDummyData } from "@/assets/assets"
 import StoreInfo from "@/components/admin/StoreInfo"
 import Loading from "@/components/Loading"
 import { useEffect, useState } from "react"
 import toast from "react-hot-toast"
+import { db } from "@/config/FirebaseConfig"
+import { collection, query, where, onSnapshot, updateDoc, doc, getDoc } from "firebase/firestore"
 
 export default function AdminApprove() {
 
     const [stores, setStores] = useState([])
     const [loading, setLoading] = useState(true)
-
-
-    const fetchStores = async () => {
-        setStores(storesDummyData)
-        setLoading(false)
-    }
+    const [approvingIds, setApprovingIds] = useState({})
 
     const handleApprove = async ({ storeId, status }) => {
-        // Logic to approve a store
+        setApprovingIds(prev => ({ ...prev, [storeId]: true }))
+        try {
+            const restaurantRef = doc(db, 'restaurants', storeId)
+            const userRef = doc(db, 'user', storeId)
 
-
+            if (status === 'approved') {
+                await updateDoc(restaurantRef, {
+                    status: 'approved',
+                    is_enable: true
+                })
+                await updateDoc(userRef, {
+                    is_enable: true
+                })
+                toast.success('Restaurant approved successfully')
+            } else if (status === 'rejected') {
+                await updateDoc(restaurantRef, {
+                    status: 'rejected',
+                    is_enable: false
+                })
+                await updateDoc(userRef, {
+                    is_enable: false
+                })
+                toast.success('Restaurant rejected')
+            }
+        } catch (error) {
+            console.error('Error updating restaurant:', error)
+            toast.error('Failed to update restaurant status')
+        } finally {
+            setApprovingIds(prev => ({ ...prev, [storeId]: false }))
+        }
     }
 
     useEffect(() => {
-            fetchStores()
+        const restaurantsRef = collection(db, 'restaurants')
+        const q = query(restaurantsRef, where('status', '==', 'approve_await'))
+
+        const unsubscribe = onSnapshot(q, async (snapshot) => {
+            const storesData = []
+            for (const restaurantDoc of snapshot.docs) {
+                const restaurantData = restaurantDoc.data()
+                const userDoc = await getDoc(doc(db, 'user', restaurantData.userId))
+                const userData = userDoc.exists() ? userDoc.data() : {}
+
+                storesData.push({
+                    id: restaurantDoc.id,
+                    name: restaurantData.name,
+                    logo: restaurantData.imageUrl,
+                    username: restaurantData.userId,
+                    status: restaurantData.status,
+                    description: restaurantData.description || '',
+                    address: restaurantData.address,
+                    contact: restaurantData.phone || userData.phone || '',
+                    email: userData.email || restaurantData.email || '',
+                    createdAt: restaurantData.createdAt?.toDate?.() || new Date(),
+                    user: {
+                        name: userData.name || restaurantData.name,
+                        email: userData.email || '',
+                        image: userData.image || restaurantData.imageUrl || 'https://via.placeholder.com/36'
+                    },
+                    restaurantId: restaurantDoc.id,
+                    userId: restaurantData.userId
+                })
+            }
+            setStores(storesData)
+            setLoading(false)
+        }, (error) => {
+            console.error('Error fetching stores:', error)
+            toast.error('Failed to load restaurants')
+            setLoading(false)
+        })
+
+        return () => unsubscribe()
     }, [])
 
     return !loading ? (
@@ -39,11 +100,19 @@ export default function AdminApprove() {
 
                             {/* Actions */}
                             <div className="flex gap-3 pt-2 flex-wrap">
-                                <button onClick={() => toast.promise(handleApprove({ storeId: store.id, status: 'approved' }), { loading: "approving" })} className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm" >
-                                    Approve
+                                <button
+                                    onClick={() => handleApprove({ storeId: store.restaurantId, status: 'approved' })}
+                                    disabled={approvingIds[store.restaurantId]}
+                                    className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {approvingIds[store.restaurantId] ? 'Approving...' : 'Approve'}
                                 </button>
-                                <button onClick={() => toast.promise(handleApprove({ storeId: store.id, status: 'rejected' }), { loading: 'rejecting' })} className="px-4 py-2 bg-slate-500 text-white rounded hover:bg-slate-600 text-sm" >
-                                    Reject
+                                <button
+                                    onClick={() => handleApprove({ storeId: store.restaurantId, status: 'rejected' })}
+                                    disabled={approvingIds[store.restaurantId]}
+                                    className="px-4 py-2 bg-slate-500 text-white rounded hover:bg-slate-600 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {approvingIds[store.restaurantId] ? 'Rejecting...' : 'Reject'}
                                 </button>
                             </div>
                         </div>

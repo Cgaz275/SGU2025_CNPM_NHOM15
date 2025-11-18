@@ -746,7 +746,7 @@ function OptionGroupsSection({
             {!showForm ? (
                 <button
                     onClick={() => setShowForm(true)}
-                    className="w-full py-3 px-4 border-2 border-dashed border-blue-400 rounded-lg text-blue-600 font-medium hover:bg-blue-50 transition flex items-center justify-center gap-2"
+                    className="w-full py-3 px-4 border-2 border-dashed border-[#366055] rounded-lg text-blue-600 font-medium hover:bg-[#31594F] transition flex items-center justify-center gap-2"
                 >
                     <Plus size={18} />
                     Add Option Group

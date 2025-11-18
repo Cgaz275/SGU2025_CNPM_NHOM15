@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import useCurrentUser from '@/hooks/useCurrentUser';
-import { doc, updateDoc, collection, addDoc, query, where, getDocs, GeoPoint } from 'firebase/firestore';
+import { doc, updateDoc, collection, addDoc, query, where, getDocs, GeoPoint, onSnapshot } from 'firebase/firestore';
 import { db } from '@/config/FirebaseConfig';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
@@ -25,6 +25,7 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
   const [selectedAddressData, setSelectedAddressData] = useState(null);
+  const [merchantApprovalStatus, setMerchantApprovalStatus] = useState(null);
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
@@ -40,6 +41,21 @@ export default function ProfilePage() {
         defaultAddress: user.defaultAddress || '',
         phone: user.phone || ''
       });
+
+      // If user is a merchant, check their approval status
+      if (user.role === 'merchant') {
+        const restaurantRef = doc(db, 'restaurants', user.uid);
+        const unsubscribe = onSnapshot(restaurantRef, (docSnap) => {
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            setMerchantApprovalStatus({
+              status: data.status || 'pending',
+              is_enable: data.is_enable !== false
+            });
+          }
+        });
+        return () => unsubscribe();
+      }
     }
   }, [user]);
 
@@ -183,7 +199,30 @@ export default function ProfilePage() {
 
           <AccountInfo user={user} />
 
-          {user?.role === 'merchant' && (
+          {user?.role === 'merchant' && merchantApprovalStatus && merchantApprovalStatus?.status !== 'approved' && (
+            <div className="mt-12 bg-gradient-to-r from-blue-50 to-blue-100 border-2 border-blue-300 rounded-xl p-8 shadow-lg">
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0">
+                  <svg className="h-8 w-8 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2zm-11-1h2v2H7V4zm2 4H7v2h2V8zm2-4h2v2h-2V4zm2 4h-2v2h2V8z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-xl sm:text-2xl font-bold text-blue-900 mb-2">
+                    Restaurant Management Coming Soon
+                  </h3>
+                  <p className="text-blue-800 text-base sm:text-lg mb-3">
+                    Your restaurant application is currently under review by our admin team. We're verifying all the details you provided to ensure quality standards.
+                  </p>
+                  <p className="text-blue-700 font-semibold">
+                    ⏱️ This typically takes 24-48 hours. You'll be notified once your restaurant is approved! 
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {user?.role === 'merchant' && merchantApprovalStatus?.status === 'approved' && merchantApprovalStatus?.is_enable && (
             <MerchantRestaurantEditor user={user} />
           )}
         </div>
