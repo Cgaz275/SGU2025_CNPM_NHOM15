@@ -1,8 +1,8 @@
-import { restaurants } from '@/data/mockData';
 import { Ionicons } from '@expo/vector-icons';
 import MapLibreGL from '@maplibre/maplibre-react-native';
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
+import { collection, getDocs } from 'firebase/firestore';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Alert,
@@ -13,6 +13,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { db } from '../../FirebaseConfig';
 
 MapLibreGL.setAccessToken(null);
 
@@ -28,8 +29,9 @@ const RestaurantMapScreen = () => {
     null
   );
   const [loading, setLoading] = useState(true);
+  const [restaurants, setRestaurants] = useState<any[]>([]);
 
-  // 🛰️ Lấy vị trí hiện tại ban đầu
+  // 🛰️ Lấy vị trí hiện tại
   useEffect(() => {
     (async () => {
       try {
@@ -44,7 +46,6 @@ const RestaurantMapScreen = () => {
         const pos = await Location.getCurrentPositionAsync({
           accuracy: Location.Accuracy.High,
         });
-
         const coord: [number, number] = [
           pos.coords.longitude,
           pos.coords.latitude,
@@ -65,6 +66,28 @@ const RestaurantMapScreen = () => {
     })();
   }, []);
 
+  useEffect(() => {
+    const loadRestaurants = async () => {
+      try {
+        const snap = await getDocs(collection(db, 'restaurants'));
+        const data = snap.docs.map((d) => {
+          const r = d.data();
+          const latlong = r.latlong; // GeoPoint
+          return {
+            id: d.id,
+            ...r,
+            latitude: latlong?.latitude || 0,
+            longitude: latlong?.longitude || 0,
+          };
+        });
+        setRestaurants(data);
+      } catch (err) {
+        console.error('ERROR loading restaurants:', err);
+      }
+    };
+    loadRestaurants();
+  }, []);
+
   return (
     <View style={styles.container}>
       {/* 🔙 Nút quay lại */}
@@ -72,10 +95,10 @@ const RestaurantMapScreen = () => {
         onPress={() => router.back()}
         style={{
           position: 'absolute',
-          top: Platform.OS === 'ios' ? 50 : 40, // tránh notch / status bar
+          top: Platform.OS === 'ios' ? 50 : 40,
           left: 20,
           padding: 10,
-          backgroundColor: 'rgba(255,255,255,0.9)', // nhẹ cho dễ nhìn
+          backgroundColor: 'rgba(255,255,255,0.9)',
           borderRadius: 999,
           zIndex: 10,
         }}
@@ -95,9 +118,7 @@ const RestaurantMapScreen = () => {
         <MapLibreGL.Camera
           ref={cameraRef}
           zoomLevel={15}
-          centerCoordinate={
-            userLocation || [106.68025133800008, 10.758935462000075]
-          }
+          centerCoordinate={userLocation || [106.68025, 10.75893]}
           animationDuration={10}
         />
 
@@ -152,16 +173,6 @@ export default RestaurantMapScreen;
 const styles = StyleSheet.create({
   container: { flex: 1 },
   map: { flex: 1 },
-  userMarker: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#007AFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: 'white',
-  },
   restaurantMarker: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -207,6 +218,6 @@ const styles = StyleSheet.create({
     width: 14,
     height: 14,
     borderRadius: 7,
-    backgroundColor: '#ffffffff',
+    backgroundColor: '#fff',
   },
 });

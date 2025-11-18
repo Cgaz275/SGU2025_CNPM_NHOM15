@@ -1,10 +1,20 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import {
+  addDoc,
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  query,
+  where,
+} from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
 import {
   Image,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -15,23 +25,62 @@ import {
   Paragraph,
   Portal,
 } from 'react-native-paper';
-import {
-  getOrders,
-  getRestaurantName,
-  updateOrderStatus,
-} from '../../data/orders';
+import { updateOrderStatus } from '../../data/orders';
+import { db } from '../../FirebaseConfig';
 import NavigationScreen from './location';
 
 export default function Checkout3Screen() {
   const router = useRouter();
   const { id, from } = useLocalSearchParams<{ id: string; from?: string }>();
+
   const [order, setOrder] = useState<any>(null);
   const [cancelDialogVisible, setCancelDialogVisible] = useState(false);
+  const [restaurantName, setRestaurantName] = useState<string>('');
+
+  // ⭐ rating state
+  const [rating, setRating] = useState(0);
+  const [review, setReview] = useState('');
+  const [hasRated, setHasRated] = useState(false);
 
   useEffect(() => {
-    const orders = getOrders();
-    const found = orders.find((o) => o.id === id);
-    setOrder(found);
+    const fetchOrder = async () => {
+      try {
+        const orderRef = doc(db, 'orders', id);
+        const orderSnap = await getDoc(orderRef);
+        if (!orderSnap.exists()) return;
+
+        const data = orderSnap.data();
+        const createdAt = data.createdAt?.toDate?.() || new Date();
+
+        setOrder({ id: orderSnap.id, ...data, createdAt });
+
+        // ⭐ Fetch restaurant name
+        if (data.restaurantId) {
+          const restRef = doc(db, 'restaurants', data.restaurantId);
+          const restSnap = await getDoc(restRef);
+          if (restSnap.exists()) {
+            setRestaurantName(restSnap.data().name || '');
+          }
+        }
+
+        // ⭐ CHECK xem order này đã được đánh giá chưa
+        const ratingsRef = collection(db, 'ratings');
+        const qRating = query(
+          ratingsRef,
+          where('orderId', '==', orderSnap.id),
+          where('userId', '==', data.userId)
+        );
+
+        const ratingSnap = await getDocs(qRating);
+        if (!ratingSnap.empty) {
+          setHasRated(true);
+        }
+      } catch (error) {
+        console.error('Lỗi khi fetch order:', error);
+      }
+    };
+
+    fetchOrder();
   }, [id]);
 
   if (!order) {
@@ -42,19 +91,26 @@ export default function Checkout3Screen() {
     );
   }
 
-  const handleCancel = () => {
-    setCancelDialogVisible(true);
+  const handleCancel = () => setCancelDialogVisible(true);
+
+  const confirmCancel = async () => {
+    try {
+      await updateOrderStatus(order.id, 'cancelled');
+      setOrder({ ...order, status: 'cancelled' });
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setCancelDialogVisible(false);
+    }
   };
 
-  const confirmCancel = () => {
-    updateOrderStatus(order.id, 'cancelled');
-    setOrder({ ...order, status: 'cancelled' });
-    setCancelDialogVisible(false);
-  };
-
-  const handleConfirmReceived = () => {
-    updateOrderStatus(order.id, 'completed');
-    setOrder({ ...order, status: 'completed' });
+  const handleConfirmReceived = async () => {
+    try {
+      await updateOrderStatus(order.id, 'completed');
+      setOrder({ ...order, status: 'completed' });
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   const renderStatusMessage = () => {
@@ -71,11 +127,13 @@ export default function Checkout3Screen() {
         return 'Đơn hàng đã hoàn tất. Cảm ơn bạn đã đặt món!';
       case 'cancelled':
         return 'Đơn hàng đã bị hủy.';
+      case 'fail':
+        return 'Đơn hàng đã thất bại do drone hoặc điều kiện thời tiết.';
       default:
         return '';
     }
   };
-  // Trước phần Scroll nội dung
+
   const statusSteps = [
     { key: 'pending', label: 'Đã đặt' },
     { key: 'confirmed', label: 'Chờ chuẩn bị' },
@@ -85,40 +143,66 @@ export default function Checkout3Screen() {
 
   const currentStepIndex = statusSteps.findIndex((s) => s.key === order.status);
 
-  // Thêm hàm bên trong component
   const getStatusImage = () => {
     switch (order.status) {
       case 'pending':
-        return require('../../assets/images/wait.png');
+        return require('../../assets/states/wait.png');
       case 'confirmed':
-        return require('../../assets/images/medicine2.png');
+        return require('../../assets/states/medicine2.png');
       case 'waitingCustomer':
-        return require('../../assets/images/landing2.png');
+        return require('../../assets/states/landing2.png');
       case 'completed':
-        return require('../../assets/images/package.png');
+        return require('../../assets/states/package.png');
       case 'cancelled':
-        return require('../../assets/images/wait.png');
+        return require('../../assets/states/wait.png');
       case 'shipping':
         return '';
+      case 'fail':
+        return require('../../assets/states/fail.png');
       default:
-        return require('../../assets/images/wait.png');
+        return require('../../assets/states/wait.png');
     }
   };
 
   const showCancelButton = order.status === 'pending';
   const showConfirmButton = order.status === 'waitingCustomer';
+
   const serviceFee = 5000;
   const shippingFee = 15000;
   const total = order.total;
+
+  // ⭐ Gửi rating
+  const handleSubmitRating = async () => {
+    if (!rating) {
+      alert('Bạn chưa chọn số sao!');
+      return;
+    }
+
+    try {
+      await addDoc(collection(db, 'ratings'), {
+        orderId: order.id,
+        restaurantId: order.restaurantId,
+        userId: order.userId,
+        rating,
+        review,
+        createdAt: new Date(),
+      });
+
+      setHasRated(true);
+      alert('Cảm ơn bạn đã đánh giá ❤️');
+    } catch (error) {
+      console.error('ERROR gửi rating:', error);
+      alert('Lỗi khi gửi đánh giá');
+    }
+  };
 
   return (
     <PaperProvider>
       <View style={{ flex: 1 }}>
         <ScrollView
           style={styles.container}
-          contentContainerStyle={{ paddingBottom: 250 }}
+          contentContainerStyle={{ paddingBottom: 350 }}
         >
-          {/* Header */}
           <TouchableOpacity
             style={{ padding: 8 }}
             onPress={() =>
@@ -132,23 +216,20 @@ export default function Checkout3Screen() {
             />
           </TouchableOpacity>
 
-          {/* Scroll nội dung */}
-          {/* Status */}
           {[
             'pending',
             'confirmed',
             'waitingCustomer',
             'completed',
             'cancelled',
+            'fail',
           ].includes(order.status) && (
             <View style={styles.sectionPic}>
               <View style={styles.imageContainer}>
                 <Image
-                  source={getStatusImage()} // thay bằng hàm này
+                  source={getStatusImage()}
                   style={styles.waitImage}
                 />
-
-                {/* khung map nhỏ chỉ hiện khi đang giao hàng */}
               </View>
               <Text style={styles.infoTextCentered}>
                 {renderStatusMessage()}
@@ -158,7 +239,10 @@ export default function Checkout3Screen() {
 
           {order.status === 'shipping' && (
             <View style={styles.mapContainer}>
-              <NavigationScreen />
+              <NavigationScreen
+                pickup={order.pickup_latlong}
+                dropoff={order.address?.latlong}
+              />
             </View>
           )}
 
@@ -196,11 +280,8 @@ export default function Checkout3Screen() {
             })}
           </View>
 
-          {/* Chi tiết đơn hàng */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>
-              {getRestaurantName(order.restaurantId)}
-            </Text>
+            <Text style={styles.sectionTitle}>{restaurantName}</Text>
             <Text style={styles.orderId}>Đơn hàng #{order.id}</Text>
             <Text style={[styles.sectionTitle, { marginTop: 8 }]}>
               MÓN ĂN VÀ SỐ LƯỢNG
@@ -212,7 +293,7 @@ export default function Checkout3Screen() {
                 style={styles.dishRow}
               >
                 <Image
-                  source={item.image}
+                  source={{ uri: item.image }}
                   style={styles.dishImage}
                 />
                 <View style={styles.dishInfo}>
@@ -224,7 +305,6 @@ export default function Checkout3Screen() {
               </View>
             ))}
 
-            {/* Các khoản phí */}
             <View style={styles.feeRow}>
               <Text style={{ fontSize: 16, fontWeight: '600' }}>
                 Phí dịch vụ
@@ -238,9 +318,49 @@ export default function Checkout3Screen() {
               <Text>{shippingFee.toLocaleString()}đ</Text>
             </View>
           </View>
+
+          {/* ⭐⭐⭐ UI RATING — chỉ hiện khi COMPLETED & CHƯA ĐÁNH GIÁ ⭐⭐⭐ */}
+          {order.status === 'completed' && !hasRated && (
+            <View style={styles.ratingBox}>
+              <Text style={styles.ratingTitle}>Đánh giá đơn hàng</Text>
+
+              <View style={styles.starsRow}>
+                {[1, 2, 3, 4, 5].map((s) => (
+                  <TouchableOpacity
+                    key={s}
+                    onPress={() => setRating(s)}
+                  >
+                    <Text
+                      style={{
+                        fontSize: 36,
+                        marginRight: 6,
+                        color: s <= rating ? '#f1c40f' : '#ccc',
+                      }}
+                    >
+                      ★
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <TextInput
+                placeholder="Cảm nhận của bạn..."
+                value={review}
+                onChangeText={setReview}
+                style={styles.reviewInput}
+                multiline
+              />
+
+              <TouchableOpacity
+                onPress={handleSubmitRating}
+                style={styles.sendRatingBtn}
+              >
+                <Text style={styles.sendRatingText}>Gửi đánh giá</Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </ScrollView>
 
-        {/* Footer cố định dính dưới */}
         <View style={styles.footer}>
           <View style={styles.feeRow}>
             <Text style={{ fontSize: 16, fontWeight: '600' }}>Tổng cộng</Text>
@@ -249,7 +369,7 @@ export default function Checkout3Screen() {
             </Text>
           </View>
 
-          {showCancelButton && order.status !== 'cancelled' && (
+          {showCancelButton && (
             <TouchableOpacity
               style={styles.cancelButton}
               onPress={handleCancel}
@@ -268,21 +388,15 @@ export default function Checkout3Screen() {
           )}
         </View>
 
-        {/* Dialog hủy đơn vẫn như cũ */}
         <Portal>
           <Dialog
             visible={cancelDialogVisible}
             onDismiss={() => setCancelDialogVisible(false)}
-            style={{
-              backgroundColor: '#ffffffff',
-            }}
+            style={{ backgroundColor: '#fff' }}
           >
             <Dialog.Title>Hủy đơn hàng</Dialog.Title>
             <Dialog.Content>
-              <Paragraph>
-                Chúng tôi đã nhận đơn hàng và đang chờ xử lý, bạn có chắc vẫn
-                hủy?
-              </Paragraph>
+              <Paragraph>Đơn đang được xử lý, bạn có chắc muốn hủy?</Paragraph>
             </Dialog.Content>
             <Dialog.Actions
               style={{
@@ -299,7 +413,6 @@ export default function Checkout3Screen() {
                   marginBottom: 12,
                   paddingVertical: 14,
                   borderRadius: 80,
-                  justifyContent: 'center',
                 }}
                 onPress={confirmCancel}
               >
@@ -308,15 +421,12 @@ export default function Checkout3Screen() {
 
               <Button
                 mode="outlined"
-                textColor="#363636ff"
+                textColor="#363636"
                 style={{
-                  borderColor: '#363636ff',
-
-                  borderWidth: 1,
+                  borderColor: '#363636',
+                  width: '80%',
                   paddingVertical: 14,
                   borderRadius: 80,
-                  width: '80%',
-                  justifyContent: 'center',
                 }}
                 onPress={() => setCancelDialogVisible(false)}
               >
@@ -330,16 +440,9 @@ export default function Checkout3Screen() {
   );
 }
 
-// ... giữ nguyên styles cũ
-
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff', paddingTop: 50 },
-  imageContainer: {
-    alignItems: 'center',
-    marginVertical: 16,
-    marginTop: 30,
-    marginBottom: 30,
-  },
+  imageContainer: { alignItems: 'center', marginVertical: 16, marginTop: 30 },
   waitImage: { width: 200, height: 200, resizeMode: 'contain' },
   infoTextCentered: {
     fontSize: 14,
@@ -348,7 +451,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   mapContainer: {
-    height: 300, // giới hạn chiều cao cho map nhỏ
+    height: 300,
     borderRadius: 10,
     overflow: 'hidden',
     marginVertical: 10,
@@ -356,14 +459,9 @@ const styles = StyleSheet.create({
   },
   section: { marginHorizontal: 16, marginTop: 0 },
   sectionPic: { marginHorizontal: 16, marginTop: 20, marginBottom: 50 },
-
   orderId: { fontSize: 17, fontWeight: '600', marginBottom: 9 },
   sectionTitle: { fontWeight: '700', fontSize: 16, marginBottom: 12 },
-  dishRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 8,
-  },
+  dishRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8 },
   dishImage: { width: 60, height: 60, borderRadius: 8 },
   dishInfo: { flex: 1, marginLeft: 12 },
   dishName: { fontSize: 16, fontWeight: '600' },
@@ -373,36 +471,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 12,
   },
-  cancelButton: {
-    backgroundColor: 'transparent', // bỏ nền đỏ
-    borderColor: '#e74c3c', // viền đỏ
-    borderWidth: 2, // độ dày viền
-    margin: 16,
-    padding: 16,
-    borderRadius: 50, // bo tròn
-    alignItems: 'center',
-  },
 
-  cancelText: {
-    color: '#e74c3c', // chữ đỏ
-    fontSize: 18,
-    fontWeight: '700',
-  },
-
-  confirmButton: {
-    borderColor: '#27ae60',
-    backgroundColor: 'transparent',
-    borderWidth: 2, // độ dày viền
-    margin: 16,
-    padding: 16,
-    borderRadius: 50, // bo tròn
-    alignItems: 'center',
-  },
-  confirmText: {
-    color: '#27ae60', // chữ đỏ
-    fontSize: 18,
-    fontWeight: '700',
-  },
+  // FOOTER
   footer: {
     position: 'absolute',
     bottom: 0,
@@ -414,38 +484,44 @@ const styles = StyleSheet.create({
     borderTopColor: '#ccc',
   },
 
+  cancelButton: {
+    backgroundColor: 'transparent',
+    borderColor: '#e74c3c',
+    borderWidth: 2,
+    margin: 16,
+    padding: 16,
+    borderRadius: 50,
+    alignItems: 'center',
+  },
+  cancelText: { color: '#e74c3c', fontSize: 18, fontWeight: '700' },
+
+  confirmButton: {
+    borderColor: '#27ae60',
+    backgroundColor: 'transparent',
+    borderWidth: 2,
+    margin: 16,
+    padding: 16,
+    borderRadius: 50,
+    alignItems: 'center',
+  },
+  confirmText: { color: '#27ae60', fontSize: 18, fontWeight: '700' },
+
   progressContainer: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between', // chia đều các step
+    justifyContent: 'space-between',
     paddingHorizontal: 16,
     marginVertical: 20,
   },
-  stepWrapper: {
-    alignItems: 'center',
-    width: 70, // cố định width, chữ dài xuống dòng
-  },
+  stepWrapper: { alignItems: 'center', width: 70 },
   stepCircle: {
     width: 10,
     height: 10,
     borderRadius: 8,
     backgroundColor: '#ccc',
   },
-  stepCircleActive: {
-    width: 16,
-    height: 16,
-    backgroundColor: '#d7a358', // màu active
-  },
-  stepLabel: {
-    fontSize: 12,
-    color: '#666',
-    textAlign: 'center',
-    marginTop: 4,
-  },
-  stepLabelActive: {
-    color: '#d7a358',
-    fontWeight: '700',
-  },
+  stepCircleActive: { width: 16, height: 16, backgroundColor: '#d7a358' },
+  stepLabel: { fontSize: 12, color: '#666', textAlign: 'center', marginTop: 4 },
+  stepLabelActive: { color: '#d7a358', fontWeight: '700' },
   stepLine: {
     flex: 1,
     height: 2,
@@ -454,8 +530,35 @@ const styles = StyleSheet.create({
     backgroundColor: '#ccc',
     marginHorizontal: 4,
   },
-  stepLineActive: {
-    alignSelf: 'center',
-    backgroundColor: '#d7a358',
+  stepLineActive: { backgroundColor: '#d7a358' },
+
+  // ⭐⭐⭐ RATING UI STYLES ⭐⭐⭐
+  ratingBox: {
+    backgroundColor: '#fff',
+    marginTop: 20,
+    padding: 20,
+    borderRadius: 12,
+    marginHorizontal: 16,
+    borderWidth: 1,
+    borderColor: '#eee',
   },
+  ratingTitle: { fontSize: 18, fontWeight: '700', marginBottom: 12 },
+  starsRow: { flexDirection: 'row', marginBottom: 12 },
+  reviewInput: {
+    backgroundColor: '#fafafa',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    padding: 12,
+    height: 100,
+    textAlignVertical: 'top',
+  },
+  sendRatingBtn: {
+    marginTop: 12,
+    backgroundColor: '#d7a358',
+    padding: 16,
+    borderRadius: 50,
+    alignItems: 'center',
+  },
+  sendRatingText: { color: '#fff', fontSize: 16, fontWeight: '700' },
 });

@@ -1,6 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import { collection, getDocs, query, where } from 'firebase/firestore';
+import React, { useEffect, useState } from 'react';
 import {
   Alert,
   Image,
@@ -10,50 +11,75 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-
-// Type trực tiếp trong file
-interface PromoCondition {
-  minOrderValue?: number;
-  firstTimeUserOnly?: boolean;
-}
-
+import { auth, db } from '../../FirebaseConfig';
 interface PromoCode {
   id: string;
   code: string;
-  type: 'percent' | 'fixed';
-  value: number;
-  startDate: Date;
-  endDate: Date;
-  usageLimit?: number;
-  description?: string;
-  condition?: PromoCondition;
+  discount_percentage: number;
+  minPrice: number;
+  detail: string;
+  createdAt: Date;
+  expiryDate: Date;
+  usage_limit: number;
+  usage_count: number;
+  is_enable: boolean;
+  restaurantId: string;
 }
 
-// Mock data
-const initialPromo: PromoCode[] = [
-  {
-    id: '1',
-    code: 'SALE20',
-    type: 'percent',
-    value: 20,
-    startDate: new Date('2025-11-01'),
-    endDate: new Date('2025-11-30'),
-    usageLimit: 100,
-    description: 'Giảm 20% cho đơn hàng từ 100k trở lên',
-  },
-  {
-    id: '2',
-    code: 'FREE50K',
-    type: 'fixed',
-    value: 50000,
-    startDate: new Date('2025-11-05'),
-    endDate: new Date('2025-12-05'),
-  },
-];
-
 export default function Promotion() {
-  const [promoList, setPromoList] = useState<PromoCode[]>(initialPromo);
   const router = useRouter();
+  const [promoList, setPromoList] = useState<PromoCode[]>([]);
+  const [restaurantId, setRestaurantId] = useState<string | null>(null);
+
+  // Load restaurant của user hiện tại
+  useEffect(() => {
+    const loadRestaurant = async () => {
+      const user = auth.currentUser;
+      if (!user) return;
+
+      const qRes = query(
+        collection(db, 'restaurants'),
+        where('userId', '==', user.uid)
+      );
+      const snapRes = await getDocs(qRes);
+      if (!snapRes.empty) {
+        setRestaurantId(snapRes.docs[0].id);
+      }
+    };
+    loadRestaurant();
+  }, []);
+
+  // Load promo theo restaurantId
+  useEffect(() => {
+    if (!restaurantId) return;
+
+    const loadPromo = async () => {
+      const q = query(
+        collection(db, 'promotions_restaurant'),
+        where('restaurantId', '==', restaurantId)
+      );
+      const snap = await getDocs(q);
+      const promos = snap.docs.map((d) => {
+        const data = d.data();
+        return {
+          id: d.id,
+          code: data.code,
+          discount_percentage: data.discount_percentage,
+          minPrice: data.minPrice,
+          detail: data.detail,
+          createdAt: data.createdAt.toDate(), // 🔹 convert Timestamp -> Date
+          expiryDate: data.expiryDate.toDate(), // 🔹 convert Timestamp -> Date
+          usage_limit: data.usage_limit,
+          usage_count: data.usage_count,
+          is_enable: data.is_enable,
+          restaurantId: data.restaurantId,
+        } as PromoCode;
+      });
+      setPromoList(promos);
+    };
+
+    loadPromo();
+  }, [restaurantId]);
 
   const handleDelete = (promo: PromoCode) => {
     Alert.alert('Xác nhận', `Xóa promo ${promo.code}?`, [
@@ -61,40 +87,33 @@ export default function Promotion() {
       {
         text: 'Xóa',
         style: 'destructive',
-        onPress: () => {
-          setPromoList(promoList.filter((p) => p.id !== promo.id));
-        },
+        onPress: () => setPromoList(promoList.filter((p) => p.id !== promo.id)),
       },
     ]);
   };
 
-  const formatDate = (date: Date) => {
-    const d = date.getDate().toString().padStart(2, '0');
-    const m = (date.getMonth() + 1).toString().padStart(2, '0');
-    const y = date.getFullYear();
-    return `${d}/${m}/${y}`;
+  const formatDate = (date: string) => {
+    const d = new Date(date);
+    return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1)
+      .toString()
+      .padStart(2, '0')}/${d.getFullYear()}`;
   };
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={{ flex: 1, padding: 16, backgroundColor: '#fff' }}>
       <View style={styles.headerRow}>
         <TouchableOpacity onPress={() => router.back()}>
           <Image
             source={require('../../assets/icons/arrow.png')}
             style={{ width: 24, height: 24 }}
-            resizeMode="contain"
           />
         </TouchableOpacity>
-
         <Text style={styles.pageTitle}>Quản lý khuyến mãi</Text>
       </View>
+
       <TouchableOpacity
         style={styles.addBtn}
-        onPress={() =>
-          router.push({
-            pathname: '../promo/addpromo',
-          })
-        }
+        onPress={() => router.push('../promo/addpromo')}
       >
         <Text style={styles.addBtnText}>+ Thêm khuyến mãi</Text>
       </TouchableOpacity>
@@ -111,20 +130,23 @@ export default function Promotion() {
           style={styles.card}
         >
           <Text style={styles.code}>{p.code}</Text>
+          <Text>Giảm: {p.discount_percentage}%</Text>
+          <Text>Mức tối thiểu: {p.minPrice.toLocaleString()}đ</Text>
           <Text>
-            Loại giảm: {p.type === 'percent' ? `${p.value}%` : `${p.value}₫`}
+            Thời gian: {formatDate(p.createdAt)} → {formatDate(p.expiryDate)}
           </Text>
           <Text>
-            Thời gian: {formatDate(p.startDate)} → {formatDate(p.endDate)}
+            Sử dụng: {p.usage_count}/{p.usage_limit}
           </Text>
-          {p.usageLimit && <Text>Giới hạn sử dụng: {p.usageLimit}</Text>}
-          {p.description && <Text>Mô tả: {p.description}</Text>}
+          <Text>Mô tả: {p.detail}</Text>
+          <Text>Trạng thái: {p.is_enable ? 'Bật' : 'Tắt'}</Text>
 
           <View style={styles.actionRow}>
             <TouchableOpacity
               onPress={() =>
                 router.push({
                   pathname: '../promo/editpromo',
+                  params: { promoId: p.id }, // truyền id promo
                 })
               }
               style={styles.actionBtn}
@@ -153,13 +175,14 @@ export default function Promotion() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#ffffffff', padding: 16 },
-  header: {
-    fontSize: 22,
-    fontWeight: '700',
-    marginBottom: 16,
-    textAlign: 'center',
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 50,
+    paddingBottom: 20,
+    paddingHorizontal: 5,
   },
+  pageTitle: { fontSize: 20, fontWeight: '600', marginLeft: 12 },
   addBtn: {
     backgroundColor: '#D7A359',
     padding: 14,
@@ -178,19 +201,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 3 },
     shadowRadius: 6,
     elevation: 3,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 50,
-    paddingBottom: 20,
-    paddingHorizontal: 5,
-  },
-
-  pageTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    marginLeft: 12, // khoảng cách giữa mũi tên và title
   },
   code: { fontSize: 18, fontWeight: '700', marginBottom: 6, color: '#ff9800' },
   actionRow: { flexDirection: 'row', marginTop: 8 },

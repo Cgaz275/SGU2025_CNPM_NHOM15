@@ -1,11 +1,16 @@
-import {
-  getAddresses,
-  getDefaultAddress,
-  setDefaultAddress,
-} from '@/data/address';
 import { useFocusEffect, useRouter } from 'expo-router';
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  query,
+  updateDoc,
+  where,
+} from 'firebase/firestore';
 import React, { useCallback, useState } from 'react';
 import {
+  ActivityIndicator,
   FlatList,
   Image,
   StyleSheet,
@@ -13,40 +18,94 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { auth, db } from '../../FirebaseConfig'; // 👈 nhớ export auth từ FirebaseConfig
 
 export default function AddressScreen() {
   const router = useRouter();
-  const [list, setList] = useState(getAddresses());
-  const [defaultAddr, setDefaultAddrState] = useState(getDefaultAddress());
+  const [list, setList] = useState<any[]>([]);
+  const [defaultAddrId, setDefaultAddrId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  // ✅ Hàm reload lại danh sách (dùng lại nhiều chỗ)
-  const reloadList = useCallback(() => {
-    setList([...getAddresses()]); // spread để tạo mảng mới, ép React rerender
-    setDefaultAddrState(getDefaultAddress());
-  }, []);
+  // ✅ Hàm tải địa chỉ từ Firestore
+  const fetchAddresses = useCallback(async () => {
+    setLoading(true);
+    try {
+      const user = auth.currentUser;
+      if (!user) {
+        console.warn('Chưa đăng nhập, quay về login...');
+        router.replace('../(auth)');
+        return;
+      }
 
-  // 🔁 Reload mỗi khi quay lại trang
+      const USER_ID = user.uid;
+
+      // Lấy user để biết defaultAddress
+      const userDoc = await getDoc(doc(db, 'user', USER_ID));
+      const userData = userDoc.exists() ? userDoc.data() : {};
+      const defaultAddressId = userData?.defaultAddressId || '';
+
+      // Lấy danh sách address của user
+      const addrQuery = query(
+        collection(db, 'address'),
+        where('userId', '==', USER_ID)
+      );
+      const addrSnap = await getDocs(addrQuery);
+
+      const addresses = addrSnap.docs.map((docSnap) => {
+        const d = docSnap.data();
+        return {
+          id: docSnap.id,
+          name: d.name,
+          phone: d.phone,
+          address: d.address,
+          note: d.note,
+          isDefault: docSnap.id === defaultAddressId,
+        };
+      });
+
+      setList(addresses);
+      setDefaultAddrId(defaultAddressId);
+    } catch (error) {
+      console.error('Lỗi load địa chỉ:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [router]);
+
+  // 🔁 Mỗi lần focus lại trang → reload
   useFocusEffect(
     useCallback(() => {
-      reloadList();
-    }, [reloadList])
+      fetchAddresses();
+    }, [fetchAddresses])
   );
 
-  // 🟠 Khi nhấn chọn 1 địa chỉ
-  const handleSelectDefault = (id: string) => {
-    setDefaultAddress(id);
-    reloadList();
+  // 🟠 Chọn địa chỉ mặc định
+  const handleSelectDefault = async (id: string) => {
+    const user = auth.currentUser;
+    if (!user) return;
+    const USER_ID = user.uid;
+
+    try {
+      await updateDoc(doc(db, 'user', USER_ID), {
+        defaultAddressId: id,
+      });
+      setDefaultAddrId(id);
+      setList((prev) => prev.map((a) => ({ ...a, isDefault: a.id === id })));
+    } catch (error) {
+      console.error('Lỗi cập nhật địa chỉ mặc định:', error);
+    }
   };
 
-  // ✅ Khi bấm thêm địa chỉ mới → đi đến /add và sau khi back thì tự reload
+  // ✅ Thêm địa chỉ mới
   const handleAddAddress = () => {
     router.push({
       pathname: '/address/add',
-      params: { refresh: Date.now().toString() }, // ép tạo param mới mỗi lần → router refresh
+      params: { refresh: Date.now().toString() },
     });
   };
 
-  const renderItem = ({ item }: { item: (typeof list)[0] }) => (
+  // 🔹 Render từng item
+  const renderItem = ({ item }: { item: any }) => (
     <TouchableOpacity
       style={[
         styles.addressCard,
@@ -55,21 +114,14 @@ export default function AddressScreen() {
       onPress={() => handleSelectDefault(item.id)}
     >
       <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-        <Text style={styles.label}>{item.tag}</Text>
+        <Text style={styles.label}>{item.name}</Text>
         {item.isDefault && (
           <Text style={{ color: '#e67e22', fontWeight: '600' }}>Mặc định</Text>
         )}
       </View>
 
-      <Text style={styles.detail}>
-        {item.name} - {item.phone}
-      </Text>
+      <Text style={styles.detail}>{item.phone}</Text>
       <Text style={styles.detail}>{item.address}</Text>
-
-      {item.building ? (
-        <Text style={styles.detail}>Tòa nhà: {item.building}</Text>
-      ) : null}
-      {item.gate ? <Text style={styles.detail}>Cổng: {item.gate}</Text> : null}
       {item.note ? (
         <Text style={[styles.detail, { fontStyle: 'italic', color: '#888' }]}>
           Ghi chú: {item.note}
@@ -78,9 +130,20 @@ export default function AddressScreen() {
     </TouchableOpacity>
   );
 
+  if (loading) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator
+          size="large"
+          color="#e67e22"
+        />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
-      {/* Nút quay lại */}
+      {/* nút back */}
       <TouchableOpacity
         style={{ paddingTop: 35, paddingLeft: 20, paddingBottom: 10 }}
         onPress={() => router.back()}
@@ -111,6 +174,7 @@ export default function AddressScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff', paddingTop: 16 },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   addressCard: {
     backgroundColor: '#f8f8f8',
     padding: 16,

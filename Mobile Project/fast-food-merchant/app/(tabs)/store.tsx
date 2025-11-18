@@ -28,6 +28,13 @@ export default function StoreScreen() {
       onPress: () => router.push('../statistic'),
       color: '#9c27b0',
     },
+    {
+      id: 'promotion',
+      label: 'Mã giảm giá',
+      icon: 'stats-chart-outline',
+      onPress: () => router.push('../promo'),
+      color: '#cfe600ff',
+    },
   ];
 
   return (

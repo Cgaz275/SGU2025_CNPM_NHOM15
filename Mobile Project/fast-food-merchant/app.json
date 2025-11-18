@@ -19,7 +19,8 @@
         "monochromeImage": "./assets/appimages/appbg.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.khanhne0402.fastfoodmerchant"
     },
     "web": {
       "output": "static",
@@ -43,6 +44,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "22d06d78-a167-417b-ac89-de3be11fe506"
+      }
     }
   }
 }

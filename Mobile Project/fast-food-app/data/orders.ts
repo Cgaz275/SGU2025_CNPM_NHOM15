@@ -1,5 +1,12 @@
 // data/orders.ts
-import { restaurants } from '../data/mockData';
+import {
+  addDoc,
+  collection,
+  doc,
+  serverTimestamp,
+  updateDoc,
+} from 'firebase/firestore';
+import { db } from '../FirebaseConfig';
 import { CartItem } from './cart';
 
 export type OrderStatus =
@@ -8,160 +15,109 @@ export type OrderStatus =
   | 'shipping'
   | 'waitingCustomer'
   | 'completed'
-  | 'cancelled';
+  | 'cancelled'
+  | 'fail';
 
 export type Order = {
   id: string;
-  address: string;
+  address: any;
   restaurantId: string;
   items: CartItem[];
   total: number;
-  paymentMethod: 'Visa' | 'VNPay';
+  paymentMethod: string;
   status: OrderStatus;
-  createdAt: string;
+  createdAt: any;
+  userId: string;
+
+  drone_id: string;
+  package_weight_kg: number;
+  pickup_latlong: any;
+  promotionCode?: string | null;
 };
 
-let orders: Order[] = [];
+export const addOrder = async (orderData: {
+  restaurantId: string;
+  items: CartItem[];
+  total: number;
+  paymentMethod: string;
+  address: any;
+  userId: string;
 
-// 🧩 Sample data 5 trạng thái
-const sampleOrders: Order[] = [
-  {
-    id: 'o1',
-    address: 'THTH Sài Gòn, An Dương Vương, phường 3, Quận 5, Hồ Chí Minh',
-    restaurantId: 'r1',
-    items: [
-      {
-        id: 'd1',
-        name: 'Phở bò tái',
-        price: 45000,
-        quantity: 1,
-        image: require('../assets/images/comtam.jpg'),
-      },
-    ],
-    total: 45000,
-    paymentMethod: 'Cash',
-    status: 'waitingCustomer',
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: 'o2',
-    address: 'THTH Sài Gòn, An Dương Vương, phường 3, Quận 5, Hồ Chí Minh',
-    restaurantId: 'r2',
-    items: [
-      {
-        id: 'd2',
-        name: 'Cơm tấm sườn bì chả',
-        price: 55000,
-        quantity: 1,
-        image: require('../assets/images/comtam.jpg'),
-      },
-    ],
-    total: 55000,
-    paymentMethod: 'Visa',
-    status: 'confirmed',
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: 'o3',
-    address: 'THTH Sài Gòn, An Dương Vương, phường 3, Quận 5, Hồ Chí Minh',
-    restaurantId: 'r4',
-    items: [
-      {
-        id: 'd3',
-        name: 'Bún chả',
-        price: 60000,
-        quantity: 1,
-        image: require('../assets/images/comtam.jpg'),
-      },
-    ],
-    total: 60000,
-    paymentMethod: 'Momo',
-    status: 'shipping',
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: 'o4',
-    address: 'THTH Sài Gòn, An Dương Vương, phường 3, Quận 5, Hồ Chí Minh',
-    restaurantId: 'r1',
-    items: [
-      {
-        id: 'd4',
-        name: 'Cơm chiên Dương Châu',
-        price: 50000,
-        quantity: 1,
-        image: require('../assets/images/comtam.jpg'),
-      },
-    ],
-    total: 50000,
-    paymentMethod: 'Cash',
-    status: 'completed',
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: 'o5',
-    address: 'THTH Sài Gòn, An Dương Vương, phường 3, Quận 5, Hồ Chí Minh',
-    restaurantId: 'r3',
-    items: [
-      {
-        id: 'd5',
-        name: 'Mì xào giòn',
-        price: 48000,
-        quantity: 1,
-        image: require('../assets/images/comtam.jpg'),
-      },
-    ],
-    total: 48000,
-    paymentMethod: 'Visa',
-    status: 'cancelled',
-    createdAt: new Date().toISOString(),
-  },
-];
+  drone_id: string;
+  package_weight_kg: number;
+  pickup_latlong: any;
+  promotionCode?: string | null;
+}): Promise<Order> => {
+  try {
+    // 👉 determine isPaid
+    const isPaid =
+      orderData.paymentMethod === 'Visa' || orderData.paymentMethod === 'VNPay';
 
-// 🟢 Lấy danh sách đơn
-export const getOrders = () => {
-  if (orders.length === 0) {
-    orders = [...sampleOrders]; // bơm data demo
+    // 👉 tạo tạm createdAt local để tính estimatedDelivery
+    const createdLocal = new Date();
+    const estimatedLocal = new Date(createdLocal.getTime() + 20 * 60 * 1000);
+
+    const docRef = await addDoc(collection(db, 'orders'), {
+      restaurantId: orderData.restaurantId,
+      items: orderData.items,
+      total: orderData.total,
+      paymentMethod: orderData.paymentMethod,
+      address: orderData.address,
+      status: 'pending',
+      createdAt: serverTimestamp(),
+      userId: orderData.userId,
+
+      drone_id: orderData.drone_id,
+      package_weight_kg: orderData.package_weight_kg,
+      pickup_latlong: orderData.pickup_latlong,
+      promotionCode: orderData.promotionCode || null,
+
+      // 👉 thêm các field mới
+      deliveryFee: 0,
+      discount: 0,
+      discountPercent: 0,
+      estimatedDelivery: estimatedLocal,
+      isPaid,
+    });
+
+    return {
+      id: docRef.id,
+      restaurantId: orderData.restaurantId,
+      items: orderData.items,
+      total: orderData.total,
+      paymentMethod: orderData.paymentMethod,
+      address: orderData.address,
+      status: 'pending',
+      createdAt: createdLocal,
+      userId: orderData.userId,
+
+      drone_id: orderData.drone_id,
+      package_weight_kg: orderData.package_weight_kg,
+      pickup_latlong: orderData.pickup_latlong,
+      promotionCode: orderData.promotionCode || null,
+
+      deliveryFee: 0,
+      discount: 0,
+      discountPercent: 0,
+      estimatedDelivery: estimatedLocal,
+      isPaid,
+    };
+  } catch (error) {
+    console.error('Lỗi khi tạo order:', error);
+    throw error;
   }
-  return orders;
 };
 
-// 🟢 Map restaurantId => restaurant name
-export const getRestaurantName = (id: string) => {
-  const restaurant = restaurants.find((r) => r.id === id);
-  return restaurant?.name || 'Nhà hàng không xác định';
-};
-
-// 🟢 Thêm đơn mới (checkout)
-export const addOrder = (order: Omit<Order, 'id' | 'createdAt' | 'status'>) => {
-  // 🧩 Clone items để đảm bảo mỗi item có key riêng (tránh trùng id)
-  const clonedItems = order.items.map((item, index) => ({
-    ...item,
-    _localKey: `${item.id}-${Date.now()}-${index}`, // key duy nhất tạm
-  }));
-
-  const newOrder: Order = {
-    ...order,
-    id: `o${Math.random().toString(36).substring(2, 9)}`,
-    status: 'pending',
-    createdAt: new Date().toISOString(),
-    items: clonedItems,
-  };
-
-  orders.push(newOrder);
-
-  console.log('🧾 Đơn hàng mới được lưu:');
-  console.log(JSON.stringify(newOrder, null, 2));
-
-  return newOrder;
-};
-
-// 🟢 Cập nhật trạng thái đơn
-export const updateOrderStatus = (id: string, newStatus: OrderStatus) => {
-  const order = orders.find((o) => o.id === id);
-  if (order) order.status = newStatus;
-};
-
-// 🟢 Xóa đơn
-export const removeOrder = (id: string) => {
-  orders = orders.filter((o) => o.id !== id);
+export const updateOrderStatus = async (orderId: string, status: string) => {
+  try {
+    const orderRef = doc(db, 'orders', orderId);
+    await updateDoc(orderRef, {
+      status,
+      updatedAt: new Date(),
+    });
+    console.log(`Order ${orderId} updated to status ${status}`);
+  } catch (error) {
+    console.error('Lỗi khi update order status:', error);
+    throw error;
+  }
 };

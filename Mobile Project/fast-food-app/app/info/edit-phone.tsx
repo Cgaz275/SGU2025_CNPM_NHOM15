@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Alert,
   Image,
@@ -10,12 +10,61 @@ import {
   View,
 } from 'react-native';
 
+// Firebase
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { auth, db } from '../../FirebaseConfig';
+
 export default function EditPhoneScreen() {
   const router = useRouter();
-  const [phone, setPhone] = useState('0901234567');
+  const [phone, setPhone] = useState('');
 
-  const handleSave = () => {
-    router.back();
+  useEffect(() => {
+    // Lấy số điện thoại hiện tại để hiển thị trong input
+    const fetchPhone = async () => {
+      const user = auth.currentUser;
+      if (!user) {
+        router.replace('../(auth)');
+        return;
+      }
+
+      try {
+        const docRef = doc(db, 'user', user.uid);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          setPhone(data.phone || '');
+        }
+      } catch (error) {
+        console.log('Error fetching phone:', error);
+      }
+    };
+
+    fetchPhone();
+  }, []);
+
+  const handleSave = async () => {
+    if (phone.trim() === '') {
+      Alert.alert('Lỗi', 'Số điện thoại không được để trống.');
+      return;
+    }
+
+    const user = auth.currentUser;
+    if (!user) {
+      Alert.alert('Lỗi', 'Người dùng chưa đăng nhập.');
+      return;
+    }
+
+    try {
+      const docRef = doc(db, 'user', user.uid);
+      await updateDoc(docRef, { phone: phone.trim() });
+
+      Alert.alert('Thành công', 'Số điện thoại đã được cập nhật.', [
+        { text: 'OK', onPress: () => router.back() },
+      ]);
+    } catch (error) {
+      console.log('Error updating phone:', error);
+      Alert.alert('Lỗi', 'Không thể cập nhật số điện thoại. Vui lòng thử lại.');
+    }
   };
 
   return (

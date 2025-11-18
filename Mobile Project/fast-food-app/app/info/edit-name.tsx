@@ -9,12 +9,42 @@ import {
   View,
 } from 'react-native';
 
+// Firebase
+import { doc, updateDoc } from 'firebase/firestore';
+import { auth, db } from '../../FirebaseConfig';
+
 export default function EditNameScreen() {
   const router = useRouter();
-  const [name, setName] = useState('Nguyễn Văn A');
+  const [name, setName] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSave = () => {
-    router.back();
+  const handleSave = async () => {
+    const user = auth.currentUser;
+    if (!user) {
+      alert('Vui lòng đăng nhập lại!');
+      router.replace('../(auth)');
+      return;
+    }
+
+    if (!name.trim()) {
+      alert('Tên không được để trống');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const userDocRef = doc(db, 'user', user.uid);
+      await updateDoc(userDocRef, {
+        name: name.trim(),
+      });
+      alert('Cập nhật tên thành công!');
+      router.back();
+    } catch (error) {
+      console.error('Lỗi cập nhật tên:', error);
+      alert('Có lỗi xảy ra, vui lòng thử lại.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -42,17 +72,23 @@ export default function EditNameScreen() {
           value={name}
           onChangeText={setName}
           placeholder="Nhập họ và tên"
+          editable={!loading}
         />
         <TouchableOpacity
-          style={styles.saveButton}
+          style={[styles.saveButton, loading && { opacity: 0.7 }]}
           onPress={handleSave}
+          disabled={loading}
         >
-          <Text style={styles.saveText}>Lưu thay đổi</Text>
+          <Text style={styles.saveText}>
+            {loading ? 'Đang lưu...' : 'Lưu thay đổi'}
+          </Text>
         </TouchableOpacity>
       </View>
     </View>
   );
 }
+
+// ... styles giữ nguyên
 
 const styles = StyleSheet.create({
   container: {

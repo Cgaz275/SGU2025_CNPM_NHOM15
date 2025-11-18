@@ -1,8 +1,20 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Picker } from '@react-native-picker/picker';
+import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
 import {
+  addDoc,
+  collection,
+  getDocs,
+  onSnapshot,
+  query,
+  Timestamp,
+  updateDoc,
+  where,
+} from 'firebase/firestore';
+import React, { useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
   Image,
   ScrollView,
   StyleSheet,
@@ -11,7 +23,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { categories } from '../../data/mockData';
+import { auth, db } from '../../FirebaseConfig'; // Đường dẫn file firebase config của bạn
 
 export default function AddDishScreen() {
   const [dish, setDish] = useState({
@@ -19,19 +31,81 @@ export default function AddDishScreen() {
     price: '',
     categoryId: '',
     description: '',
-    image: null as any,
+    image: null as any, // có thể là {uri: localUri} hoặc null
   });
   const router = useRouter();
   const [optionGroups, setOptionGroups] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [loadingCategories, setLoadingCategories] = useState(true);
+
+  // Ảnh preview local + ảnh url trên server (khi upload xong)
+  const [localImageUri, setLocalImageUri] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+
+  const apiKey = '95bec918c13c0eee27f992de0543be72';
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      const user = auth.currentUser;
+      if (!user) {
+        setCategories([]);
+        setLoadingCategories(false);
+        return;
+      }
+
+      try {
+        const qRest = query(
+          collection(db, 'restaurants'),
+          where('userId', '==', user.uid)
+        );
+        const restSnapshot = await getDocs(qRest);
+
+        if (restSnapshot.empty) {
+          setCategories([]);
+          setLoadingCategories(false);
+          return;
+        }
+
+        const restaurantDoc = restSnapshot.docs[0];
+        const restaurantId = restaurantDoc.id;
+
+        const qCategories = query(
+          collection(db, 'restaurant_categories'),
+          where('restaurant_id', '==', restaurantId)
+        );
+        const unsubscribe = onSnapshot(qCategories, (snapshot) => {
+          if (!snapshot.empty) {
+            const docData = snapshot.docs[0].data();
+            const cats = docData.category_list || [];
+            setCategories(cats);
+          } else {
+            setCategories([]);
+          }
+          setLoadingCategories(false);
+        });
+
+        return () => unsubscribe();
+      } catch (error) {
+        setCategories([]);
+        setLoadingCategories(false);
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   const handleChange = (key: string, value: any) => {
     setDish((prev) => ({ ...prev, [key]: value }));
   };
 
+  const generateId = () =>
+    Date.now().toString() + Math.floor(Math.random() * 10000).toString();
+
   const addOptionGroup = () => {
     setOptionGroups((prev) => [
       ...prev,
-      { id: Date.now().toString(), name: '', type: 'single', options: [] },
+      { id: generateId(), name: '', type: 'single', options: [] },
     ]);
   };
 
@@ -94,17 +168,168 @@ export default function AddDishScreen() {
     );
   };
 
-  const handleAddImage = () => {
-    setDish((prev) => ({
-      ...prev,
-      image: require('@/assets/images/pho.webp'),
-    }));
+  // Hàm chọn ảnh (chỉ preview localUri, chưa upload)
+  const pickImage = async () => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        quality: 0.5,
+        base64: true,
+        allowsEditing: true,
+        aspect: [1, 1],
+      });
+
+      if (result.canceled) return;
+
+      const localUri = result.assets[0].uri;
+      setLocalImageUri(localUri);
+      setDish((prev) => ({ ...prev, image: { uri: localUri } }));
+
+      // reset url cũ nếu có
+      setImageUrl(null);
+    } catch (error) {
+      alert('Lỗi chọn ảnh: ' + error);
+    }
   };
 
-  const handleSubmit = () => {
-    console.log('Dish info:', dish);
-    console.log('Options:', optionGroups);
-    router.back();
+  // Hàm upload ảnh lên server, trả về url
+  const uploadImageToServer = async (uri: string) => {
+    try {
+      setUploading(true);
+
+      // Lấy base64 từ localUri
+      const response = await fetch(uri);
+      const blob = await response.blob();
+
+      // Đọc blob thành base64
+      const base64Data = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const base64result = (reader.result as string).split(',')[1]; // bỏ prefix "data:image/xxx;base64,"
+          resolve(base64result);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+
+      const formBody = new URLSearchParams();
+      formBody.append('key', apiKey);
+      formBody.append('image', base64Data);
+
+      const res = await fetch('https://api.imgbb.com/1/upload', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: formBody.toString(),
+      });
+
+      const json = await res.json();
+
+      if (json.success) {
+        return json.data.url;
+      } else {
+        throw new Error('Upload ảnh thất bại');
+      }
+    } catch (error) {
+      throw error;
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // Hàm submit, upload ảnh rồi mới lưu data món ăn
+  const handleSubmit = async () => {
+    try {
+      if (!dish.name.trim()) {
+        alert('Vui lòng nhập tên món ăn!');
+        return;
+      }
+      if (!dish.price || isNaN(Number(dish.price))) {
+        alert('Vui lòng nhập giá món ăn hợp lệ!');
+        return;
+      }
+      if (!dish.categoryId) {
+        alert('Vui lòng chọn danh mục!');
+        return;
+      }
+
+      const user = auth.currentUser;
+      if (!user) {
+        alert('Bạn cần đăng nhập để thêm món ăn.');
+        return;
+      }
+
+      // Lấy restaurantId
+      const qRest = query(
+        collection(db, 'restaurants'),
+        where('userId', '==', user.uid)
+      );
+      const restSnapshot = await getDocs(qRest);
+
+      if (restSnapshot.empty) {
+        alert('Không tìm thấy nhà hàng của bạn!');
+        return;
+      }
+
+      const restaurantId = restSnapshot.docs[0].id;
+
+      // Nếu có ảnh local thì upload ảnh lên server, lấy URL
+      let uploadedImageUrl = imageUrl;
+      if (localImageUri && !imageUrl) {
+        uploadedImageUrl = await uploadImageToServer(localImageUri);
+        setImageUrl(uploadedImageUrl);
+      }
+
+      // Tạo dữ liệu món ăn
+      const dishData = {
+        name: dish.name,
+        price: Number(dish.price),
+        categoryId: dish.categoryId,
+        description: dish.description,
+        restaurantId,
+        imageUrl: uploadedImageUrl || null,
+        createdAt: Timestamp.now(),
+        optionGroup: [],
+      };
+
+      // Lưu món ăn, lấy doc ref để lấy id
+      const dishRef = await addDoc(collection(db, 'dishes'), dishData);
+      const dishId = dishRef.id;
+
+      const optionGroupIds: string[] = [];
+
+      // Lưu từng nhóm tùy chọn riêng
+      for (const group of optionGroups) {
+        const groupData = {
+          dishId,
+          restaurantId,
+          name: group.name,
+          type: group.type,
+          choices: group.options.map((opt: any) => ({
+            id: opt.id,
+            name: opt.label,
+            price: opt.price,
+          })),
+          createdAt: Timestamp.now(),
+          updatedAt: Timestamp.now(),
+        };
+
+        const groupRef = await addDoc(collection(db, 'optionGroup'), groupData);
+        optionGroupIds.push(groupRef.id);
+      }
+
+      // Cập nhật món ăn với optionGroupIds
+      await updateDoc(dishRef, {
+        optionGroup: optionGroupIds,
+        updatedAt: Timestamp.now(),
+      });
+
+      alert('Lưu món ăn và nhóm tùy chọn thành công!');
+      router.back();
+    } catch (error) {
+      console.error('Lỗi khi lưu món ăn:', error);
+      alert('Lưu món ăn thất bại!');
+    }
   };
 
   return (
@@ -119,37 +344,37 @@ export default function AddDishScreen() {
           resizeMode="contain"
         />
       </TouchableOpacity>
+
+      {/* Ảnh preview + chọn ảnh */}
+      <TouchableOpacity
+        style={{
+          width: 120,
+          height: 120,
+          borderRadius: 10,
+          backgroundColor: '#eee',
+          justifyContent: 'center',
+          alignItems: 'center',
+          overflow: 'hidden',
+          alignSelf: 'center',
+          marginBottom: 16,
+        }}
+        onPress={pickImage}
+      >
+        {uploading ? (
+          <ActivityIndicator size="large" />
+        ) : localImageUri ? (
+          <Image
+            source={{ uri: localImageUri }}
+            style={{ width: '100%', height: '100%' }}
+          />
+        ) : (
+          <Text>Chọn ảnh</Text>
+        )}
+      </TouchableOpacity>
+
       <ScrollView>
         <Text style={styles.header}>Thêm món ăn mới</Text>
 
-        <View style={styles.imageRow}>
-          {/* Ảnh */}
-          <TouchableOpacity
-            style={styles.imagePicker}
-            onPress={handleAddImage}
-          >
-            {dish.image ? (
-              <Image
-                source={dish.image}
-                style={styles.image}
-              />
-            ) : (
-              <>
-                <Ionicons
-                  name="camera-outline"
-                  size={32}
-                  color="#888"
-                />
-                <Text style={styles.imagePickerText}>Thêm ảnh</Text>
-              </>
-            )}
-          </TouchableOpacity>
-
-          {/* Chú thích */}
-          <Text style={styles.imageNote}>Chỉ chấp nhận ảnh 1x1</Text>
-        </View>
-
-        {/* Tên món */}
         <Text style={styles.label}>Tên món ăn</Text>
         <TextInput
           placeholder="Tên món ăn"
@@ -158,7 +383,6 @@ export default function AddDishScreen() {
           onChangeText={(text) => handleChange('name', text)}
         />
 
-        {/* Giá */}
         <Text style={styles.label}>Giá</Text>
         <TextInput
           placeholder="Giá (VNĐ)"
@@ -168,7 +392,6 @@ export default function AddDishScreen() {
           onChangeText={(text) => handleChange('price', text)}
         />
 
-        {/* Dropdown danh mục */}
         <View style={styles.pickerBox}>
           <Text style={styles.label}>Danh mục</Text>
           <View style={styles.pickerWrapper}>
@@ -182,18 +405,24 @@ export default function AddDishScreen() {
                 label="Chọn danh mục"
                 value=""
               />
-              {categories.map((c) => (
+              {categories.length === 0 ? (
                 <Picker.Item
-                  key={c.id}
-                  label={c.name}
-                  value={c.id}
+                  label="Không có danh mục"
+                  value=""
                 />
-              ))}
+              ) : (
+                categories.map((c) => (
+                  <Picker.Item
+                    key={c.id}
+                    label={c.name}
+                    value={c.id}
+                  />
+                ))
+              )}
             </Picker>
           </View>
         </View>
 
-        {/* Mô tả */}
         <Text style={styles.label}>Mô tả</Text>
         <TextInput
           placeholder="Mô tả món ăn"
@@ -203,7 +432,6 @@ export default function AddDishScreen() {
           onChangeText={(text) => handleChange('description', text)}
         />
 
-        {/* Nhóm tùy chọn */}
         <View style={{ marginTop: 20 }}>
           <Text style={styles.subHeader}>Nhóm tùy chọn</Text>
           {optionGroups.map((group) => (
@@ -324,11 +552,16 @@ export default function AddDishScreen() {
               Thêm nhóm tùy chọn
             </Text>
           </TouchableOpacity>
+
           <TouchableOpacity
             style={styles.submitBtn}
             onPress={handleSubmit}
           >
-            <Text style={styles.submitText}>Lưu món ăn (Demo)</Text>
+            {uploading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.submitText}>Lưu món ăn</Text>
+            )}
           </TouchableOpacity>
         </View>
       </ScrollView>

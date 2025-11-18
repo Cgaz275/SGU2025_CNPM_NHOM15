@@ -1,8 +1,11 @@
 import { useRouter } from 'expo-router';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
+
 import React, { useState } from 'react';
 import {
-  Alert,
   KeyboardAvoidingView,
+  Modal,
   Platform,
   ScrollView,
   StyleSheet,
@@ -11,28 +14,66 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { auth, db } from '../../FirebaseConfig';
 
 export default function Register() {
   const router = useRouter();
-  const [name, setName] = useState('');
-  const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
+  const [modal, setModal] = useState({ visible: false, message: '' });
 
-  const isValid = () =>
-    name.trim() &&
-    phone.trim() &&
-    email.trim() &&
-    password &&
-    password === confirm;
+  const showModal = (msg: string) => {
+    setModal({ visible: true, message: msg });
+  };
 
-  const handleRegister = () => {
-    if (!isValid()) {
-      Alert.alert('Lỗi', 'Vui lòng nhập đầy đủ thông tin hợp lệ.');
-      return;
+  const isValid = () => email.trim() && password && password === confirm;
+
+  const signUp = async () => {
+    try {
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      const user = userCredential.user;
+
+      await setDoc(doc(db, 'user', user.uid), {
+        email: user.email,
+        createdAt: new Date(),
+        is_enable: true,
+        role: 'user',
+        name: '',
+        phone: '',
+        defaultAddress: '',
+        defaultAddressId: '',
+      });
+
+      if (user) router.replace('../(tabs)');
+    } catch (error: any) {
+      console.log(error);
+
+      let message = 'Đăng ký thất bại';
+      switch (error.code) {
+        case 'auth/email-already-in-use':
+          message = 'Email này đã được đăng ký';
+          break;
+        case 'auth/invalid-email':
+          message = 'Email không hợp lệ';
+          break;
+        case 'auth/weak-password':
+          message = 'Mật khẩu quá yếu (ít nhất 6 ký tự)';
+          break;
+        case 'auth/operation-not-allowed':
+          message = 'Chức năng đăng ký bằng email chưa được bật';
+          break;
+        default:
+          message = error.message || message;
+      }
+
+      // Hiện modal hoặc alert
+      showModal(message);
     }
-    router.push('/email');
   };
 
   return (
@@ -45,19 +86,6 @@ export default function Register() {
         <Text style={styles.subtitle}>Nhập thông tin của bạn để đăng ký</Text>
 
         <View style={styles.form}>
-          <Input
-            label="Tên"
-            value={name}
-            onChangeText={setName}
-            placeholder="Nguyễn Văn A"
-          />
-          <Input
-            label="Số điện thoại"
-            value={phone}
-            onChangeText={setPhone}
-            placeholder="0912345678"
-            keyboardType="phone-pad"
-          />
           <Input
             label="Email"
             value={email}
@@ -83,7 +111,7 @@ export default function Register() {
         </View>
 
         <TouchableOpacity
-          onPress={handleRegister}
+          onPress={signUp}
           activeOpacity={0.8}
           disabled={!isValid()}
           style={[styles.button, !isValid() && styles.buttonDisabled]}
@@ -98,6 +126,24 @@ export default function Register() {
           </Text>
         </TouchableOpacity>
       </ScrollView>
+      <Modal
+        transparent
+        animationType="fade"
+        visible={modal.visible}
+        onRequestClose={() => setModal({ ...modal, visible: false })}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalBox}>
+            <Text style={styles.modalText}>{modal.message}</Text>
+            <TouchableOpacity
+              style={styles.modalButton}
+              onPress={() => setModal({ ...modal, visible: false })}
+            >
+              <Text style={styles.modalButtonText}>OK</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </KeyboardAvoidingView>
   );
 }
@@ -181,6 +227,37 @@ const styles = StyleSheet.create({
   },
   loginHighlight: {
     color: '#e67e22',
+    fontWeight: '600',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 40,
+  },
+  modalBox: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    paddingVertical: 30,
+    paddingHorizontal: 24,
+    width: '100%',
+  },
+  modalText: {
+    fontSize: 16,
+    color: '#374151',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  modalButton: {
+    backgroundColor: '#e67e22',
+    borderRadius: 12,
+    paddingVertical: 12,
+  },
+  modalButtonText: {
+    textAlign: 'center',
+    color: '#fff',
+    fontSize: 15,
     fontWeight: '600',
   },
 });

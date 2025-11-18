@@ -1,21 +1,37 @@
 import { useRouter } from 'expo-router';
 import { VideoView, useVideoPlayer } from 'expo-video';
+import { getAuth } from 'firebase/auth';
 import React from 'react';
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function LoginScreen() {
   const router = useRouter();
+  // === CHECK LOGIN ===
+  const auth = getAuth();
 
   const handleLogin = (type: string) => {
     router.replace('/(tabs)');
   };
 
-  const handleEmail = (type: string) => {
-    router.replace('./email');
+  const handleEmail = () => {
+    const user = auth.currentUser;
+    if (user) {
+      // Kiểm tra user có provider email không
+      const hasEmailProvider = user.providerData.some(
+        (provider) => provider.providerId === 'password'
+      );
+      if (hasEmailProvider) {
+        // Đã đăng nhập Email rồi => nhảy vô tabs luôn
+        router.replace('/(tabs)');
+        return;
+      }
+    }
+    // Chưa đăng nhập Email => qua trang email
+    router.push('./email');
   };
 
   const handleGuest = () => {
-    router.replace('/(tabs)');
+    router.replace('./(tabs)');
   };
 
   // tạo player
@@ -48,7 +64,7 @@ export default function LoginScreen() {
 
         <View style={styles.buttonContainer}>
           {/* nút Google */}
-          <TouchableOpacity
+          {/* <TouchableOpacity
             style={[styles.button, styles.google]}
             onPress={() => handleLogin('Google')}
           >
@@ -59,7 +75,7 @@ export default function LoginScreen() {
               />
             </View>
             <Text style={styles.buttonText}>Đăng nhập với Google</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
 
           {/* nút Email */}
           <TouchableOpacity
@@ -78,12 +94,12 @@ export default function LoginScreen() {
           </TouchableOpacity>
 
           {/* nút khách */}
-          <TouchableOpacity
+          {/* <TouchableOpacity
             style={styles.guestButton}
             onPress={handleGuest}
           >
             <Text style={styles.guestText}>Tiếp tục với tư cách khách</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
       </View>
     </View>
@@ -105,7 +121,7 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    marginBottom: 60,
+    marginBottom: 30,
   },
   title: {
     fontSize: 28,

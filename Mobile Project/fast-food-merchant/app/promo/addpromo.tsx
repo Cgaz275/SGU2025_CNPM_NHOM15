@@ -1,88 +1,81 @@
-import { restaurants } from '@/data/mockData';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import {
+  addDoc,
+  collection,
+  getDocs,
+  query,
+  serverTimestamp,
+  where,
+} from 'firebase/firestore';
+import React, { useEffect, useState } from 'react';
 import {
   Image,
-  Modal,
   Platform,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
-
-interface PromoCondition {
-  minOrderValue?: number;
-  firstTimeUserOnly?: boolean;
-  applicableItems?: string[];
-}
-
-interface PromoCode {
-  id: string;
-  code: string;
-  type: 'percent' | 'fixed';
-  value: number;
-  startDate: Date;
-  endDate: Date;
-  usageLimit?: number;
-  description?: string;
-  condition?: PromoCondition;
-}
+import { auth, db } from '../../FirebaseConfig';
 
 export default function AddPromo() {
   const router = useRouter();
 
+  const [restaurantId, setRestaurantId] = useState<string | null>(null);
+
   const [code, setCode] = useState('');
-  const [type, setType] = useState<'percent' | 'fixed'>('percent');
-  const [value, setValue] = useState('');
-  const [startDate, setStartDate] = useState(new Date());
-  const [endDate, setEndDate] = useState(new Date());
+  const [discount, setDiscount] = useState('');
+  const [expiryDate, setExpiryDate] = useState(new Date());
   const [usageLimit, setUsageLimit] = useState('');
-  const [description, setDescription] = useState('');
+  const [minPrice, setMinPrice] = useState('');
+  const [detail, setDetail] = useState('');
+  const [showExpiryPicker, setShowExpiryPicker] = useState(false);
 
-  const [minOrderValue, setMinOrderValue] = useState('');
-  const [firstTimeUserOnly, setFirstTimeUserOnly] = useState(false);
+  // --------------------------------------------------
+  // Load restaurant của user hiện tại
+  // --------------------------------------------------
+  useEffect(() => {
+    const loadRestaurant = async () => {
+      const user = auth.currentUser;
+      if (!user) return;
 
-  const [applicableItems, setApplicableItems] = useState<string[]>([]);
-  const [showDishModal, setShowDishModal] = useState(false);
-
-  const allDishes = restaurants.flatMap((r) => r.dishes);
-
-  const toggleDish = (id: string) => {
-    if (applicableItems.includes(id)) {
-      setApplicableItems(applicableItems.filter((i) => i !== id));
-    } else {
-      setApplicableItems([...applicableItems, id]);
-    }
-  };
-
-  const [showStartPicker, setShowStartPicker] = useState(false);
-  const [showEndPicker, setShowEndPicker] = useState(false);
-
-  const savePromo = () => {
-    const newPromo: PromoCode = {
-      id: Date.now().toString(),
-      code,
-      type,
-      value: Number(value),
-      startDate,
-      endDate,
-      usageLimit: usageLimit ? Number(usageLimit) : undefined,
-      description,
-      condition: {
-        minOrderValue: minOrderValue ? Number(minOrderValue) : undefined,
-        firstTimeUserOnly,
-        applicableItems:
-          applicableItems.length > 0 ? applicableItems : undefined,
-      },
+      const qRes = query(
+        collection(db, 'restaurants'),
+        where('userId', '==', user.uid)
+      );
+      const snapRes = await getDocs(qRes);
+      if (!snapRes.empty) {
+        setRestaurantId(snapRes.docs[0].id);
+      }
     };
+    loadRestaurant();
+  }, []);
 
-    console.log('Promo added:', newPromo);
-    router.back();
+  const savePromo = async () => {
+    if (!restaurantId) return;
+
+    try {
+      const newPromo = {
+        code,
+        discount_percentage: Number(discount),
+        createdAt: serverTimestamp(), // Ngày bắt đầu tự động
+        expiryDate,
+        detail,
+        is_enable: true,
+        minPrice: minPrice ? Number(minPrice) : 0,
+        restaurantId,
+        usage_count: 0,
+        usage_limit: usageLimit ? Number(usageLimit) : 1,
+      };
+
+      await addDoc(collection(db, 'promotions_restaurant'), newPromo);
+      router.back();
+    } catch (e) {
+      console.log('Lỗi thêm promo:', e);
+    }
   };
 
   const formatDate = (date: Date) => {
@@ -108,165 +101,59 @@ export default function AddPromo() {
       <TextInput
         style={styles.input}
         placeholder="Mã giảm giá"
+        placeholderTextColor="#888" // màu placeholder
         value={code}
         onChangeText={setCode}
       />
-
-      <View style={styles.row}>
-        <TouchableOpacity
-          style={[styles.typeBtn, type === 'percent' && styles.typeSelected]}
-          onPress={() => setType('percent')}
-        >
-          <Text
-            style={
-              type === 'percent' ? styles.typeSelectedText : styles.typeText
-            }
-          >
-            %
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.typeBtn, type === 'fixed' && styles.typeSelected]}
-          onPress={() => setType('fixed')}
-        >
-          <Text
-            style={type === 'fixed' ? styles.typeSelectedText : styles.typeText}
-          >
-            ₫
-          </Text>
-        </TouchableOpacity>
-      </View>
-
       <TextInput
         style={styles.input}
-        placeholder="Giá trị giảm"
-        value={value}
-        onChangeText={setValue}
+        placeholder="Giảm giá (%)"
+        placeholderTextColor="#888"
+        value={discount}
+        onChangeText={setDiscount}
         keyboardType="numeric"
       />
-
-      <TouchableOpacity
-        onPress={() => setShowStartPicker(true)}
-        style={styles.dateBtn}
-      >
-        <Text>Ngày bắt đầu: {formatDate(startDate)}</Text>
-      </TouchableOpacity>
-      {showStartPicker && (
-        <DateTimePicker
-          value={startDate}
-          mode="date"
-          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-          onChange={(_, d) => {
-            if (d) setStartDate(d);
-            setShowStartPicker(false);
-          }}
-        />
-      )}
-
-      <TouchableOpacity
-        onPress={() => setShowEndPicker(true)}
-        style={styles.dateBtn}
-      >
-        <Text>Ngày kết thúc: {formatDate(endDate)}</Text>
-      </TouchableOpacity>
-      {showEndPicker && (
-        <DateTimePicker
-          value={endDate}
-          mode="date"
-          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-          onChange={(_, d) => {
-            if (d) setEndDate(d);
-            setShowEndPicker(false);
-          }}
-        />
-      )}
-
+      <TextInput
+        style={styles.input}
+        placeholder="Giá trị tối thiểu"
+        placeholderTextColor="#888"
+        value={minPrice}
+        onChangeText={setMinPrice}
+        keyboardType="numeric"
+      />
+      <TextInput
+        style={styles.input}
+        placeholderTextColor="#888"
+        placeholder="Mô tả"
+        value={detail}
+        onChangeText={setDetail}
+      />
       <TextInput
         style={styles.input}
         placeholder="Giới hạn sử dụng"
+        placeholderTextColor="#888"
         value={usageLimit}
         onChangeText={setUsageLimit}
         keyboardType="numeric"
       />
-      <TextInput
-        style={styles.input}
-        placeholder="Mô tả"
-        value={description}
-        onChangeText={setDescription}
-      />
 
-      <Text style={styles.subHeader}>Điều kiện sử dụng</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Giá trị đơn tối thiểu"
-        value={minOrderValue}
-        onChangeText={setMinOrderValue}
-        keyboardType="numeric"
-      />
-
-      <View style={styles.switchRow}>
-        <Text>Chỉ áp dụng khách hàng lần đầu</Text>
-        <Switch
-          value={firstTimeUserOnly}
-          onValueChange={setFirstTimeUserOnly}
-        />
-      </View>
-
-      {/* Nút mở modal chọn món */}
       <TouchableOpacity
+        onPress={() => setShowExpiryPicker(true)}
         style={styles.dateBtn}
-        onPress={() => setShowDishModal(true)}
       >
-        <Text>Món áp dụng ({applicableItems.length} đã chọn)</Text>
+        <Text>Ngày hết hạn: {formatDate(expiryDate)}</Text>
       </TouchableOpacity>
-
-      {/* Modal chọn món */}
-      <Modal
-        visible={showDishModal}
-        animationType="slide"
-        transparent
-        onRequestClose={() => setShowDishModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Chọn món áp dụng</Text>
-            <ScrollView>
-              {allDishes.map((dish) => {
-                const selected = applicableItems.includes(dish.id);
-                return (
-                  <TouchableOpacity
-                    key={dish.id}
-                    style={[styles.dishItem, selected && styles.dishSelected]}
-                    onPress={() => toggleDish(dish.id)}
-                  >
-                    {dish.image && (
-                      <Image
-                        source={dish.image}
-                        style={styles.dishImage}
-                      />
-                    )}
-                    <Text
-                      style={{
-                        marginLeft: 10,
-                        color: selected ? '#fff' : '#000',
-                        fontWeight: '500',
-                      }}
-                    >
-                      {dish.name}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
-            <TouchableOpacity
-              style={styles.closeBtn}
-              onPress={() => setShowDishModal(false)}
-            >
-              <Text style={{ color: '#fff', fontWeight: '600' }}>Xong</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+      {showExpiryPicker && (
+        <DateTimePicker
+          value={expiryDate}
+          mode="date"
+          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+          onChange={(_, d) => {
+            if (d) setExpiryDate(d);
+            setShowExpiryPicker(false);
+          }}
+        />
+      )}
 
       <TouchableOpacity
         style={styles.addBtn}
@@ -287,39 +174,18 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     paddingHorizontal: 5,
   },
-  pageTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    marginLeft: 12,
-  },
+  pageTitle: { fontSize: 20, fontWeight: '600', marginLeft: 12 },
   input: {
-    backgroundColor: '#fff',
+    backgroundColor: '#ffffffff',
+    color: '#000', // chữ đen
     padding: 12,
     borderRadius: 8,
     marginBottom: 12,
   },
-  row: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
-  typeBtn: {
-    flex: 1,
-    padding: 12,
-    borderRadius: 8,
-    backgroundColor: '#eee',
-    alignItems: 'center',
-    marginHorizontal: 4,
-  },
-  typeSelected: { backgroundColor: '#D7A359' },
-  typeText: { color: '#000', fontWeight: '600' },
-  typeSelectedText: { color: '#fff', fontWeight: '600' },
   dateBtn: {
     backgroundColor: '#fff',
     padding: 12,
     borderRadius: 8,
-    marginBottom: 12,
-  },
-  switchRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
     marginBottom: 12,
   },
   addBtn: {
@@ -330,34 +196,4 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   addBtnText: { color: '#fff', fontWeight: '600', fontSize: 16 },
-  subHeader: { fontSize: 16, fontWeight: '600', marginVertical: 8 },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    paddingHorizontal: 16,
-  },
-  modalContent: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    maxHeight: '80%',
-  },
-  modalTitle: { fontSize: 18, fontWeight: '600', marginBottom: 12 },
-  dishItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },
-  dishSelected: { backgroundColor: '#D7A359' },
-  dishImage: { width: 40, height: 40, borderRadius: 6 },
-  closeBtn: {
-    backgroundColor: '#D7A359',
-    padding: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 12,
-  },
 });

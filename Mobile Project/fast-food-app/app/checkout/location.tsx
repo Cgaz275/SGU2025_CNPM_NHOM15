@@ -10,8 +10,8 @@ const GoongConstants = {
   API_KEY: 'rrES1aD0oSzi4rK4BpufpNhcW9U4hyXg1Uatebk1', // Key để gọi API services
 };
 
-const NavigationScreen = () => {
-  const camera = useRef(null);
+const NavigationScreen = ({ pickup, dropoff }) => {
+  const camera = useRef<MapLibreGL.Camera>(null);
   const [zoomLevel, setZoomLevel] = useState(12);
   const [centerCoordinate, setCenterCoordinate] = useState<[number, number]>([
     106.681,
@@ -29,10 +29,6 @@ const NavigationScreen = () => {
     [number, number] | null
   >(null);
 
-  const addressA =
-    'THTH Sài Gòn, An Dương Vương, phường 3, Quận 5, Hồ Chí Minh';
-  const addressB = '25 Phan Văn Trị, Quận 5, Hồ Chí Minh';
-
   const geocodeAddress = async (address: string) => {
     const url = `https://rsapi.goong.io/Geocode?address=${encodeURIComponent(
       address
@@ -49,63 +45,67 @@ const NavigationScreen = () => {
   };
 
   const getDirections = async () => {
-    setLoading(true);
-    try {
-      // Geocode hai địa chỉ
-      const [origin, destination] = await Promise.all([
-        geocodeAddress(addressA),
-        geocodeAddress(addressB),
-      ]);
-      setOriginLocation(origin);
-      setDestinationLocation(destination);
+    if (!pickup || !dropoff) return;
 
-      const coordinates = [
-        { latitude: origin[1], longitude: origin[0] },
-        { latitude: destination[1], longitude: destination[0] },
-      ];
-      setRoute(coordinates);
+    const origin = [pickup.longitude, pickup.latitude];
+    const destination = [dropoff.longitude, dropoff.latitude];
 
-      // Tính khoảng cách đường chim bay
-      const R = 6371;
-      const toRad = (deg: number) => (deg * Math.PI) / 180;
-      const [lon1, lat1] = origin;
-      const [lon2, lat2] = destination;
-      const dLat = toRad(lat2 - lat1);
-      const dLon = toRad(lon2 - lon1);
-      const a =
-        Math.sin(dLat / 2) ** 2 +
-        Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-      const dist = (R * c).toFixed(2);
-      setDistance(`${dist} km`);
+    setOriginLocation(origin);
+    setDestinationLocation(destination);
 
-      // Căn giữa camera
-      // Căn camera theo 2 điểm
-      if (camera.current && origin && destination) {
-        const west = Math.min(origin[0], destination[0]);
-        const south = Math.min(origin[1], destination[1]);
-        const east = Math.max(origin[0], destination[0]);
-        const north = Math.max(origin[1], destination[1]);
+    const coordinates = [
+      { latitude: origin[1], longitude: origin[0] },
+      { latitude: destination[1], longitude: destination[0] },
+    ];
+    setRoute(coordinates);
 
-        // fitBounds(leftBottom, rightTop, padding)
-        camera.current.fitBounds([west, south], [east, north], 100, 1000);
-      }
-    } catch (err) {
-      console.log(err);
-    } finally {
-      setLoading(false);
+    // tính distance
+    const R = 6371;
+    const toRad = (deg) => (deg * Math.PI) / 180;
+
+    const dLat = toRad(destination[1] - origin[1]);
+    const dLon = toRad(destination[0] - origin[0]);
+
+    const a =
+      Math.sin(dLat / 2) ** 2 +
+      Math.cos(toRad(origin[1])) *
+        Math.cos(toRad(destination[1])) *
+        Math.sin(dLon / 2) ** 2;
+
+    const dist = (R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))).toFixed(
+      2
+    );
+    setDistance(`${dist} km`);
+
+    // fit camera
+    if (camera.current) {
+      const west = Math.min(origin[0], destination[0]);
+      const south = Math.min(origin[1], destination[1]);
+      const east = Math.max(origin[0], destination[0]);
+      const north = Math.max(origin[1], destination[1]);
+
+      (camera.current as any).fitBounds(
+        [west, south],
+        [east, north],
+        100,
+        1000
+      );
     }
   };
+
   useEffect(() => {
-    getDirections();
-  }, []);
+    if (pickup && dropoff) {
+      setTimeout(() => {
+        getDirections();
+      }, 300);
+    }
+  }, [pickup, dropoff]);
 
   return (
     <View style={styles.container}>
       <MapLibreGL.MapView
         mapStyle={`https://tiles.goong.io/assets/goong_map_highlight.json?api_key=${GoongConstants.MAP_KEY}`}
         style={styles.map}
-        projection="globe"
       >
         <MapLibreGL.Camera
           ref={camera}

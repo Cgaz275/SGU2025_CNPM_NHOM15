@@ -1,4 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { doc, getDoc } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
 import {
   FlatList,
@@ -8,6 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { db } from '../../../FirebaseConfig';
 import {
   CartItem,
   getCart,
@@ -17,37 +19,57 @@ import {
 
 export default function CartScreen() {
   const router = useRouter();
-  const { id } = useLocalSearchParams(); // id của restaurant
+  const params = useLocalSearchParams();
+  const [restaurantId, setRestaurantId] = useState<string | null>(null);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
 
-  // 🧠 Lấy giỏ hàng theo restaurant
+  // 🟢 Lấy restaurantId từ Firebase dựa vào param id
+  useEffect(() => {
+    const fetchRestaurant = async () => {
+      const rid = Array.isArray(params.id) ? params.id[0] : params.id;
+      if (!rid) return console.warn('❌ No restaurant id param');
+
+      try {
+        const restDoc = await getDoc(doc(db, 'restaurants', rid));
+        if (restDoc.exists()) {
+          setRestaurantId(restDoc.id);
+          console.log('🟢 Fetched restaurantId from Firebase:', restDoc.id);
+        } else {
+          console.warn('❌ Restaurant not found in Firebase');
+        }
+      } catch (err) {
+        console.error('❌ Error fetching restaurant:', err);
+      }
+    };
+
+    fetchRestaurant();
+  }, [params.id]);
+
+  // 🧠 Refresh cart khi có restaurantId
   const refreshCart = () => {
-    const items = getCart().filter((i) => i.restaurantId === id);
+    if (!restaurantId) return;
+    const items = getCart().filter((i) => i.restaurantId === restaurantId);
+    console.log('🔹 Cart filtered by restaurant:', items);
     setCartItems(items);
   };
 
   useEffect(() => {
     refreshCart();
-  }, [id]);
+  }, [restaurantId]);
 
-  // 💰 Tính tổng có options phụ thu
   const total = cartItems.reduce((sum, item) => {
     const optionExtra = Object.values(item.options || {}).reduce(
       (acc, opt: any) => {
-        if (Array.isArray(opt)) {
+        if (Array.isArray(opt))
           return acc + opt.reduce((s, o) => s + (o.price || 0), 0);
-        } else if (opt?.price) {
-          return acc + opt.price;
-        }
+        if (opt?.price) return acc + opt.price;
         return acc;
       },
       0
     );
-
     return sum + (item.price + optionExtra) * item.quantity;
   }, 0);
 
-  // ⚙️ Tăng giảm số lượng
   const handleQuantityChange = (item: CartItem, delta: number) => {
     const newQuantity = item.quantity + delta;
     if (newQuantity <= 0) {
@@ -58,21 +80,16 @@ export default function CartScreen() {
     refreshCart();
   };
 
-  // 💥 Render từng món
   const renderItem = ({ item }: { item: CartItem }) => {
-    // Tính phụ thu option để hiển thị giá chính xác
     const optionExtra = Object.values(item.options || {}).reduce(
       (acc, opt: any) => {
-        if (Array.isArray(opt)) {
+        if (Array.isArray(opt))
           return acc + opt.reduce((s, o) => s + (o.price || 0), 0);
-        } else if (opt?.price) {
-          return acc + opt.price;
-        }
+        if (opt?.price) return acc + opt.price;
         return acc;
       },
       0
     );
-
     const totalPrice = (item.price + optionExtra) * item.quantity;
 
     return (
@@ -86,28 +103,35 @@ export default function CartScreen() {
         <View style={{ flex: 1, marginLeft: 10 }}>
           <Text style={styles.itemName}>{item.name}</Text>
 
-          {/* Hiển thị options */}
-          {item.options && Object.keys(item.options).length > 0 && (
-            <View style={{ marginTop: 4 }}>
-              {Object.entries(item.options).map(([group, value], i) => (
+          {item.options &&
+            Object.keys(item.options).length > 0 &&
+            Object.entries(item.options).map(([group, value], i) => {
+              // 🔥 FIX: nếu là object có key 0,1… thì ép thành array
+              const normalizedValue = Array.isArray(value)
+                ? value
+                : typeof value === 'object' &&
+                  Object.keys(value).every((k) => !isNaN(Number(k)))
+                ? Object.values(value) // chuyển {0:{},1:{}} → [{},{}]
+                : value;
+
+              return (
                 <Text
                   key={i}
                   style={styles.optionText}
                 >
                   {group}:{' '}
-                  {Array.isArray(value)
-                    ? value.map((v) => v.name).join(', ')
-                    : typeof value === 'object'
-                    ? value.name || value
-                    : value}
+                  {Array.isArray(normalizedValue)
+                    ? normalizedValue.map((v) => v.name).join(', ')
+                    : typeof normalizedValue === 'object'
+                    ? normalizedValue.name || JSON.stringify(normalizedValue)
+                    : normalizedValue}
                 </Text>
-              ))}
-            </View>
-          )}
+              );
+            })}
 
           <Text style={styles.itemPrice}>{totalPrice.toLocaleString()}đ</Text>
         </View>
-        {/* Nút tăng giảm */}
+
         <View style={styles.qtyContainer}>
           <TouchableOpacity
             style={styles.qtyButton}
@@ -125,14 +149,12 @@ export default function CartScreen() {
             <Text style={styles.qtyText}>+</Text>
           </TouchableOpacity>
         </View>
-        {/* Xoá món */}
       </View>
     );
   };
 
   return (
     <View style={styles.container}>
-      {/* Header */}
       <TouchableOpacity
         style={{ padding: 8, marginLeft: 10 }}
         onPress={() => router.back()}
@@ -144,7 +166,7 @@ export default function CartScreen() {
         />
       </TouchableOpacity>
 
-      <Text style={styles.title}>Giỏ hàng của bạn</Text>
+      <Text style={styles.title}>Giỏ hàng</Text>
 
       <FlatList
         data={cartItems}
@@ -156,7 +178,6 @@ export default function CartScreen() {
         }
       />
 
-      {/* Footer */}
       {cartItems.length > 0 && (
         <View style={styles.footer}>
           <Text style={styles.totalText}>Tổng: {total.toLocaleString()}đ</Text>
@@ -165,7 +186,7 @@ export default function CartScreen() {
             onPress={() =>
               router.push({
                 pathname: '/restaurantsc/[id]/checkout',
-                params: { id: String(id) },
+                params: { id: restaurantId },
               })
             }
           >
@@ -205,7 +226,6 @@ const styles = StyleSheet.create({
   },
   qtyText: { fontSize: 16, fontWeight: '700' },
   qtyNumber: { marginHorizontal: 10, fontSize: 16, fontWeight: '600' },
-  removeText: { fontSize: 18, color: '#999' },
   emptyText: {
     textAlign: 'center',
     marginTop: 60,

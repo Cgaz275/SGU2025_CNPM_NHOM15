@@ -1,5 +1,13 @@
 import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  query,
+  where,
+} from 'firebase/firestore';
 import React, { useCallback, useState } from 'react';
 import {
   FlatList,
@@ -9,18 +17,71 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { getOrders, getRestaurantName } from '../../data/orders';
+import { auth, db } from '../../FirebaseConfig';
 
 export default function PresentOrders() {
   const router = useRouter();
-  const [orders, setOrders] = useState(getOrders());
+  const [orders, setOrders] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Mỗi lần màn hình được focus => reload lại data
+  const fetchOrders = async () => {
+    const user = auth.currentUser;
+    if (!user) {
+      console.warn('Chưa đăng nhập!');
+      return;
+    }
+
+    try {
+      const ordersQuery = query(
+        collection(db, 'orders'),
+        where('userId', '==', user.uid)
+      );
+      const ordersSnap = await getDocs(ordersQuery);
+
+      const ordersData = await Promise.all(
+        ordersSnap.docs.map(async (docSnap) => {
+          const data = docSnap.data();
+          const restaurantId = data.restaurantId;
+
+          let restaurantName = 'Không rõ';
+          if (restaurantId) {
+            const resRef = doc(db, 'restaurants', restaurantId);
+            const resSnap = await getDoc(resRef);
+            if (resSnap.exists()) {
+              restaurantName = resSnap.data().name || 'Không rõ';
+            }
+          }
+
+          return {
+            id: docSnap.id,
+            ...data,
+            restaurantName,
+            createdAt: data.createdAt?.toDate?.() || new Date(),
+          };
+        })
+      );
+
+      setOrders(ordersData);
+    } catch (error) {
+      console.error('Lỗi khi fetch orders:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useFocusEffect(
     useCallback(() => {
-      setOrders(getOrders());
+      fetchOrders();
     }, [])
   );
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <Text>Đang tải đơn hàng...</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -52,8 +113,7 @@ export default function PresentOrders() {
           )}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => {
-            const restaurantName = getRestaurantName(item.restaurantId);
-            const thumbnail = item.items[0]?.image; // món đầu tiên
+            const thumbnail = item.items[0]?.image;
             return (
               <TouchableOpacity
                 style={styles.orderCard}
@@ -65,17 +125,17 @@ export default function PresentOrders() {
                 }
               >
                 <View style={styles.orderCardContent}>
-                  {/* Hình món */}
                   {thumbnail && (
                     <Image
-                      source={thumbnail}
+                      source={{ uri: thumbnail }}
                       style={styles.orderThumbnail}
                     />
                   )}
 
-                  {/* Thông tin */}
                   <View style={styles.orderInfo}>
-                    <Text style={styles.restaurantName}>{restaurantName}</Text>
+                    <Text style={styles.restaurantName}>
+                      {item.restaurantName}
+                    </Text>
                     <Text style={styles.status}>
                       {item.status === 'pending'
                         ? 'Chờ nhà hàng xác nhận'

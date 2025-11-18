@@ -1,8 +1,15 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { getAddresses } from '../../data/address';
-
-import React, { useCallback, useRef, useState } from 'react';
+import { getAuth } from 'firebase/auth';
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  query,
+  where,
+} from 'firebase/firestore';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   FlatList,
   Image,
@@ -11,7 +18,8 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { restaurants } from '../../data/mockData';
+
+import { db } from '../../FirebaseConfig';
 
 export default function RestaurantScreen() {
   const router = useRouter();
@@ -19,15 +27,108 @@ export default function RestaurantScreen() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [defaultAddress, setDefaultAddress] =
     useState<string>('Chưa có địa chỉ');
+  const [restaurants, setRestaurants] = useState<any[]>([]); // mảng nhà hàng, mỗi nhà hàng có field dishes
 
-  // 🔥 Mỗi khi quay lại trang này thì tự lấy lại địa chỉ mặc định
+  const auth = getAuth();
+
   useFocusEffect(
     useCallback(() => {
-      const list = getAddresses();
-      const def = list.find((a) => a.isDefault);
-      setDefaultAddress(def ? def.address : 'Chưa có địa chỉ');
+      const loadDefaultAddress = async () => {
+        const user = auth.currentUser;
+        if (!user) {
+          setDefaultAddress('Chưa có địa chỉ');
+          return;
+        }
+
+        try {
+          // 1) Lấy document user
+          const userRef = doc(db, 'user', user.uid);
+          const userSnap = await getDoc(userRef);
+
+          if (!userSnap.exists()) {
+            setDefaultAddress('Chưa có địa chỉ');
+            return;
+          }
+
+          const userData = userSnap.data();
+          const addressId = userData.defaultAddressId; // ⭐ ID của địa chỉ mặc định
+
+          // 2) User chưa đặt địa chỉ mặc định
+          if (!addressId) {
+            setDefaultAddress('Chưa có địa chỉ');
+            return;
+          }
+
+          // 3) Lấy address theo ID
+          const addressRef = doc(db, 'address', addressId);
+          const addressSnap = await getDoc(addressRef);
+
+          if (addressSnap.exists()) {
+            const addressData = addressSnap.data();
+            setDefaultAddress(addressData.address);
+          } else {
+            setDefaultAddress('Chưa có địa chỉ');
+          }
+        } catch (err) {
+          console.log('Lỗi lấy default address:', err);
+          setDefaultAddress('Chưa có địa chỉ');
+        }
+      };
+
+      loadDefaultAddress();
     }, [])
   );
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Lấy tất cả nhà hàng (nếu nhiều)
+        const restaurantsSnapshot = await getDocs(
+          collection(db, 'restaurants')
+        );
+        const restaurantsData: any[] = [];
+
+        for (const docSnap of restaurantsSnapshot.docs) {
+          const restaurantData = docSnap.data();
+          const restaurantId = docSnap.id;
+
+          // Lấy món ăn của nhà hàng đó
+          const dishesQuery = query(
+            collection(db, 'dishes'),
+            where('restaurantId', '==', restaurantId)
+          );
+          const dishesSnapshot = await getDocs(dishesQuery);
+
+          const dishesData = dishesSnapshot.docs.map((dishDoc) => {
+            const d = dishDoc.data();
+            return {
+              id: dishDoc.id,
+              name: d.name,
+              price: d.price,
+              image: { uri: d.imageUrl }, // phải chuyển url thành object cho Image
+              categoryId: d.categoryId,
+              description: d.description,
+              restaurantId: d.restaurantId,
+            };
+          });
+
+          restaurantsData.push({
+            id: restaurantId,
+            name: restaurantData.name,
+            rating: restaurantData.rating,
+            image: { uri: restaurantData.imageUrl },
+            address: restaurantData.address,
+            dishes: dishesData,
+          });
+        }
+
+        setRestaurants(restaurantsData);
+      } catch (error) {
+        console.log('Error fetching restaurants and dishes:', error);
+      }
+    };
+    fetchData();
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -60,7 +161,7 @@ export default function RestaurantScreen() {
           />
         </TouchableOpacity>
       </View>
-      {/* Title */}
+
       {/* Title + nút Nearby */}
       <View style={styles.titleRow}>
         <Text style={styles.title}>Nhà hàng gần đây</Text>
@@ -79,6 +180,7 @@ export default function RestaurantScreen() {
       </View>
 
       <FlatList
+        ref={flatListRef}
         data={restaurants}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
@@ -101,7 +203,7 @@ export default function RestaurantScreen() {
             <View style={styles.info}>
               <Text style={styles.name}>{item.name}</Text>
               <Text style={styles.sub}>
-                ⭐ {item.rating} | {item.distance}
+                ⭐ {item.rating} | {item.address}
               </Text>
 
               {/* Món ăn nổi bật */}

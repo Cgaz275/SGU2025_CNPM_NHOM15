@@ -1,112 +1,74 @@
-import { restaurants } from '@/data/mockData';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import React, { useEffect, useState } from 'react';
 import {
   Image,
-  Modal,
   Platform,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
-
-interface PromoCondition {
-  minOrderValue?: number;
-  firstTimeUserOnly?: boolean;
-  applicableItems?: string[];
-}
-
-interface PromoCode {
-  id: string;
-  code: string;
-  type: 'percent' | 'fixed';
-  value: number;
-  startDate: Date;
-  endDate: Date;
-  usageLimit?: number;
-  description?: string;
-  condition?: PromoCondition;
-}
+import { db } from '../../FirebaseConfig';
 
 export default function EditPromo() {
   const router = useRouter();
+  const { promoId } = useLocalSearchParams<{ promoId: string }>();
 
-  const [promo, setPromo] = useState<PromoCode>({
-    id: '1',
-    code: 'FIRST50',
-    type: 'percent',
-    value: 50,
-    startDate: new Date(),
-    endDate: new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000),
-    usageLimit: 100,
-    description: 'Giảm 50% cho khách hàng lần đầu',
-    condition: {
-      minOrderValue: 50000,
-      firstTimeUserOnly: true,
-      applicableItems: ['d1', 'd3'],
-    },
-  });
+  const [code, setCode] = useState('');
+  const [discount, setDiscount] = useState('');
+  const [expiryDate, setExpiryDate] = useState(new Date());
+  const [usageLimit, setUsageLimit] = useState('');
+  const [minPrice, setMinPrice] = useState('');
+  const [detail, setDetail] = useState('');
+  const [createdAt, setCreatedAt] = useState(new Date());
+  const [showExpiryPicker, setShowExpiryPicker] = useState(false);
 
-  const [editField, setEditField] = useState<
-    | keyof PromoCode
-    | 'minOrderValue'
-    | 'firstTimeUserOnly'
-    | 'applicableItems'
-    | null
-  >(null);
-  const [tempValue, setTempValue] = useState<any>(null);
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [dateField, setDateField] = useState<'startDate' | 'endDate' | null>(
-    null
-  );
-
-  const allDishes = restaurants.flatMap((r) => r.dishes);
-
-  const openEdit = (field: typeof editField) => {
-    setEditField(field);
-    if (field === 'minOrderValue')
-      setTempValue(promo.condition?.minOrderValue?.toString() || '');
-    else if (field === 'firstTimeUserOnly')
-      setTempValue(promo.condition?.firstTimeUserOnly || false);
-    else if (field === 'applicableItems')
-      setTempValue(promo.condition?.applicableItems || []);
-    else if (field) setTempValue(promo[field]);
-  };
-
-  const saveEdit = () => {
-    if (editField) {
-      if (editField === 'minOrderValue') {
-        setPromo({
-          ...promo,
-          condition: { ...promo.condition, minOrderValue: Number(tempValue) },
-        });
-      } else if (editField === 'firstTimeUserOnly') {
-        setPromo({
-          ...promo,
-          condition: { ...promo.condition, firstTimeUserOnly: tempValue },
-        });
-      } else if (editField === 'applicableItems') {
-        setPromo({
-          ...promo,
-          condition: { ...promo.condition, applicableItems: tempValue },
-        });
-      } else {
-        setPromo({ ...promo, [editField]: tempValue });
+  // Load dữ liệu promo
+  useEffect(() => {
+    const loadPromo = async () => {
+      if (!promoId) return;
+      const docRef = doc(db, 'promotions_restaurant', promoId);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        setCode(data.code || '');
+        setDiscount(data.discount_percentage?.toString() || '');
+        setExpiryDate(
+          data.expiryDate?.toDate
+            ? data.expiryDate.toDate()
+            : new Date(data.expiryDate)
+        );
+        setUsageLimit(data.usage_limit?.toString() || '');
+        setMinPrice(data.minPrice?.toString() || '');
+        setDetail(data.detail || '');
+        setCreatedAt(
+          data.createdAt?.toDate ? data.createdAt.toDate() : new Date()
+        );
       }
-      setEditField(null);
-    }
-  };
+    };
+    loadPromo();
+  }, [promoId]);
 
-  const toggleDish = (id: string) => {
-    if (!Array.isArray(tempValue)) return;
-    if (tempValue.includes(id))
-      setTempValue(tempValue.filter((i: string) => i !== id));
-    else setTempValue([...tempValue, id]);
+  const savePromo = async () => {
+    if (!promoId) return;
+    try {
+      const docRef = doc(db, 'promotions_restaurant', promoId);
+      await updateDoc(docRef, {
+        code,
+        discount_percentage: Number(discount),
+        expiryDate,
+        detail,
+        minPrice: minPrice ? Number(minPrice) : 0,
+        usage_limit: usageLimit ? Number(usageLimit) : 1,
+      });
+      router.back();
+    } catch (e) {
+      console.log('Lỗi update promo:', e);
+    }
   };
 
   const formatDate = (date: Date) => {
@@ -117,238 +79,99 @@ export default function EditPromo() {
   };
 
   return (
-    <View style={styles.container}>
-      <ScrollView>
-        <View style={styles.headerRow}>
-          <TouchableOpacity onPress={() => router.back()}>
-            <Image
-              source={require('../../assets/icons/arrow.png')}
-              style={{ width: 24, height: 24 }}
-              resizeMode="contain"
-            />
-          </TouchableOpacity>
-
-          <Text style={styles.pageTitle}>Chi tiết khuyến mãi</Text>
-        </View>
-
-        {/* Các row promo */}
-        {/** Mã giảm giá */}
-        <TouchableOpacity style={styles.row}>
-          <Text style={styles.label}>Mã giảm giá</Text>
-          <Text style={styles.value}>{promo.code}</Text>
+    <ScrollView style={styles.container}>
+      <View style={styles.headerRow}>
+        <TouchableOpacity onPress={() => router.back()}>
+          <Image
+            source={require('../../assets/icons/arrow.png')}
+            style={{ width: 24, height: 24 }}
+            resizeMode="contain"
+          />
         </TouchableOpacity>
+        <Text style={styles.pageTitle}>Chỉnh sửa khuyến mãi</Text>
+      </View>
 
-        {/* Kiểu giảm */}
-        <TouchableOpacity style={styles.row}>
-          <Text style={styles.label}>Kiểu giảm</Text>
-          <Text style={styles.value}>
-            {promo.type === 'percent' ? '%' : '₫'}
-          </Text>
-        </TouchableOpacity>
+      <Text style={styles.label}>Mã giảm giá</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Nhập mã giảm giá"
+        placeholderTextColor="#888"
+        value={code}
+        onChangeText={setCode}
+      />
 
-        {/* Giá trị */}
-        <TouchableOpacity style={styles.row}>
-          <Text style={styles.label}>Giá trị</Text>
-          <Text style={styles.value}>{promo.value}</Text>
-        </TouchableOpacity>
+      <Text style={styles.label}>Giảm giá (%)</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Nhập % giảm"
+        placeholderTextColor="#888"
+        value={discount}
+        onChangeText={setDiscount}
+        keyboardType="numeric"
+      />
 
-        {/* Ngày bắt đầu */}
-        <TouchableOpacity
-          style={styles.row}
-          onPress={() => {
-            setDateField('startDate');
-            setShowDatePicker(true);
-          }}
-        >
-          <Text style={styles.label}>Ngày bắt đầu</Text>
-          <Text style={styles.value}>{formatDate(promo.startDate)}</Text>
-        </TouchableOpacity>
+      <Text style={styles.label}>Giá trị đơn tối thiểu</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Nhập giá trị tối thiểu"
+        placeholderTextColor="#888"
+        value={minPrice}
+        onChangeText={setMinPrice}
+        keyboardType="numeric"
+      />
 
-        {/* Ngày kết thúc */}
-        <TouchableOpacity
-          style={styles.row}
-          onPress={() => {
-            setDateField('endDate');
-            setShowDatePicker(true);
-          }}
-        >
-          <Text style={styles.label}>Ngày kết thúc</Text>
-          <Text style={styles.value}>{formatDate(promo.endDate)}</Text>
-        </TouchableOpacity>
+      <Text style={styles.label}>Mô tả</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Nhập mô tả"
+        placeholderTextColor="#888"
+        value={detail}
+        onChangeText={setDetail}
+      />
 
-        {/* Giới hạn sử dụng */}
-        <TouchableOpacity
-          style={styles.row}
-          onPress={() => openEdit('usageLimit')}
-        >
-          <Text style={styles.label}>Giới hạn sử dụng</Text>
-          <Text style={styles.value}>
-            {promo.usageLimit || 'Không giới hạn'}
-          </Text>
-        </TouchableOpacity>
+      <Text style={styles.label}>Giới hạn sử dụng</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Nhập giới hạn sử dụng"
+        placeholderTextColor="#888"
+        value={usageLimit}
+        onChangeText={setUsageLimit}
+        keyboardType="numeric"
+      />
 
-        {/* Mô tả */}
-        <TouchableOpacity
-          style={styles.row}
-          onPress={() => openEdit('description')}
-        >
-          <Text style={styles.label}>Mô tả</Text>
-          <Text style={styles.value}>{promo.description || '-'}</Text>
-        </TouchableOpacity>
+      <Text style={styles.label}>Ngày bắt đầu</Text>
+      <TextInput
+        style={[styles.input, { backgroundColor: '#eee' }]}
+        value={formatDate(createdAt)}
+        editable={false}
+      />
 
-        {/* Điều kiện */}
-        <Text style={styles.subHeader}>Điều kiện sử dụng</Text>
-
-        <TouchableOpacity
-          style={styles.row}
-          // onPress={() => openEdit('minOrderValue')}
-        >
-          <Text style={styles.label}>Giá trị đơn tối thiểu</Text>
-          <Text style={styles.value}>
-            {promo.condition?.minOrderValue || '-'}
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-        // onPress={() => openEdit('firstTimeUserOnly')}
-        >
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              padding: 12,
-              backgroundColor: '#fff',
-              borderRadius: 8,
-              marginBottom: 8,
-            }}
-          >
-            <Text style={styles.label}>Chỉ áp dụng khách hàng lần đầu</Text>
-            <Text style={styles.value}>
-              {promo.condition?.firstTimeUserOnly ? 'Có' : 'Không'}
-            </Text>
-          </View>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.row}
-          // onPress={() => openEdit('applicableItems')}
-        >
-          <Text style={styles.label}>Món áp dụng</Text>
-          <Text style={styles.value}>
-            {promo.condition?.applicableItems
-              ?.map((id) => allDishes.find((d) => d.id === id)?.name)
-              .join(', ') || '-'}
-          </Text>
-        </TouchableOpacity>
-      </ScrollView>
-
-      {/* Modal edit */}
-      <Modal
-        visible={!!editField}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setEditField(null)}
+      <Text style={styles.label}>Ngày hết hạn</Text>
+      <TouchableOpacity
+        onPress={() => setShowExpiryPicker(true)}
+        style={styles.dateBtn}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>
-              {editField === 'minOrderValue'
-                ? 'Giá trị đơn tối thiểu'
-                : editField === 'firstTimeUserOnly'
-                ? 'Chỉ áp dụng khách hàng lần đầu'
-                : editField === 'applicableItems'
-                ? 'Chọn món áp dụng'
-                : `Chỉnh sửa ${editField}`}
-            </Text>
-
-            {editField === 'firstTimeUserOnly' ? (
-              <Switch
-                value={tempValue}
-                onValueChange={setTempValue}
-              />
-            ) : editField === 'applicableItems' ? (
-              <ScrollView style={{ maxHeight: 300 }}>
-                {allDishes.map((dish) => {
-                  const selected = tempValue.includes(dish.id);
-                  return (
-                    <TouchableOpacity
-                      key={dish.id}
-                      style={[styles.dishItem, selected && styles.dishSelected]}
-                      onPress={() => toggleDish(dish.id)}
-                    >
-                      {dish.image && (
-                        <Image
-                          source={dish.image}
-                          style={styles.dishImage}
-                        />
-                      )}
-                      <Text
-                        style={{
-                          marginLeft: 10,
-                          color: selected ? '#fff' : '#000',
-                          fontWeight: '500',
-                        }}
-                      >
-                        {dish.name}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </ScrollView>
-            ) : (
-              <TextInput
-                style={styles.input}
-                value={tempValue != null ? tempValue.toString() : ''}
-                onChangeText={setTempValue}
-                keyboardType={
-                  typeof tempValue === 'number' ? 'numeric' : 'default'
-                }
-              />
-            )}
-
-            <View
-              style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                marginTop: 16,
-              }}
-            >
-              <TouchableOpacity
-                style={[styles.modalButton, { backgroundColor: '#D7A359' }]}
-                onPress={saveEdit}
-              >
-                <Text style={styles.modalButtonText}>Lưu</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalButton, { backgroundColor: '#ddd' }]}
-                onPress={() => setEditField(null)}
-              >
-                <Text style={[styles.modalButtonText, { color: '#333' }]}>
-                  Hủy
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Date Picker modal */}
-      {showDatePicker && dateField && (
+        <Text>{formatDate(expiryDate)}</Text>
+      </TouchableOpacity>
+      {showExpiryPicker && (
         <DateTimePicker
-          value={promo[dateField]}
+          value={expiryDate}
           mode="date"
           display={Platform.OS === 'ios' ? 'spinner' : 'default'}
           onChange={(_, d) => {
-            if (d && dateField) {
-              setPromo({ ...promo, [dateField]: d });
-            }
-            setShowDatePicker(false);
-            setDateField(null);
+            if (d) setExpiryDate(d);
+            setShowExpiryPicker(false);
           }}
         />
       )}
-    </View>
+
+      <TouchableOpacity
+        style={styles.addBtn}
+        onPress={savePromo}
+      >
+        <Text style={styles.addBtnText}>Cập nhật khuyến mãi</Text>
+      </TouchableOpacity>
+    </ScrollView>
   );
 }
 
@@ -358,60 +181,30 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginTop: 50,
-    marginBottom: 20,
+    marginBottom: 15,
     paddingHorizontal: 5,
   },
-  pageTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    marginLeft: 12,
-  },
-  subHeader: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginTop: 16,
-    marginBottom: 8,
-  },
-  row: {
-    padding: 12,
+  pageTitle: { fontSize: 20, fontWeight: '600', marginLeft: 12 },
+  label: { fontSize: 14, fontWeight: '600', marginBottom: 4, color: '#000' },
+  input: {
     backgroundColor: '#fff',
-    borderRadius: 8,
-    marginBottom: 8,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  label: { fontSize: 15, color: '#555' },
-  value: { fontSize: 15, fontWeight: '500', color: '#000' },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    justifyContent: 'flex-end',
-  },
-  modalContent: {
-    backgroundColor: '#fff',
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    padding: 16,
-    maxHeight: '90%',
-  },
-  modalTitle: { fontSize: 16, fontWeight: '600', marginBottom: 12 },
-  input: { backgroundColor: '#f0f0f0', padding: 10, borderRadius: 8 },
-  modalButton: {
-    flex: 1,
+    color: '#000',
     padding: 12,
     borderRadius: 8,
-    alignItems: 'center',
-    marginHorizontal: 4,
+    marginBottom: 12,
   },
-  modalButtonText: { color: '#fff', fontWeight: '600' },
-  dishItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+  dateBtn: {
+    backgroundColor: '#fff',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 12,
   },
-  dishSelected: { backgroundColor: '#D7A359' },
-  dishImage: { width: 40, height: 40, borderRadius: 6 },
+  addBtn: {
+    backgroundColor: '#D7A359',
+    padding: 14,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  addBtnText: { color: '#fff', fontWeight: '600', fontSize: 16 },
 });

@@ -1,9 +1,17 @@
 import { clearTempAddress, getTempAddress } from '@/data/address';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
+
+import {
+  addDoc,
+  collection,
+  GeoPoint,
+  serverTimestamp,
+} from 'firebase/firestore';
 import React, { useCallback, useState } from 'react';
 import {
+  Alert,
   Image,
   ScrollView,
   StyleSheet,
@@ -12,61 +20,87 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { addAddress } from '../../data/address';
+import { auth, db } from '../../FirebaseConfig';
 
 export default function AddAddressScreen() {
   const router = useRouter();
 
-  const [form, setForm] = useState({
+  type AddressForm = {
+    name: string;
+    phone: string;
+    address: string;
+    note: string;
+    latlong: GeoPoint | null;
+  };
+
+  const [form, setForm] = useState<AddressForm>({
     name: '',
     phone: '',
     address: '',
-    building: '',
-    gate: '',
-    tag: 'Nhà riêng',
     note: '',
+    latlong: null,
   });
-  const params = useLocalSearchParams();
 
-  const [address, setAddress] = useState('');
+  const [formKey, setFormKey] = useState(0);
 
-  const [formKey, setFormKey] = useState(0); // state phụ để ép rerender
+  // ✅ Khi quay lại trang → load địa chỉ tạm (nếu có)
   useFocusEffect(
     useCallback(() => {
       const temp = getTempAddress();
-      if (temp?.address) {
-        setForm((prev) => ({ ...prev, address: temp.address! }));
+      if (temp) {
+        setForm((prev) => ({
+          ...prev,
+          address: temp.address ?? prev.address,
+          latlong:
+            temp.lat && temp.lng
+              ? new GeoPoint(temp.lat, temp.lng)
+              : prev.latlong,
+        }));
         clearTempAddress();
       }
     }, [])
   );
 
+  // ✅ Cập nhật field
   const handleChange = (field: string, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSave = () => {
+  // ✅ Lưu lên Firebase
+  const handleSave = async () => {
     if (!form.name || !form.phone || !form.address) {
-      alert('Vui lòng nhập đầy đủ Tên, Số điện thoại và Địa chỉ!');
+      Alert.alert(
+        'Thiếu thông tin',
+        'Vui lòng nhập đầy đủ Tên, Số điện thoại và Địa chỉ!'
+      );
       return;
     }
 
-    const newAddress = {
-      id: Date.now().toString(),
-      name: form.name,
-      phone: form.phone,
-      address: form.address,
-      building: form.building,
-      gate: form.gate,
-      tag: form.tag,
-      note: form.note,
-      isDefault: false, // mặc định không phải là default
-    };
+    const user = auth.currentUser;
+    if (!user) {
+      Alert.alert('Lỗi', 'Bạn chưa đăng nhập!');
+      router.replace('../(auth)');
+      return;
+    }
 
-    addAddress(newAddress);
-    console.log('📦 Đã thêm địa chỉ:', newAddress);
+    try {
+      await addDoc(collection(db, 'address'), {
+        userId: user.uid,
+        name: form.name,
+        phone: form.phone,
+        address: form.address,
+        note: form.note || '',
+        latlong: form.latlong || null,
+        createdAt: serverTimestamp(),
+      });
 
-    router.back();
+      console.log('📦 Đã thêm địa chỉ mới cho user:', user.uid);
+      Alert.alert('Thành công', 'Đã lưu địa chỉ!');
+      router.back();
+    } catch (error) {
+      console.error('Lỗi khi thêm địa chỉ:', error);
+      Alert.alert('Lỗi', 'Không thể lưu địa chỉ. Vui lòng thử lại.');
+    }
   };
 
   return (
@@ -85,6 +119,7 @@ export default function AddAddressScreen() {
 
       <Text style={styles.title}>Thêm địa chỉ mới</Text>
 
+      {/* Họ tên */}
       <View style={styles.field}>
         <Text style={styles.label}>Tên *</Text>
         <TextInput
@@ -95,6 +130,7 @@ export default function AddAddressScreen() {
         />
       </View>
 
+      {/* Số điện thoại */}
       <View style={styles.field}>
         <Text style={styles.label}>Số điện thoại *</Text>
         <View
@@ -104,10 +140,9 @@ export default function AddAddressScreen() {
             borderWidth: 1,
             borderColor: '#ccc',
             borderRadius: 8,
-            overflow: 'hidden', // để +84 và input liền khối
+            overflow: 'hidden',
           }}
         >
-          {/* Prefix +84 */}
           <View
             style={{
               backgroundColor: '#e67e22',
@@ -120,7 +155,6 @@ export default function AddAddressScreen() {
             <Text style={{ fontWeight: '500', color: '#fff' }}>+84</Text>
           </View>
 
-          {/* Input số */}
           <TextInput
             style={{
               flex: 1,
@@ -142,6 +176,7 @@ export default function AddAddressScreen() {
         </View>
       </View>
 
+      {/* Địa chỉ */}
       <View style={styles.field}>
         <Text style={styles.label}>Địa chỉ *</Text>
 
@@ -157,7 +192,7 @@ export default function AddAddressScreen() {
           onPress={() =>
             router.push({
               pathname: './location',
-              params: form, // truyền toàn bộ form hiện tại
+              params: form,
             })
           }
         >
@@ -176,48 +211,7 @@ export default function AddAddressScreen() {
         </TouchableOpacity>
       </View>
 
-      <View style={styles.field}>
-        <Text style={styles.label}>Tòa nhà / Số tầng (không bắt buộc)</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="VD: Tòa A, tầng 5"
-          value={form.building}
-          onChangeText={(v) => handleChange('building', v)}
-        />
-      </View>
-
-      <View style={styles.field}>
-        <Text style={styles.label}>Cổng (không bắt buộc)</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="VD: Cổng sau, gần bãi xe..."
-          value={form.gate}
-          onChangeText={(v) => handleChange('gate', v)}
-        />
-      </View>
-
-      <View style={styles.field}>
-        <Text style={styles.label}>Loại địa chỉ</Text>
-        <View style={styles.tagContainer}>
-          {['Nhà riêng', 'Văn phòng', 'Khác'].map((tag) => (
-            <TouchableOpacity
-              key={tag}
-              style={[styles.tagButton, form.tag === tag && styles.tagSelected]}
-              onPress={() => handleChange('tag', tag)}
-            >
-              <Text
-                style={{
-                  color: form.tag === tag ? '#fff' : '#000',
-                  fontWeight: form.tag === tag ? '700' : '400',
-                }}
-              >
-                {tag}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </View>
-
+      {/* Ghi chú */}
       <View style={styles.field}>
         <Text style={styles.label}>Ghi chú (không bắt buộc)</Text>
         <TextInput
@@ -241,7 +235,6 @@ export default function AddAddressScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff', padding: 16, paddingTop: 40 },
-  backText: { color: '#e67e22', marginBottom: 10, fontWeight: '500' },
   title: { fontSize: 20, fontWeight: '700', marginBottom: 20 },
   field: { marginBottom: 16 },
   label: { fontWeight: '600', marginBottom: 6 },
@@ -251,22 +244,6 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 10,
     fontSize: 15,
-  },
-  tagContainer: {
-    flexDirection: 'row',
-    gap: 10,
-    marginTop: 6,
-  },
-  tagButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 10,
-  },
-  tagSelected: {
-    backgroundColor: '#e67e22',
-    borderColor: '#e67e22',
   },
   saveButton: {
     backgroundColor: '#e67e22',

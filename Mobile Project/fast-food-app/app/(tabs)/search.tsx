@@ -1,4 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { collection, getDocs } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
 import {
   Dimensions,
@@ -11,7 +12,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { restaurants as allRestaurants, categories } from '../../data/mockData';
+import { db } from '../../FirebaseConfig';
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -22,16 +23,57 @@ export default function Search() {
   const [selectedCategoryId, setSelectedCategoryId] = useState<
     string | undefined
   >(categoryId);
+
   const [restaurants, setRestaurants] = useState<any[]>([]);
+  const [filteredRestaurants, setFilteredRestaurants] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortType, setSortType] = useState<'name' | 'distance' | null>(null);
 
+  //🔥 categories từ Firestore
+  const [categories, setCategories] = useState<any[]>([]);
+
   useEffect(() => {
-    let filtered = [...allRestaurants];
+    const fetchCategories = async () => {
+      try {
+        const snap = await getDocs(collection(db, 'categories'));
+        const list = snap.docs.map((d) => ({
+          id: d.id,
+          ...d.data(),
+        }));
+
+        setCategories(list);
+      } catch (err) {
+        console.log('Lỗi lấy categories:', err);
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
+  //🔥 restaurants từ Firestore
+  useEffect(() => {
+    const fetchRestaurants = async () => {
+      try {
+        const snapshot = await getDocs(collection(db, 'restaurants'));
+        const list = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setRestaurants(list);
+      } catch (err) {
+        console.log('Lỗi lấy nhà hàng:', err);
+      }
+    };
+    fetchRestaurants();
+  }, []);
+
+  //🔥 Filter khi state thay đổi
+  useEffect(() => {
+    let filtered = [...restaurants];
 
     if (selectedCategoryId) {
       filtered = filtered.filter((r) =>
-        r.categories.includes(selectedCategoryId)
+        r.categories?.includes(selectedCategoryId)
       );
     }
 
@@ -47,10 +89,9 @@ export default function Search() {
       filtered.sort((a, b) => parseFloat(a.distance) - parseFloat(b.distance));
     }
 
-    setRestaurants(filtered);
-  }, [selectedCategoryId, searchQuery, sortType, categoryId]);
+    setFilteredRestaurants(filtered);
+  }, [restaurants, selectedCategoryId, searchQuery, sortType, categoryId]);
 
-  // Sync lại khi đổi tab có categoryId mới
   useEffect(() => {
     if (categoryId) setSelectedCategoryId(categoryId);
   }, [categoryId]);
@@ -94,7 +135,6 @@ export default function Search() {
         </TouchableOpacity>
       </View>
 
-      {/* ✅ Gộp hết trong ScrollView để tránh giật layout */}
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Categories */}
         <View style={{ marginTop: 6 }}>
@@ -109,6 +149,7 @@ export default function Search() {
             }}
             renderItem={({ item }) => {
               const isActive = item.id === selectedCategoryId;
+
               return (
                 <TouchableOpacity
                   onPress={() => handleCategoryPress(item.id)}
@@ -118,7 +159,7 @@ export default function Search() {
                   ]}
                 >
                   <Image
-                    source={item.image}
+                    source={{ uri: item.imageUrl }}
                     style={styles.categoryImage}
                   />
                   <Text
@@ -137,8 +178,8 @@ export default function Search() {
 
         {/* Restaurants */}
         <View style={{ paddingHorizontal: 16, paddingBottom: 40 }}>
-          {restaurants.length > 0 ? (
-            restaurants.map((item) => (
+          {filteredRestaurants.length > 0 ? (
+            filteredRestaurants.map((item) => (
               <TouchableOpacity
                 key={item.id}
                 onPress={() =>
@@ -150,7 +191,7 @@ export default function Search() {
                 style={styles.restaurantCard}
               >
                 <Image
-                  source={item.image}
+                  source={{ uri: item.imageUrl }}
                   style={styles.restaurantImage}
                 />
                 <View style={{ flex: 1, marginLeft: 10 }}>
@@ -205,7 +246,6 @@ const styles = StyleSheet.create({
   },
   sortText: { color: '#fff', fontWeight: '600' },
 
-  // Category styles
   categoryCard: {
     width: 80,
     marginRight: 10,
@@ -227,7 +267,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 
-  // Restaurant styles
   restaurantCard: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -1,7 +1,6 @@
 import { useRouter } from 'expo-router';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
-  Alert,
   Image,
   ScrollView,
   StyleSheet,
@@ -10,27 +9,49 @@ import {
   View,
 } from 'react-native';
 
+import { doc, getDoc } from 'firebase/firestore';
+import { auth, db } from '../../FirebaseConfig';
+
 export default function ProfileScreen() {
   const router = useRouter();
 
-  const user = {
-    name: 'Nguyễn Văn A',
-    email: 'nguyenvana@example.com',
-    phone: '0901234567',
-  };
+  // Khai báo kiểu dữ liệu userData có thể có các trường
+  const [userData, setUserData] = useState<{
+    email?: string;
+    name?: string;
+    phone?: string;
+  } | null>(null);
 
-  const handleLogout = () => {
-    Alert.alert('Đăng xuất', 'Bạn có chắc muốn đăng xuất không?', [
-      { text: 'Hủy', style: 'cancel' },
-      {
-        text: 'Đăng xuất',
-        style: 'destructive',
-        onPress: () => {
-          // Mock logout
-          router.replace('../(auth)');
-        },
-      },
-    ]);
+  useEffect(() => {
+    const fetchUserData = async () => {
+      const user = auth.currentUser;
+      if (!user) {
+        router.replace('../(auth)');
+        return;
+      }
+
+      try {
+        const docRef = doc(db, 'user', user.uid); // sửa 'user' thành 'users' nếu bạn lưu collection tên đó
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+          setUserData(docSnap.data());
+        } else {
+          console.log('No such document!');
+          setUserData({});
+        }
+      } catch (error) {
+        console.log('Error getting user data:', error);
+      }
+    };
+
+    fetchUserData();
+  }, []);
+
+  const user = {
+    name: userData?.name ?? '', // nếu không có thì để trống
+    email: userData?.email ?? 'Đang tải...',
+    phone: userData?.phone ?? '',
   };
 
   const renderItem = (label: string, value: string, route: string) => (
@@ -62,15 +83,8 @@ export default function ProfileScreen() {
       <Text style={styles.title}>Thông tin cá nhân</Text>
 
       {renderItem('Họ và tên', user.name, '/info/edit-name')}
-      {renderItem('Email', user.email, '/info/edit-email')}
+      {renderItem('Email', user.email, '')}
       {renderItem('Số điện thoại', user.phone, '/info/edit-phone')}
-
-      <TouchableOpacity
-        style={styles.logoutButton}
-        onPress={handleLogout}
-      >
-        <Text style={styles.logoutText}>Đăng xuất</Text>
-      </TouchableOpacity>
     </ScrollView>
   );
 }
@@ -93,12 +107,4 @@ const styles = StyleSheet.create({
   label: { fontSize: 15, color: '#333', fontWeight: '500' },
   value: { fontSize: 14, color: '#777', marginTop: 4 },
   arrow: { fontSize: 22, color: '#ccc', marginLeft: 8 },
-  logoutButton: {
-    backgroundColor: '#e74c3c',
-    marginTop: 40,
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  logoutText: { color: '#fff', fontWeight: '700', fontSize: 16 },
 });
