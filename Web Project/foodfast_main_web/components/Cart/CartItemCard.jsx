@@ -12,6 +12,10 @@ export default function CartItemCard({ item, onDelete, currency }) {
         setImageLoadError(true);
     };
 
+    const handleDeleteClick = () => {
+        onDelete(item.id);
+    };
+
     const getImageUrl = () => {
         if (item.images && item.images[0]) return item.images[0];
         if (item.imageUrl) return item.imageUrl;
@@ -30,8 +34,10 @@ export default function CartItemCard({ item, onDelete, currency }) {
         <div className="relative bg-[#FAFAF6] rounded-xl p-8 shadow-sm">
             {/* Remove Button */}
             <button
-                onClick={() => onDelete(item.id)}
-                className="absolute -left-4 -top-4 w-8 h-8 bg-[#366055] rounded-full flex items-center justify-center hover:bg-[#2a4d42] transition"
+                onClick={handleDeleteClick}
+                className="absolute top-4 right-4 w-8 h-8 bg-[#366055] rounded-full flex items-center justify-center hover:bg-[#2a4d42] transition z-10"
+                aria-label="Delete item from cart"
+                title="Delete item"
             >
                 <XIcon size={15} className="text-white" />
             </button>
@@ -111,7 +117,10 @@ export default function CartItemCard({ item, onDelete, currency }) {
 
                 {/* Quantity Controls */}
                 <div className="flex sm:flex-col items-center justify-center">
-                    <Counter productId={item.id} />
+                    <Counter
+                        cartItemKey={item.id}
+                        item={item}
+                    />
                 </div>
             </div>
         </div>

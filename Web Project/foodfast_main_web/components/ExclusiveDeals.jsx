@@ -8,6 +8,11 @@ export default function ExclusiveDeals() {
     const router = useRouter();
     const { data: deals, loading, error } = usePromotionalRestaurants(6);
 
+    // Sort deals by discount_percentage in descending order
+    const sortedDeals = [...deals].sort((a, b) => {
+        return (b.discount_percentage || 0) - (a.discount_percentage || 0);
+    });
+
     const handleSeeAll = () => {
         router.push('/AllResturant');
     };
@@ -51,12 +56,12 @@ export default function ExclusiveDeals() {
                         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#FC8A06] mx-auto mb-4"></div>
                         <p className="text-gray-600">Loading restaurants...</p>
                     </div>
-                ) : deals.length === 0 ? (
+                ) : sortedDeals.length === 0 ? (
                     <div className="col-span-full text-center py-12">
                         <p className="text-gray-600">No restaurants available</p>
                     </div>
                 ) : (
-                    deals.map((deal) => (
+                    sortedDeals.map((deal) => (
                         <div
                             key={deal.id}
                             className="relative rounded-xl overflow-hidden group cursor-pointer hover:shadow-xl transition"
@@ -91,6 +96,11 @@ export default function ExclusiveDeals() {
                                 <h3 className="text-white text-2xl font-bold mb-2">{deal.restaurantName}</h3>
                                 {deal.address && (
                                     <p className="text-gray-100 text-sm mb-3 line-clamp-2">{deal.address}</p>
+                                )}
+                                {deal.code && (
+                                    <div className="inline-block bg-white border border-[#FC8A06] rounded px-3 py-1 mb-2">
+                                        <p className="text-[#FC8A06] font-semibold text-sm">Code: {deal.code}</p>
+                                    </div>
                                 )}
                                 <div className="flex items-center gap-2">
                                     <div className="flex items-center gap-1">

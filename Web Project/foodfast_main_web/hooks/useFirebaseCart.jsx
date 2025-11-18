@@ -9,18 +9,18 @@ const useFirebaseCart = () => {
   const user = useSelector(state => state.auth.user);
   const dispatch = useDispatch();
   const syncTimeoutRef = useRef(null);
+  const prevCartItemsRef = useRef(null);
 
   // Sync cart to Firebase whenever cart state changes
   useEffect(() => {
     if (!user?.uid) return;
 
-    // Clear existing timeout to avoid multiple syncs
-    if (syncTimeoutRef.current) {
-      clearTimeout(syncTimeoutRef.current);
-    }
+    const performSync = async () => {
+      if (!user?.uid) {
+        console.warn('Cannot sync cart: user UID is missing');
+        return;
+      }
 
-    // Debounce the sync operation by 1 second to avoid excessive Firebase writes
-    syncTimeoutRef.current = setTimeout(async () => {
       try {
         const userCartRef = doc(db, 'user', user.uid, 'cart', 'items');
 
@@ -39,10 +39,37 @@ const useFirebaseCart = () => {
 
         // Save the current cart state to Firebase
         await setDoc(userCartRef, cartData, { merge: true });
+        console.log('Cart synced to Firebase successfully', { cartItemCount: Object.keys(cartState.cartItems).length, total: cartState.total });
       } catch (error) {
         console.error('Error syncing cart to Firebase:', error);
+        console.error('User UID:', user?.uid);
+        console.error('Cart data:', cartState);
       }
-    }, 1000);
+    };
+
+    // Determine if items were deleted by comparing previous and current cart items
+    const currentItemIds = Object.keys(cartState.cartItems);
+    const currentItemCount = currentItemIds.length;
+    const prevItemIds = prevCartItemsRef.current ? Object.keys(prevCartItemsRef.current) : [];
+    const prevItemCount = prevItemIds.length;
+
+    // Items were deleted if the count decreased
+    const itemsWereDeleted = prevItemCount > 0 && currentItemCount < prevItemCount;
+
+    // Clear existing timeout
+    if (syncTimeoutRef.current) {
+      clearTimeout(syncTimeoutRef.current);
+    }
+
+    if (itemsWereDeleted) {
+      // Sync deletions immediately without debounce
+      performSync();
+    } else {
+      // Debounce additions/quantity changes by 500ms
+      syncTimeoutRef.current = setTimeout(performSync, 500);
+    }
+
+    prevCartItemsRef.current = cartState.cartItems;
 
     return () => {
       if (syncTimeoutRef.current) {

@@ -56,13 +56,13 @@ const cartSlice = createSlice({
         removeFromCart: (state, action) => {
             const { productId } = action.payload
             if (state.cartItems[productId]) {
-                state.cartItems[productId]--
+                state.cartItems[productId] -= 1
+                state.total = Math.max(0, state.total - 1)
                 if (state.cartItems[productId] <= 0) {
                     delete state.cartItems[productId]
                     delete state.itemMetadata[productId]
                 }
             }
-            state.total = Math.max(0, state.total - 1)
         },
         deleteItemFromCart: (state, action) => {
             const { productId } = action.payload

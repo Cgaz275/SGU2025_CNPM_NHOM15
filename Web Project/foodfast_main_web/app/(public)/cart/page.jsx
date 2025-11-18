@@ -45,58 +45,84 @@ export default function Cart() {
     const [selectedAddressCreatedAt, setSelectedAddressCreatedAt] = useState(null);
 
     const createCartArray = async () => {
-        setLoading(true);
-        setTotalPrice(0);
-        const cartArray = [];
-        for (const [key, value] of Object.entries(cartItems)) {
-            // Extract original productId from composite key (if addons were selected)
-            const originalProductId = itemMetadata[key]?.originalProductId || key.split('_')[0];
+        try {
+            setLoading(true);
+            const cartArray = [];
+            let calculatedTotal = 0;
 
-            let item = products.find(product => product.id === originalProductId);
+            for (const [key, value] of Object.entries(cartItems)) {
+                // Extract original productId from composite key (if addons were selected)
+                const originalProductId = itemMetadata[key]?.originalProductId || key.split('_')[0];
 
-            if (!item) {
-                try {
-                    const dishRef = doc(db, 'dishes', originalProductId);
-                    const dishSnap = await getDoc(dishRef);
-                    if (dishSnap.exists()) {
-                        item = {
-                            id: dishSnap.id,
-                            ...dishSnap.data(),
-                        };
+                let item = products.find(product => product.id === originalProductId);
+
+                if (!item) {
+                    try {
+                        const dishRef = doc(db, 'dishes', originalProductId);
+                        const dishSnap = await getDoc(dishRef);
+                        if (dishSnap.exists()) {
+                            item = {
+                                id: dishSnap.id,
+                                ...dishSnap.data(),
+                            };
+                        }
+                    } catch (error) {
+                        console.error('Error fetching dish:', error);
                     }
-                } catch (error) {
-                    console.error('Error fetching dish:', error);
+                }
+
+                if (item || itemMetadata[key]) {
+                    const metadata = itemMetadata[key];
+
+                    // Use metadata price if available (includes addons), otherwise use item price
+                    const itemPrice = metadata?.price || item?.price || 0;
+                    const itemBasePrice = metadata?.basePrice || item?.price || 0;
+                    const itemAddonPrice = itemPrice - itemBasePrice;
+
+                    const finalItem = {
+                        id: key,
+                        originalProductId: metadata?.originalProductId || originalProductId,
+                        name: item?.name || metadata?.name || 'Unknown Item',
+                        price: itemPrice,
+                        basePrice: itemBasePrice,
+                        addonPrice: itemAddonPrice,
+                        imageUrl: item?.imageUrl || metadata?.imageUrl,
+                        images: item?.images,
+                        category: item?.category,
+                        size: item?.size,
+                        restaurantId: item?.restaurantId,
+                        selectedChoices: metadata?.selectedChoices || {},
+                        addonDetails: metadata?.addonDetails || [],
+                        quantity: value,
+                    };
+
+                    // Preserve item properties but don't override calculated prices
+                    if (item) {
+                        Object.keys(item).forEach(key => {
+                            if (!['price', 'basePrice'].includes(key) && !(key in finalItem)) {
+                                finalItem[key] = item[key];
+                            }
+                        });
+                    }
+
+                    cartArray.push(finalItem);
+                    calculatedTotal += itemPrice * value;
                 }
             }
 
-            if (item || itemMetadata[key]) {
-                const metadata = itemMetadata[key];
-                const finalItem = {
-                    id: key,
-                    name: item?.name || metadata?.name || 'Unknown Item',
-                    price: metadata?.price || item?.price || 0,
-                    basePrice: metadata?.basePrice || item?.price || 0,
-                    addonPrice: (metadata?.price || 0) - (metadata?.basePrice || item?.price || 0),
-                    imageUrl: item?.imageUrl || metadata?.imageUrl,
-                    images: item?.images,
-                    category: item?.category,
-                    size: item?.size,
-                    restaurantId: item?.restaurantId,
-                    selectedChoices: metadata?.selectedChoices || {},
-                    addonDetails: metadata?.addonDetails || [],
-                    ...item,
-                    quantity: value,
-                };
-                cartArray.push(finalItem);
-                setTotalPrice(prev => prev + (finalItem.price * value));
-            }
+            setCartArray(cartArray);
+            setTotalPrice(calculatedTotal);
+        } finally {
+            setLoading(false);
         }
-        setCartArray(cartArray);
-        setLoading(false);
     }
 
     const handleDeleteItemFromCart = (productId) => {
-        dispatch(deleteItemFromCart({ productId }))
+        const item = cartArray.find(item => item.id === productId);
+        dispatch(deleteItemFromCart({ productId }));
+        if (item) {
+            toast.success(`${item.name} removed from cart`);
+        }
     }
 
     const handleApplyPromoCode = async () => {
@@ -437,9 +463,9 @@ export default function Cart() {
                 <div className="flex flex-col lg:flex-row gap-8">
                     {/* Left Side - Cart Items */}
                     <div className="flex-1 space-y-7">
-                        {cartArray.map((item, index) => (
+                        {cartArray.map((item) => (
                             <CartItemCard
-                                key={index}
+                                key={item.id}
                                 item={item}
                                 onDelete={handleDeleteItemFromCart}
                                 currency={currency}
