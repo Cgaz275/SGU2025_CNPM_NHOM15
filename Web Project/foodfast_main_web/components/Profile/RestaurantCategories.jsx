@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { doc, getDoc, setDoc, updateDoc, deleteDoc, collection, query, where, getDocs } from 'firebase/firestore'
+import { doc, getDoc, setDoc, updateDoc, deleteDoc, collection, query, where, getDocs, serverTimestamp } from 'firebase/firestore'
 import { db } from '@/config/FirebaseConfig'
 import toast from 'react-hot-toast'
 import { Trash2, Plus } from 'lucide-react'
@@ -65,7 +65,7 @@ export default function RestaurantCategories({ restaurantId }) {
             await setDoc(docRef, {
                 category_list: updatedCategories,
                 restaurant_id: restaurantId,
-                updatedAt: new Date()
+                updatedAt: serverTimestamp()
             }, { merge: true })
 
             setCategories(updatedCategories)
@@ -104,7 +104,7 @@ export default function RestaurantCategories({ restaurantId }) {
             const docRef = doc(db, 'restaurant_categories', restaurantId)
             await updateDoc(docRef, {
                 category_list: updatedCategories,
-                updatedAt: new Date()
+                updatedAt: serverTimestamp()
             })
 
             setCategories(updatedCategories)
@@ -131,7 +131,7 @@ export default function RestaurantCategories({ restaurantId }) {
             const docRef = doc(db, 'restaurant_categories', restaurantId)
             await updateDoc(docRef, {
                 category_list: updatedCategories,
-                updatedAt: new Date()
+                updatedAt: serverTimestamp()
             })
 
             setCategories(updatedCategories)

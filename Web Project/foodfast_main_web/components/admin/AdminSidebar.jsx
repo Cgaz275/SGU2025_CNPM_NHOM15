@@ -1,7 +1,7 @@
 'use client'
 
 import { usePathname } from "next/navigation"
-import { HomeIcon, ShieldCheckIcon, StoreIcon, TicketPercentIcon } from "lucide-react"
+import { HomeIcon, ShieldCheckIcon, StoreIcon, TicketPercentIcon, Plane, MapPin, Package } from "lucide-react"
 import Link from "next/link"
 
 const AdminSidebar = () => {
@@ -10,9 +10,12 @@ const AdminSidebar = () => {
 
     const sidebarLinks = [
         { name: 'Dashboard', href: '/admin', icon: HomeIcon },
+        { name: 'Orders', href: '/admin/orders', icon: Package },
         { name: 'Stores', href: '/admin/stores', icon: StoreIcon },
         { name: 'Approve Store', href: '/admin/approve', icon: ShieldCheckIcon },
-        { name: 'Coupons', href: '/admin/coupons', icon: TicketPercentIcon  },
+        { name: 'Coupons', href: '/admin/coupons', icon: TicketPercentIcon },
+        { name: 'Drones', href: '/admin/drones', icon: Plane },
+        { name: 'Drone Stations', href: '/admin/drone-stations', icon: MapPin },
     ]
 
     return (

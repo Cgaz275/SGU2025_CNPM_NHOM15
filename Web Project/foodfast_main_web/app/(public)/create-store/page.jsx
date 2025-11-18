@@ -5,7 +5,7 @@ import Loading from "@/components/Loading"
 import AddressPickerModal from "@/components/Modals/AddressPickerModal"
 import { db, auth } from "@/config/FirebaseConfig"
 import { doc, setDoc, serverTimestamp, GeoPoint, collection, onSnapshot } from "firebase/firestore"
-import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth"
+import { createUserWithEmailAndPassword, updateProfile, signOut } from "firebase/auth"
 import { useRouter } from "next/navigation"
 import { MapPin, Upload } from "lucide-react"
 
@@ -27,7 +27,7 @@ export default function CreateStore() {
         address: "",
         latitude: "",
         longitude: "",
-        category: ""
+        categories: ""
     })
 
     const [files, setFiles] = useState({
@@ -72,7 +72,7 @@ export default function CreateStore() {
     const handleCategorySelect = (categoryId) => {
         setFormData(prev => ({
             ...prev,
-            category: categoryId
+            categories: categoryId
         }))
     }
 
@@ -167,7 +167,7 @@ export default function CreateStore() {
             return
         }
 
-        if (!formData.category) {
+        if (!formData.categories) {
             toast.error('Please select a category')
             return
         }
@@ -217,15 +217,18 @@ export default function CreateStore() {
                 is_enable: false,
                 rating: 0,
                 status: "approve_await",
-                category: formData.category,
+                categories: formData.categories,
                 userId: user.uid,
                 createdAt: serverTimestamp(),
             })
             console.log('Restaurant document saved')
             console.log('Registration completed successfully!')
 
+            // Sign out merchant immediately - they can't access features until approved
+            await signOut(auth)
+
             setTimeout(() => {
-                router.push('/store')
+                router.push('/')
             }, 1000)
         } catch (error) {
             console.error('Error submitting registration:', error)
@@ -345,7 +348,7 @@ export default function CreateStore() {
                                 <label
                                     key={category.id}
                                     className={`flex items-center gap-3 p-4 border rounded-lg cursor-pointer transition ${
-                                        formData.category === category.id
+                                        formData.categories === category.id
                                             ? 'border-[#366055] bg-[#366055]/5'
                                             : 'border-slate-300 hover:bg-slate-50'
                                     }`}
@@ -354,7 +357,7 @@ export default function CreateStore() {
                                         type="radio"
                                         name="category"
                                         value={category.id}
-                                        checked={formData.category === category.id}
+                        checked={formData.categories === category.id}
                                         onChange={() => handleCategorySelect(category.id)}
                                         className="w-5 h-5 text-[#366055] border-slate-300 cursor-pointer"
                                     />
@@ -366,9 +369,9 @@ export default function CreateStore() {
                         </div>
                     )}
 
-                    {formData.category && (
+                    {formData.categories && (
                         <p className="text-sm text-slate-600 mb-6">
-                            Selected: <span className="font-semibold text-[#366055]">{categories.find(c => c.id === formData.category)?.name || 'Unknown'}</span>
+                            Selected: <span className="font-semibold text-[#366055]">{categories.find(c => c.id === formData.categories)?.name || 'Unknown'}</span>
                         </p>
                     )}
                 </div>

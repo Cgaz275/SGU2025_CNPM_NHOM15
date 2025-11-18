@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import useCurrentUser from '@/hooks/useCurrentUser';
-import { doc, updateDoc, collection, addDoc, query, where, getDocs, GeoPoint, onSnapshot } from 'firebase/firestore';
+import { doc, updateDoc, collection, addDoc, query, where, getDocs, GeoPoint, onSnapshot, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/config/FirebaseConfig';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
@@ -102,7 +102,7 @@ export default function ProfilePage() {
             phone: formData.phone,
             note: "",
             userId: user.uid,
-            createdAt: new Date()
+            createdAt: serverTimestamp()
           });
         }
         updateData.defaultAddress = selectedAddressData.address;
@@ -126,7 +126,7 @@ export default function ProfilePage() {
             phone: formData.phone,
             note: "",
             userId: user.uid,
-            createdAt: new Date()
+            createdAt: serverTimestamp()
           });
         }
         updateData.defaultAddress = formData.defaultAddress;

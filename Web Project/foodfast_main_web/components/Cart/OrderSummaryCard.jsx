@@ -6,6 +6,7 @@ export default function OrderSummaryCard({
     shippingFee,
     discount,
     discountApplied,
+    appliedPromo,
     finalTotal,
     paymentMethod,
     setPaymentMethod,
@@ -28,7 +29,12 @@ export default function OrderSummaryCard({
                 </div>
 
                 <div className="flex justify-between text-white">
-                    <span className="text-base md:text-lg font-semibold">Discount Applied:</span>
+                    <div className="flex flex-col">
+                        <span className="text-base md:text-lg font-semibold">Discount Applied:</span>
+                        {discountApplied && appliedPromo && (
+                            <span className="text-sm text-green-300 mt-1">Code: {appliedPromo.code}</span>
+                        )}
+                    </div>
                     <span className="text-base md:text-lg font-normal">
                         {discountApplied ? formatPrice(discount) : 'No promotion applied'}
                     </span>

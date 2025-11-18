@@ -143,7 +143,7 @@ const SignUpForm = ({ onSuccess, router }) => {
                     email,
                     phone,
                     is_enable: true,
-                    role: "user",
+                    role: "customer",
                     defaultAddress: "",
                     createdAt: serverTimestamp(),
                 });

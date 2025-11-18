@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { doc, getDoc, collection, query, where, getDocs, updateDoc, setDoc, deleteDoc } from 'firebase/firestore'
+import { doc, getDoc, collection, query, where, getDocs, updateDoc, setDoc, deleteDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from '@/config/FirebaseConfig'
 import { MapPin, Phone, Mail, Star, ChevronLeft, AlertCircle, X, Plus, Edit2, Trash2 } from 'lucide-react'
 import Loading from '@/components/Loading'
@@ -142,7 +142,7 @@ export default function StoreDetailPage() {
         is_enable: !restaurant.is_enable
       })
 
-      toast.success(`Restaurant ${!restaurant.is_enable ? 'enabled' : 'banned'} successfully`)
+      toast.success(`Restaurant ${!restaurant.is_enable ? 'enabled' : 'disable'} successfully`)
     } catch (error) {
       console.error('Error updating restaurant status:', error)
       toast.error('Failed to update restaurant status')
@@ -206,17 +206,19 @@ export default function StoreDetailPage() {
         minPrice: parseFloat(promoFormData.minPrice),
         expiryDate: new Date(promoFormData.expiryDate).toISOString(),
         is_enable: true,
-        usage_count: editingPromo?.usage_count || 0,
         usage_limit: parseInt(promoFormData.usage_limit),
         restaurantId: storeId,
-        createdAt: editingPromo?.createdAt || new Date().toISOString(),
-        updatedAt: new Date().toISOString()
       }
 
       if (editingPromo?.id) {
+        promoData.usage_count = editingPromo.usage_count
+        promoData.updatedAt = serverTimestamp()
         await updateDoc(doc(db, 'promotions_restaurant', editingPromo.id), promoData)
         toast.success('Promotion updated successfully')
       } else {
+        promoData.usage_count = 0
+        promoData.createdAt = serverTimestamp()
+        promoData.updatedAt = serverTimestamp()
         await setDoc(doc(collection(db, 'promotions_restaurant')), promoData)
         toast.success('Promotion created successfully')
       }
@@ -326,7 +328,7 @@ export default function StoreDetailPage() {
       await setDoc(docRef, {
         category_list: updatedCategories,
         restaurant_id: storeId,
-        updatedAt: new Date()
+        updatedAt: serverTimestamp()
       }, { merge: true })
 
       setCategories(updatedCategories)
@@ -366,7 +368,7 @@ export default function StoreDetailPage() {
       const docRef = doc(db, 'restaurant_categories', storeId)
       await updateDoc(docRef, {
         category_list: updatedCategories,
-        updatedAt: new Date()
+        updatedAt: serverTimestamp()
       })
 
       setCategories(updatedCategories)
@@ -393,7 +395,7 @@ export default function StoreDetailPage() {
       const docRef = doc(db, 'restaurant_categories', storeId)
       await updateDoc(docRef, {
         category_list: updatedCategories,
-        updatedAt: new Date()
+        updatedAt: serverTimestamp()
       })
 
       setCategories(updatedCategories)
@@ -487,7 +489,7 @@ export default function StoreDetailPage() {
         categoryId: dishFormData.categoryId,
         restaurantId: storeId,
         is_enable: true,
-        updatedAt: new Date()
+        updatedAt: serverTimestamp()
       }
 
       if (dishFormData.imageUrl) {
@@ -500,7 +502,7 @@ export default function StoreDetailPage() {
         toast.success('Dish updated successfully')
       } else {
         const newDocRef = doc(collection(db, 'dishes'))
-        dishData.createdAt = new Date()
+        dishData.createdAt = serverTimestamp()
         await setDoc(newDocRef, dishData)
         setDishes([...dishes, { id: newDocRef.id, ...dishData }])
         toast.success('Dish added successfully')
@@ -650,14 +652,14 @@ export default function StoreDetailPage() {
         dishId: editingDish.id,
         restaurantId: storeId,
         choices: optionGroupFormData.choices,
-        updatedAt: new Date()
+        updatedAt: serverTimestamp()
       }
 
       if (editingOptionGroup) {
         await updateDoc(doc(db, 'optionGroup', editingOptionGroup.id), optionGroupData)
         toast.success('Option group updated successfully')
       } else {
-        optionGroupData.createdAt = new Date()
+        optionGroupData.createdAt = serverTimestamp()
         const newDocRef = doc(collection(db, 'optionGroup'))
         await setDoc(newDocRef, optionGroupData)
 
@@ -772,8 +774,8 @@ export default function StoreDetailPage() {
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6 flex items-start gap-3">
           <AlertCircle className="text-red-600 flex-shrink-0 mt-0.5" size={20} />
           <div>
-            <h3 className="font-semibold text-red-900">Restaurant Banned</h3>
-            <p className="text-red-800 text-sm">This restaurant is currently banned and will not appear in customer view</p>
+            <h3 className="font-semibold text-red-900">Restaurant Disable</h3>
+            <p className="text-red-800 text-sm">This restaurant is currently disable and will not appear in customer view</p>
           </div>
         </div>
       )}

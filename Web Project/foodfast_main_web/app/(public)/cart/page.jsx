@@ -5,7 +5,7 @@ import PromoCard from "@/components/Cart/PromoCard";
 import DeliveryInfoCard from "@/components/Cart/DeliveryInfoCard";
 import OrderSummaryCard from "@/components/Cart/OrderSummaryCard";
 import { deleteItemFromCart, clearCart } from "@/lib/features/cart/cartSlice";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { doc, getDoc, collection, addDoc, serverTimestamp, query, where, getDocs, GeoPoint, updateDoc } from "firebase/firestore";
 import { db } from "@/config/FirebaseConfig";
@@ -43,6 +43,19 @@ export default function Cart() {
     const [selectedAddressData, setSelectedAddressData] = useState(null);
     const [defaultAddressId, setDefaultAddressId] = useState(null);
     const [selectedAddressCreatedAt, setSelectedAddressCreatedAt] = useState(null);
+
+    const isMounted = useRef(true);
+    const abortControllerRef = useRef(null);
+
+    useEffect(() => {
+        return () => {
+            isMounted.current = false;
+            // Abort any pending fetch requests
+            if (abortControllerRef.current) {
+                abortControllerRef.current.abort();
+            }
+        };
+    }, []);
 
     const createCartArray = async () => {
         try {
@@ -215,6 +228,9 @@ export default function Cart() {
                 setPromoCode('');
 
                 try {
+                    // Create a new AbortController for this request
+                    abortControllerRef.current = new AbortController();
+
                     const response = await fetch('/api/promotions/apply-promo', {
                         method: 'POST',
                         headers: {
@@ -225,18 +241,25 @@ export default function Cart() {
                             collection: promoCollection,
                             restaurantId: restaurantId || null,
                         }),
+                        signal: abortControllerRef.current.signal,
                     });
 
-                    let result;
-                    const contentType = response.headers.get('content-type');
+                    // Check if component is still mounted before reading response
+                    if (!isMounted.current) return;
 
-                    if (contentType && contentType.includes('application/json')) {
+                    let result;
+                    try {
                         result = await response.json();
-                    } else {
-                        const text = await response.text();
-                        console.error('Received non-JSON response:', text);
-                        throw new Error('Server returned invalid response. Please check server logs.');
+                    } catch (parseError) {
+                        console.error('Failed to parse JSON response:', parseError);
+                        if (isMounted.current) {
+                            toast.error('Server returned invalid response. Please check server logs.');
+                        }
+                        return;
                     }
+
+                    // Check if component is still mounted before updating state
+                    if (!isMounted.current) return;
 
                     if (!response.ok) {
                         toast.error(result.error || 'Failed to apply promotion');
@@ -254,13 +277,16 @@ export default function Cart() {
                         toast.success(`Promotion applied! You save ${formatPrice(discountVal)}`);
                     }
                 } catch (error) {
-                    console.error('Error applying promo:', error);
-                    toast.error(error.message || 'Failed to apply promo code');
-                    setDiscountApplied(false);
-                    setAppliedPromo(null);
-                    setDiscountAmount(0);
-                    setDiscountPercent(0);
-                    setPromoCode('');
+                    // Only show error if request wasn't aborted and component is mounted
+                    if (error.name !== 'AbortError' && isMounted.current) {
+                        console.error('Error applying promo:', error);
+                        toast.error(error.message || 'Failed to apply promo code');
+                        setDiscountApplied(false);
+                        setAppliedPromo(null);
+                        setDiscountAmount(0);
+                        setDiscountPercent(0);
+                        setPromoCode('');
+                    }
                 }
             } else {
                 toast.error('Promo code not found or not applicable');
@@ -496,6 +522,7 @@ export default function Cart() {
                             shippingFee={shippingFee}
                             discount={discountAmount}
                             discountApplied={discountApplied}
+                            appliedPromo={appliedPromo}
                             finalTotal={finalTotal}
                             paymentMethod={paymentMethod}
                             setPaymentMethod={setPaymentMethod}

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { collection, query, where, getDocs, doc, setDoc, updateDoc, deleteDoc } from 'firebase/firestore'
+import { collection, query, where, getDocs, doc, setDoc, updateDoc, deleteDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from '@/config/FirebaseConfig'
 import toast from 'react-hot-toast'
 import { Trash2, Plus, Edit2, X } from 'lucide-react'
@@ -95,24 +95,33 @@ export default function RestaurantPromotions({ restaurantId }) {
 
         try {
             setSaving(true)
-            const promoData = {
-                code: formData.code.toUpperCase(),
-                detail: formData.detail,
-                discount_percentage: parseFloat(formData.discount_percentage),
-                minPrice: parseFloat(formData.minPrice),
-                expiryDate: new Date(formData.expiryDate).toISOString(),
-                is_enable: true,
-                usage_count: editingPromo?.usage_count || 0,
-                usage_limit: parseInt(formData.usage_limit),
-                restaurantId: restaurantId,
-                createdAt: editingPromo?.createdAt || new Date().toISOString(),
-                updatedAt: new Date().toISOString()
-            }
-
             if (editingPromo?.id) {
-                await updateDoc(doc(db, 'promotions_restaurant', editingPromo.id), promoData)
+                const updateData = {
+                    code: formData.code.toUpperCase(),
+                    detail: formData.detail,
+                    discount_percentage: parseFloat(formData.discount_percentage),
+                    minPrice: parseFloat(formData.minPrice),
+                    expiryDate: new Date(formData.expiryDate).toISOString(),
+                    is_enable: true,
+                    usage_limit: parseInt(formData.usage_limit),
+                    updatedAt: serverTimestamp()
+                }
+                await updateDoc(doc(db, 'promotions_restaurant', editingPromo.id), updateData)
                 toast.success('Promotion updated successfully')
             } else {
+                const promoData = {
+                    code: formData.code.toUpperCase(),
+                    detail: formData.detail,
+                    discount_percentage: parseFloat(formData.discount_percentage),
+                    minPrice: parseFloat(formData.minPrice),
+                    expiryDate: new Date(formData.expiryDate).toISOString(),
+                    is_enable: true,
+                    usage_count: 0,
+                    usage_limit: parseInt(formData.usage_limit),
+                    restaurantId: restaurantId,
+                    createdAt: serverTimestamp(),
+                    updatedAt: serverTimestamp()
+                }
                 await setDoc(doc(collection(db, 'promotions_restaurant')), promoData)
                 toast.success('Promotion created successfully')
             }

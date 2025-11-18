@@ -31,8 +31,7 @@ export default function AdminStores() {
           merchant.email.toLowerCase().includes(searchQuery.toLowerCase())
 
         const matchesCategory = !selectedCategory ||
-          restaurant.category === selectedCategory ||
-          restaurant.categories?.includes(selectedCategory)
+          restaurant.categories === selectedCategory
 
         return matchesSearch && matchesCategory
       })
@@ -64,7 +63,7 @@ export default function AdminStores() {
           merchantName: merchant.name,
           merchantEmail: merchant.email,
           merchantPhone: merchant.phone,
-          categoryName: restaurant.category ? categoryMap[restaurant.category] : null
+          categoryName: restaurant.categories ? categoryMap[restaurant.categories] : null
         })
       })
     })
@@ -82,14 +81,20 @@ export default function AdminStores() {
     setCurrentPage(1)
   }, [searchQuery, selectedCategory])
 
-  const handleToggleRestaurantStatus = async (restaurantId, currentStatus) => {
+  const handleToggleRestaurantStatus = async (restaurantId, currentStatus, restaurant) => {
+    // Check if restaurant is approved before allowing toggle
+    if (restaurant.status !== 'approved') {
+      toast.error('Please approve the restaurant first before enabling/disabling it')
+      return
+    }
+
     setTogglingRestaurant(restaurantId)
     try {
       const restaurantRef = doc(db, 'restaurants', restaurantId)
       await updateDoc(restaurantRef, {
         is_enable: !currentStatus
       })
-      toast.success(`Restaurant ${!currentStatus ? 'enabled' : 'banned'} successfully`)
+      toast.success(`Restaurant ${!currentStatus ? 'enabled' : 'disabled'} successfully`)
     } catch (error) {
       console.error('Error updating restaurant status:', error)
       toast.error('Failed to update restaurant status')
@@ -186,7 +191,7 @@ export default function AdminStores() {
                       Rating: <span className="font-medium">{restaurant.rating || 0} / 5</span>
                     </span>
                     <span className={`font-medium ${restaurant.is_enable ? 'text-green-600' : 'text-red-600'}`}>
-                      {restaurant.is_enable ? '✓ Active' : '✗ Banned'}
+                      {restaurant.is_enable ? '✓ Active' : '✗ Disable'}
                     </span>
                     {restaurant.categoryName && (
                       <span className="text-slate-600">
@@ -205,13 +210,16 @@ export default function AdminStores() {
                     View Details
                   </Link>
                   <button
-                    onClick={() => handleToggleRestaurantStatus(restaurant.id, restaurant.is_enable)}
-                    disabled={togglingRestaurant === restaurant.id}
+                    onClick={() => handleToggleRestaurantStatus(restaurant.id, restaurant.is_enable, restaurant)}
+                    disabled={togglingRestaurant === restaurant.id || restaurant.status !== 'approved'}
                     className={`px-4 py-2 rounded-lg transition text-center font-medium text-sm ${
-                      restaurant.is_enable
+                      restaurant.status !== 'approved'
+                        ? 'bg-gray-100 text-gray-500 cursor-not-allowed'
+                        : restaurant.is_enable
                         ? 'bg-red-100 text-red-700 hover:bg-red-200'
                         : 'bg-green-100 text-green-700 hover:bg-green-200'
                     } disabled:opacity-50`}
+                    title={restaurant.status !== 'approved' ? 'Approve restaurant first before enabling/disabling' : ''}
                   >
                     {togglingRestaurant === restaurant.id ? 'Updating...' : (restaurant.is_enable ? 'Disable' : 'Enable')}
                   </button>

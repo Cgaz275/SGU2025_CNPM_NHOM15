@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { collection, query, where, getDocs, doc, setDoc, updateDoc, deleteDoc, getDoc } from 'firebase/firestore'
+import { collection, query, where, getDocs, doc, setDoc, updateDoc, deleteDoc, getDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from '@/config/FirebaseConfig'
 import toast from 'react-hot-toast'
 import { Trash2, Plus, Edit2, X } from 'lucide-react'
@@ -184,7 +184,7 @@ export default function DishManagement({ restaurantId }) {
                 categoryId: formData.categoryId,
                 restaurantId: restaurantId,
                 is_enable: true,
-                updatedAt: new Date()
+                updatedAt: serverTimestamp()
             }
 
             if (formData.imageUrl) {
@@ -197,7 +197,7 @@ export default function DishManagement({ restaurantId }) {
                 toast.success('Dish updated successfully')
             } else {
                 const newDocRef = doc(collection(db, 'dishes'))
-                dishData.createdAt = new Date()
+                dishData.createdAt = serverTimestamp()
                 dishData.optionGroup = []
                 await setDoc(newDocRef, dishData)
                 setDishes([...dishes, { id: newDocRef.id, ...dishData }])
@@ -323,14 +323,14 @@ export default function DishManagement({ restaurantId }) {
                 dishId: editingDish.id,
                 restaurantId: restaurantId,
                 choices: optionGroupFormData.choices,
-                updatedAt: new Date()
+                updatedAt: serverTimestamp()
             }
 
             if (editingOptionGroup) {
                 await updateDoc(doc(db, 'optionGroup', editingOptionGroup.id), optionGroupData)
                 toast.success('Option group updated successfully')
             } else {
-                optionGroupData.createdAt = new Date()
+                optionGroupData.createdAt = serverTimestamp()
                 const newDocRef = doc(collection(db, 'optionGroup'))
                 await setDoc(newDocRef, optionGroupData)
 

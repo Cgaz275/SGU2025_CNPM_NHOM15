@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/config/FirebaseAdminConfig';
+import admin from 'firebase-admin';
 
 export async function POST(request) {
     try {
@@ -82,7 +83,7 @@ export async function POST(request) {
 
             const updateData = {
                 usage_count: newUsage,
-                updatedAt: new Date().toISOString(),
+                updatedAt: admin.firestore.FieldValue.serverTimestamp(),
             };
 
             if (newUsage >= usageLimit && currentData.is_enable) {

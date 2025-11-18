@@ -1,5 +1,6 @@
 import { collection, getDocs, query, where } from 'firebase/firestore'
 import { db } from '@/config/FirebaseConfig'
+import { convertToISO } from '@/utils/timestampUtils'
 
 /**
  * Format revenue in Vietnamese format (5.000.000 VND)
@@ -94,41 +95,10 @@ export const calculateTotalStores = async () => {
 
 /**
  * Convert Firebase timestamp to ISO string
+ * (Wrapper for backward compatibility - uses timestampUtils)
  */
 const convertTimestampToISO = (timestamp) => {
-    if (!timestamp) return new Date().toISOString()
-
-    // If it's a Firestore Timestamp object
-    if (timestamp.toDate && typeof timestamp.toDate === 'function') {
-        return timestamp.toDate().toISOString()
-    }
-
-    // If it's already an ISO string
-    if (typeof timestamp === 'string') {
-        return timestamp
-    }
-
-    // If it's a Date object
-    if (timestamp instanceof Date) {
-        return timestamp.toISOString()
-    }
-
-    // If it's a number (milliseconds)
-    if (typeof timestamp === 'number') {
-        return new Date(timestamp).toISOString()
-    }
-
-    // Fallback: try to create a date from it
-    try {
-        const date = new Date(timestamp)
-        if (!isNaN(date.getTime())) {
-            return date.toISOString()
-        }
-    } catch (e) {
-        console.error('Error converting timestamp:', timestamp, e)
-    }
-
-    return new Date().toISOString()
+    return convertToISO(timestamp)
 }
 
 /**

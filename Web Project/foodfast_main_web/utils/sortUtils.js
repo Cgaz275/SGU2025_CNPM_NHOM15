@@ -1,3 +1,5 @@
+import { convertToDate } from './timestampUtils';
+
 /**
  * Sorts an array of objects by a field in ascending order
  * @param {Array} items - Array of objects to sort
@@ -9,9 +11,8 @@ export const sortAsc = (items, fieldName) => {
     const valueA = a[fieldName];
     const valueB = b[fieldName];
 
-    // Handle Firestore Timestamp objects
-    const dateA = valueA?.toDate ? valueA.toDate() : new Date(valueA);
-    const dateB = valueB?.toDate ? valueB.toDate() : new Date(valueB);
+    const dateA = convertToDate(valueA);
+    const dateB = convertToDate(valueB);
 
     return dateA - dateB;
   });
@@ -28,9 +29,8 @@ export const sortDesc = (items, fieldName) => {
     const valueA = a[fieldName];
     const valueB = b[fieldName];
 
-    // Handle Firestore Timestamp objects
-    const dateA = valueA?.toDate ? valueA.toDate() : new Date(valueA);
-    const dateB = valueB?.toDate ? valueB.toDate() : new Date(valueB);
+    const dateA = convertToDate(valueA);
+    const dateB = convertToDate(valueB);
 
     return dateB - dateA;
   });
@@ -49,8 +49,8 @@ export const sortByMultiple = (items, sortConfig) => {
       const valueA = a[fieldName];
       const valueB = b[fieldName];
 
-      const dateA = valueA?.toDate ? valueA.toDate() : new Date(valueA);
-      const dateB = valueB?.toDate ? valueB.toDate() : new Date(valueB);
+      const dateA = convertToDate(valueA);
+      const dateB = convertToDate(valueB);
 
       if (dateA !== dateB) {
         return order === 'asc' ? dateA - dateB : dateB - dateA;

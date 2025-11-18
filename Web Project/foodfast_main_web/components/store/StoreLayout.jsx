@@ -47,7 +47,12 @@ const StoreLayout = ({ children }) => {
     }
 
     useEffect(() => {
-        const unsubscribe = fetchIsSeller()
+        let unsubscribe
+
+        fetchIsSeller().then((unsub) => {
+            unsubscribe = unsub
+        })
+
         return () => {
             if (unsubscribe) unsubscribe()
         }

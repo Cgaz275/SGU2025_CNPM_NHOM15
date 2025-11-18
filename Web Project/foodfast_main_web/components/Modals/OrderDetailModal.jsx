@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { X, MapPin, Truck } from 'lucide-react';
-import { format } from 'date-fns';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/config/FirebaseConfig';
 import { formatPrice } from '@/utils/currencyFormatter';
+import { formatTimestampDisplay } from '@/utils/timestampUtils';
 import toast from 'react-hot-toast';
 import RatingModal from './Rating/RatingModal';
 
@@ -28,7 +28,7 @@ const OrderDetailModal = ({ isOpen, onClose, order }) => {
       const orderRef = doc(db, 'orders', order.id);
       await updateDoc(orderRef, {
         status: 'cancelled',
-        cancelledAt: new Date(),
+        cancelledAt: serverTimestamp(),
       });
       toast.success('Order cancelled successfully');
       setShowCancelConfirm(false);
@@ -74,13 +74,7 @@ const OrderDetailModal = ({ isOpen, onClose, order }) => {
   if (!isOpen || !order) return null;
 
   const formatDate = (timestamp) => {
-    if (!timestamp) return 'N/A';
-    try {
-      const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-      return format(date, 'dd/MM/yyyy \'at\' HH:mm a');
-    } catch (error) {
-      return 'N/A';
-    }
+    return formatTimestampDisplay(timestamp);
   };
 
   const getStatusClass = (currentStatus) => {

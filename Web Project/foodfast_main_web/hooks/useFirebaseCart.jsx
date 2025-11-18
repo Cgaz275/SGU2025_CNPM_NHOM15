@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../config/FirebaseConfig';
 import { clearCart, restoreCart } from '../lib/features/cart/cartSlice';
 
@@ -29,7 +29,7 @@ const useFirebaseCart = () => {
           cartItems: cartState.cartItems,
           total: cartState.total,
           itemMetadata: cartState.itemMetadata,
-          lastUpdated: new Date().toISOString(),
+          lastUpdated: serverTimestamp(),
         };
 
         // Only include restaurantId if it's not null/undefined

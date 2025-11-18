@@ -26,44 +26,15 @@ export const formatPrices = (prices, symbol = process.env.NEXT_PUBLIC_MONEY_SYMB
     return prices.map(price => formatPrice(price, symbol));
 };
 
+// Import from centralized timestamp utility
+import { convertToDate as convertToDateUtil } from './timestampUtils';
+
 /**
  * Convert Firestore Timestamp to JavaScript Date
- * Handles Firestore Timestamp objects, ISO strings, Date objects, and numbers
+ * (Wrapper for backward compatibility - use timestampUtils instead)
  * @param {any} timestamp - The timestamp to convert
  * @returns {Date} JavaScript Date object
  */
 export const convertToDate = (timestamp) => {
-    if (!timestamp) return new Date();
-
-    // If it's a Firestore Timestamp object with toDate method
-    if (timestamp && typeof timestamp.toDate === 'function') {
-        return timestamp.toDate();
-    }
-
-    // If it's already a Date object
-    if (timestamp instanceof Date) {
-        return timestamp;
-    }
-
-    // If it's an ISO string
-    if (typeof timestamp === 'string') {
-        return new Date(timestamp);
-    }
-
-    // If it's a number (milliseconds)
-    if (typeof timestamp === 'number') {
-        return new Date(timestamp);
-    }
-
-    // Fallback: try to create a Date from it
-    try {
-        const date = new Date(timestamp);
-        if (!isNaN(date.getTime())) {
-            return date;
-        }
-    } catch (e) {
-        console.error('Error converting timestamp:', timestamp, e);
-    }
-
-    return new Date();
+    return convertToDateUtil(timestamp);
 };

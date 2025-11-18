@@ -44,9 +44,8 @@ export default function AllRestaurant() {
             return restaurants;
         }
         return restaurants.filter(restaurant => {
-            // Match restaurant by category field (adjust based on your data structure)
-            return restaurant.category === selectedCategory || 
-                   restaurant.categories?.includes(selectedCategory);
+            // Match restaurant by category field
+            return restaurant.categories === selectedCategory;
         });
     }, [restaurants, selectedCategory]);
 
@@ -166,7 +165,7 @@ export default function AllRestaurant() {
                                                         {restaurant.name}
                                                     </h3>
                                                     <div className="flex items-center justify-center text-sm text-yellow-400">
-                                                        ⭐
+                                                        ���
                                                         <span className="font-semibold text-[#FC8A06] ml-1">
                                                             {!isNaN(parseFloat(restaurant.rating)) && restaurant.rating !== null
                                                                 ? parseFloat(restaurant.rating).toFixed(1)

@@ -9,15 +9,11 @@ try {
             privateKey: process.env.FIREBASE_PRIVATE_KEY
                 ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n')
                 : undefined,
+            clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
         };
 
-        // clientEmail is optional for notifications
-        if (process.env.FIREBASE_CLIENT_EMAIL) {
-            serviceAccountKey.clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-        }
-
-        if (!serviceAccountKey.projectId || !serviceAccountKey.privateKey) {
-            throw new Error('Missing Firebase Admin SDK environment variables. Required: FIREBASE_PROJECT_ID, FIREBASE_PRIVATE_KEY');
+        if (!serviceAccountKey.projectId || !serviceAccountKey.privateKey || !serviceAccountKey.clientEmail) {
+            throw new Error('Missing Firebase Admin SDK environment variables. Required: FIREBASE_PROJECT_ID, FIREBASE_PRIVATE_KEY, FIREBASE_CLIENT_EMAIL');
         }
 
         adminApp = admin.initializeApp({
