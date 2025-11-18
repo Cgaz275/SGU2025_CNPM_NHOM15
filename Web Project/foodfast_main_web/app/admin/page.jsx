@@ -1,33 +1,37 @@
 'use client'
-import { dummyAdminDashboardData } from "@/assets/assets"
 import Loading from "@/components/Loading"
 import OrdersAreaChart from "@/components/Orders/OrdersAreaChart"
-import { CircleDollarSignIcon, ShoppingBasketIcon, StoreIcon, TagsIcon } from "lucide-react"
+import { CircleDollarSignIcon, Users2Icon, StoreIcon, TagsIcon } from "lucide-react"
 import { useEffect, useState } from "react"
+import { fetchDashboardMetrics, formatRevenueVND } from "@/utils/admin/calculateDashboardMetrics"
 
 export default function AdminDashboard() {
 
-    const currency = process.env.NEXT_PUBLIC_CURRENCY_SYMBOL || '$'
-
     const [loading, setLoading] = useState(true)
     const [dashboardData, setDashboardData] = useState({
-        products: 0,
-        revenue: 0,
+        customers: 0,
+        revenue: '0.00',
         orders: 0,
         stores: 0,
         allOrders: [],
     })
 
     const dashboardCardsData = [
-        { title: 'Total Products', value: dashboardData.products, icon: ShoppingBasketIcon },
-        { title: 'Total Revenue', value: currency + dashboardData.revenue, icon: CircleDollarSignIcon },
+        { title: 'Total Customers', value: dashboardData.customers, icon: Users2Icon },
+        { title: 'Total Revenue', value: formatRevenueVND(dashboardData.revenue) + ' VND', icon: CircleDollarSignIcon },
         { title: 'Total Orders', value: dashboardData.orders, icon: TagsIcon },
         { title: 'Total Stores', value: dashboardData.stores, icon: StoreIcon },
     ]
 
     const fetchDashboardData = async () => {
-        setDashboardData(dummyAdminDashboardData)
-        setLoading(false)
+        try {
+            const metrics = await fetchDashboardMetrics()
+            setDashboardData(metrics)
+        } catch (error) {
+            console.error('Error fetching dashboard data:', error)
+        } finally {
+            setLoading(false)
+        }
     }
 
     useEffect(() => {

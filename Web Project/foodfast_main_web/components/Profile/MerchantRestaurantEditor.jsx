@@ -4,10 +4,11 @@ import { useState } from 'react'
 import RestaurantBasicInfo from './RestaurantBasicInfo'
 import RestaurantCategories from './RestaurantCategories'
 import DishManagement from './DishManagement'
+import RestaurantPromotions from './RestaurantPromotions'
 
 export default function MerchantRestaurantEditor({ user }) {
     const [activeTab, setActiveTab] = useState('basic')
-    
+
     if (!user?.uid) {
         return null
     }
@@ -15,7 +16,8 @@ export default function MerchantRestaurantEditor({ user }) {
     const tabs = [
         { id: 'basic', label: 'Restaurant Info' },
         { id: 'categories', label: 'Categories'},
-        { id: 'dishes', label: 'Dishes'}
+        { id: 'dishes', label: 'Dishes'},
+        { id: 'promotions', label: 'Promotions'}
     ]
 
     return (
@@ -49,6 +51,7 @@ export default function MerchantRestaurantEditor({ user }) {
                 {activeTab === 'basic' && <RestaurantBasicInfo restaurantId={user.uid} />}
                 {activeTab === 'categories' && <RestaurantCategories restaurantId={user.uid} />}
                 {activeTab === 'dishes' && <DishManagement restaurantId={user.uid} />}
+                {activeTab === 'promotions' && <RestaurantPromotions restaurantId={user.uid} />}
             </div>
         </div>
     )

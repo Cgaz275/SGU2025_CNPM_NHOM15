@@ -27,11 +27,12 @@ const AdminNavbar = () => {
 
     return (
         <div className="flex items-center justify-between px-12 py-3 border-b border-slate-200 transition-all">
-            <Link href="/admin" className="relative text-4xl font-semibold text-slate-700">
-                <span className="text-green-600">go</span>cart<span className="text-green-600 text-5xl leading-0">.</span>
-                <p className="absolute text-xs font-semibold -top-1 -right-13 px-3 p-0.5 rounded-full flex items-center gap-2 text-white bg-green-500">
-                    Admin
-                </p>
+            <Link href="/admin" className="flex-shrink-0">
+                <img
+                    src="https://api.builder.io/api/v1/image/assets/TEMP/21fb37881c8a700a2aff3a03c52250c97364baa5?width=676"
+                    alt="FoodFast Logo"
+                    className="h-12 md:h-16 w-auto"
+                />
             </Link>
             <div className="flex items-center gap-6">
                 <div className="flex items-center gap-2">

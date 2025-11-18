@@ -145,13 +145,15 @@ const OrderDetailModal = ({ isOpen, onClose, order }) => {
               </div>
             </div>
             <div className="flex flex-col sm:flex-row gap-3">
-              <button
-                onClick={onClose}
-                className="px-6 py-3 bg-[#366055] text-white rounded-lg hover:bg-[#2b4c44] transition flex items-center gap-2"
-              >
-                <MapPin className="w-4 h-4" />
-                Track order
-              </button>
+              {order?.status?.toLowerCase() !== 'cancelled' && (
+                <button
+                  onClick={onClose}
+                  className="px-6 py-3 bg-[#366055] text-white rounded-lg hover:bg-[#2b4c44] transition flex items-center gap-2"
+                >
+                  <MapPin className="w-4 h-4" />
+                  Track order
+                </button>
+              )}
               {order?.status?.toLowerCase() === 'pending' && (
                 <button
                   onClick={() => setShowCancelConfirm(true)}
@@ -176,19 +178,31 @@ const OrderDetailModal = ({ isOpen, onClose, order }) => {
 
           {/* Order Status Timeline */}
           <div className="relative">
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-8 relative">
-              {['pending', 'confirmed', 'shipping', 'completed'].map((status, index) => (
-                <div key={status} className="flex flex-col items-center">
-                  <div className={`w-6 h-6 rounded-full ${getStatusClass(status)} mb-2`}></div>
-                  <div className={`text-base sm:text-lg font-medium capitalize ${getTextClass(status)} text-center`}>
-                    {status}
-                  </div>
-                  <div className="text-sm text-[#667085] text-center mt-1">
-                    {formatDate(order.createdAt)}
-                  </div>
+            {order?.status?.toLowerCase() === 'cancelled' ? (
+              <div className="flex flex-col items-center py-8">
+                <div className="w-6 h-6 rounded-full bg-red-600 mb-4"></div>
+                <div className="text-lg sm:text-xl font-medium text-red-600 text-center">
+                  Cancelled
                 </div>
-              ))}
-            </div>
+                <div className="text-sm text-[#667085] text-center mt-2">
+                  {formatDate(order.cancelledAt || order.createdAt)}
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-8 relative">
+                {['pending', 'confirmed', 'shipping', 'completed'].map((status, index) => (
+                  <div key={status} className="flex flex-col items-center">
+                    <div className={`w-6 h-6 rounded-full ${getStatusClass(status)} mb-2`}></div>
+                    <div className={`text-base sm:text-lg font-medium capitalize ${getTextClass(status)} text-center`}>
+                      {status}
+                    </div>
+                    <div className="text-sm text-[#667085] text-center mt-1">
+                      {formatDate(order.createdAt)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="h-px bg-[#D0D5DD]"></div>

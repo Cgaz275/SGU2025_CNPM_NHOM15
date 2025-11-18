@@ -7,13 +7,14 @@ import OrderSummaryCard from "@/components/Cart/OrderSummaryCard";
 import { deleteItemFromCart, clearCart } from "@/lib/features/cart/cartSlice";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { doc, getDoc, collection, addDoc, serverTimestamp, query, where, getDocs, GeoPoint } from "firebase/firestore";
+import { doc, getDoc, collection, addDoc, serverTimestamp, query, where, getDocs, GeoPoint, updateDoc } from "firebase/firestore";
 import { db } from "@/config/FirebaseConfig";
 import useCurrentUser from "@/hooks/useCurrentUser";
 import AuthModal from "@/components/Modals/AuthModal";
 import AddressPickerModal from "@/components/Modals/AddressPickerModal";
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
+import { formatPrice, convertToDate } from '@/utils/currencyFormatter';
 
 export default function Cart() {
     const currency = process.env.NEXT_PUBLIC_CURRENCY_SYMBOL || 'VND ';
@@ -32,6 +33,9 @@ export default function Cart() {
     const [receiverName, setReceiverName] = useState('');
     const [phoneNumber, setPhoneNumber] = useState('');
     const [discountApplied, setDiscountApplied] = useState(false);
+    const [discountAmount, setDiscountAmount] = useState(0);
+    const [discountPercent, setDiscountPercent] = useState(0);
+    const [appliedPromo, setAppliedPromo] = useState(null);
     const [loading, setLoading] = useState(false);
     const [placingOrder, setPlacingOrder] = useState(false);
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -45,11 +49,14 @@ export default function Cart() {
         setTotalPrice(0);
         const cartArray = [];
         for (const [key, value] of Object.entries(cartItems)) {
-            let item = products.find(product => product.id === key);
+            // Extract original productId from composite key (if addons were selected)
+            const originalProductId = itemMetadata[key]?.originalProductId || key.split('_')[0];
+
+            let item = products.find(product => product.id === originalProductId);
 
             if (!item) {
                 try {
-                    const dishRef = doc(db, 'dishes', key);
+                    const dishRef = doc(db, 'dishes', originalProductId);
                     const dishSnap = await getDoc(dishRef);
                     if (dishSnap.exists()) {
                         item = {
@@ -67,12 +74,16 @@ export default function Cart() {
                 const finalItem = {
                     id: key,
                     name: item?.name || metadata?.name || 'Unknown Item',
-                    price: item?.price || metadata?.price || 0,
+                    price: metadata?.price || item?.price || 0,
+                    basePrice: metadata?.basePrice || item?.price || 0,
+                    addonPrice: (metadata?.price || 0) - (metadata?.basePrice || item?.price || 0),
                     imageUrl: item?.imageUrl || metadata?.imageUrl,
                     images: item?.images,
                     category: item?.category,
                     size: item?.size,
                     restaurantId: item?.restaurantId,
+                    selectedChoices: metadata?.selectedChoices || {},
+                    addonDetails: metadata?.addonDetails || [],
                     ...item,
                     quantity: value,
                 };
@@ -88,8 +99,151 @@ export default function Cart() {
         dispatch(deleteItemFromCart({ productId }))
     }
 
-    const handleApplyPromoCode = () => {
-        console.log('Applying promo code:', promoCode);
+    const handleApplyPromoCode = async () => {
+        if (!promoCode.trim()) {
+            toast.error('Please enter a promo code');
+            return;
+        }
+
+        if (cartArray.length === 0) {
+            toast.error('Your cart is empty');
+            return;
+        }
+
+        try {
+            const restaurantId = cartArray[0]?.restaurantId;
+            const promoCodeUpper = promoCode.toUpperCase();
+
+            let applicablePromo = null;
+            let promoCollection = null;
+
+            try {
+                const adminPromoQuery = query(
+                    collection(db, 'promotions'),
+                    where('code', '==', promoCodeUpper)
+                );
+                const adminPromoSnap = await getDocs(adminPromoQuery);
+
+                if (!adminPromoSnap.empty) {
+                    const promoData = adminPromoSnap.docs[0].data();
+
+                    if (!promoData.is_enable) {
+                        toast.error('This promotion is not active');
+                        return;
+                    }
+
+                    const expiryDate = new Date(promoData.expiryDate);
+                    if (expiryDate < new Date()) {
+                        toast.error('This promotion has expired');
+                        return;
+                    }
+
+                    if (totalPrice < promoData.minPrice) {
+                        toast.error(`Minimum order amount ${formatPrice(promoData.minPrice)} required`);
+                        return;
+                    }
+
+                    applicablePromo = promoData;
+                    promoCollection = 'promotions';
+                } else if (restaurantId) {
+                    const restaurantPromoQuery = query(
+                        collection(db, 'promotions_restaurant'),
+                        where('code', '==', promoCodeUpper),
+                        where('restaurantId', '==', restaurantId)
+                    );
+                    const restaurantPromoSnap = await getDocs(restaurantPromoQuery);
+
+                    if (!restaurantPromoSnap.empty) {
+                        const promoData = restaurantPromoSnap.docs[0].data();
+
+                        if (!promoData.is_enable) {
+                            toast.error('This promotion is not active');
+                            return;
+                        }
+
+                        const expiryDate = convertToDate(promoData.expiryDate);
+                        if (expiryDate < new Date()) {
+                            toast.error('This promotion has expired');
+                            return;
+                        }
+
+                        if (totalPrice < promoData.minPrice) {
+                            toast.error(`Minimum order amount ${formatPrice(promoData.minPrice)} required`);
+                            return;
+                        }
+
+                        applicablePromo = promoData;
+                        promoCollection = 'promotions_restaurant';
+                    }
+                }
+            } catch (error) {
+                console.error('Error fetching promotions:', error);
+            }
+
+            if (applicablePromo && promoCollection) {
+                const discountVal = (totalPrice * applicablePromo.discount_percentage) / 100;
+                setDiscountPercent(applicablePromo.discount_percentage);
+                setDiscountAmount(discountVal);
+                setDiscountApplied(true);
+                setAppliedPromo(applicablePromo);
+                setPromoCode('');
+
+                try {
+                    const response = await fetch('/api/promotions/apply-promo', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            code: promoCodeUpper,
+                            collection: promoCollection,
+                            restaurantId: restaurantId || null,
+                        }),
+                    });
+
+                    let result;
+                    const contentType = response.headers.get('content-type');
+
+                    if (contentType && contentType.includes('application/json')) {
+                        result = await response.json();
+                    } else {
+                        const text = await response.text();
+                        console.error('Received non-JSON response:', text);
+                        throw new Error('Server returned invalid response. Please check server logs.');
+                    }
+
+                    if (!response.ok) {
+                        toast.error(result.error || 'Failed to apply promotion');
+                        setDiscountApplied(false);
+                        setAppliedPromo(null);
+                        setDiscountAmount(0);
+                        setDiscountPercent(0);
+                        setPromoCode('');
+                        return;
+                    }
+
+                    if (result.wasDisabled) {
+                        toast.success(`Promotion applied! You save ${formatPrice(discountVal)} (This was the last available use)`);
+                    } else {
+                        toast.success(`Promotion applied! You save ${formatPrice(discountVal)}`);
+                    }
+                } catch (error) {
+                    console.error('Error applying promo:', error);
+                    toast.error(error.message || 'Failed to apply promo code');
+                    setDiscountApplied(false);
+                    setAppliedPromo(null);
+                    setDiscountAmount(0);
+                    setDiscountPercent(0);
+                    setPromoCode('');
+                }
+            } else {
+                toast.error('Promo code not found or not applicable');
+                setPromoCode('');
+            }
+        } catch (error) {
+            console.error('Error validating promo:', error);
+            toast.error('Failed to apply promo code');
+        }
     }
 
     const handleSelectAddress = async (addressData) => {
@@ -160,8 +314,7 @@ export default function Cart() {
     }, [user]);
 
     const shippingFee = 0;
-    const discount = discountApplied ? 0 : 0;
-    const finalTotal = totalPrice + shippingFee - discount;
+    const finalTotal = totalPrice + shippingFee - discountAmount;
 
     const handlePlaceOrder = async () => {
         if (!isAuthenticated) {
@@ -228,17 +381,20 @@ export default function Cart() {
                     quantity: item.quantity,
                     image: item.imageUrl || item.images?.[0] || "",
                     restaurantId: item.restaurantId || restaurantId || "",
-                    restaurant: restaurantName
+                    restaurant: restaurantName,
+                    selectedChoices: item.selectedChoices || {},
+                    addonDetails: item.addonDetails || [],
+                    basePrice: item.basePrice || item.price
                 })),
                 deliveryFee: shippingFee,
-                discount: discount,
-                discountPercent: discountApplied ? 0 : 0,
+                discount: discountAmount,
+                discountPercent: discountPercent,
                 total: finalTotal,
                 paymentMethod: paymentMethod,
                 isPaid: paymentMethod !== 'COD',
                 pickup_latlong: pickupLatlong,
                 package_weight_kg: 0.2,
-                promotionCode: "",
+                promotionCode: appliedPromo?.code || "",
                 address: {
                     address: address,
                     name: receiverName,
@@ -312,7 +468,7 @@ export default function Cart() {
                         <OrderSummaryCard
                             totalPrice={totalPrice}
                             shippingFee={shippingFee}
-                            discount={discount}
+                            discount={discountAmount}
                             discountApplied={discountApplied}
                             finalTotal={finalTotal}
                             paymentMethod={paymentMethod}

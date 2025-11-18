@@ -20,6 +20,12 @@ export default function CartItemCard({ item, onDelete, currency }) {
 
     const imageUrl = getImageUrl();
 
+    // Get addon price from metadata if available
+    const addonPrice = item.addonPrice || 0;
+    const basePrice = item.basePrice || item.price || 0;
+    const totalItemPrice = basePrice + addonPrice;
+    const addonDetails = item.addonDetails || [];
+
     return (
         <div className="relative bg-[#FAFAF6] rounded-xl p-8 shadow-sm">
             {/* Remove Button */}
@@ -58,17 +64,46 @@ export default function CartItemCard({ item, onDelete, currency }) {
                             {item.category || 'Product Category'}
                         </p>
                         <p className="text-[#03081F] text-sm md:text-base">
-                            Unit price: {formatPrice(item.price)}
+                            Unit price: {formatPrice(basePrice)}
                         </p>
-                        <p className="text-[#03081F] text-sm md:text-base">
-                            Size: {item.size || 'Standard'}
-                        </p>
+                        {addonDetails.length > 0 ? (
+                            <div className="text-[#03081F] text-sm md:text-base space-y-1">
+                                {(() => {
+                                    // Group addons by groupName
+                                    const groupedAddons = {};
+                                    addonDetails.forEach(addon => {
+                                        if (!groupedAddons[addon.groupName]) {
+                                            groupedAddons[addon.groupName] = [];
+                                        }
+                                        groupedAddons[addon.groupName].push(addon);
+                                    });
+
+                                    return Object.entries(groupedAddons).map(([groupName, items]) => (
+                                        <div key={groupName}>
+                                            <p className="font-medium">
+                                                {groupName}: {items.map((item, idx) => (
+                                                    <span key={idx}>
+                                                        {item.choiceName}
+                                                        {item.price > 0 && ` (+${formatPrice(item.price)})`}
+                                                        {idx < items.length - 1 ? ', ' : ''}
+                                                    </span>
+                                                ))}
+                                            </p>
+                                        </div>
+                                    ));
+                                })()}
+                            </div>
+                        ) : addonPrice > 0 && (
+                            <p className="text-[#03081F] text-sm md:text-base">
+                                Addons: {formatPrice(addonPrice)}
+                            </p>
+                        )}
                     </div>
                     <div className="mt-4">
                         <p className="text-sm md:text-base">
                             <span className="text-[#03081F]">Total: </span>
                             <span className="text-[#FC8A06] text-xl md:text-2xl font-bold">
-                                {formatPrice(item.price * item.quantity)}
+                                {formatPrice(totalItemPrice * item.quantity)}
                             </span>
                         </p>
                     </div>

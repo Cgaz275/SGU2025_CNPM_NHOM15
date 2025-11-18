@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { collection, onSnapshot, limit, query, doc, getDoc } from "firebase/firestore";
+import { collection, onSnapshot, limit, query, doc, getDoc, where } from "firebase/firestore";
 import { db } from "../config/FirebaseConfig";
 
 const usePromotionalRestaurants = (limitCount = 6) => {
@@ -9,15 +9,24 @@ const usePromotionalRestaurants = (limitCount = 6) => {
 
     useEffect(() => {
         const promotionsCollectionRef = collection(db, "promotions_restaurant");
-        const q = query(promotionsCollectionRef, limit(limitCount));
+        const q = query(
+            promotionsCollectionRef,
+            where('is_enable', '==', true),
+            limit(limitCount)
+        );
 
         const unsubscribe = onSnapshot(
             q,
             async (snapshot) => {
-                const result = await Promise.all(
+                const result = (await Promise.all(
                     snapshot.docs.map(async (promoDoc) => {
                         const promoData = promoDoc.data();
-                        const restaurantId = promoData.restaurantID;
+                        const restaurantId = promoData.restaurantId;
+
+                        if (!restaurantId) {
+                            console.warn('Promotion missing restaurantId:', promoDoc.id);
+                            return null;
+                        }
 
                         // Fetch restaurant data
                         const restaurantRef = doc(db, "restaurants", restaurantId);
@@ -25,13 +34,18 @@ const usePromotionalRestaurants = (limitCount = 6) => {
 
                         const restaurantData = restaurantSnap.exists()
                             ? { id: restaurantId, ...restaurantSnap.data() }
-                            : { 
-                                id: restaurantId, 
-                                name: "Unknown Restaurant", 
+                            : {
+                                id: restaurantId,
+                                name: "Unknown Restaurant",
                                 imageUrl: "",
                                 address: "",
                                 rating: 0
                               };
+
+                        // Only include if restaurant is enabled
+                        if (!restaurantData.is_enable) {
+                            return null;
+                        }
 
                         return {
                             id: promoDoc.id,
@@ -46,7 +60,7 @@ const usePromotionalRestaurants = (limitCount = 6) => {
                             categories: restaurantData.categories || [],
                         };
                     })
-                );
+                )).filter(Boolean);
 
                 setData(result);
                 setLoading(false);

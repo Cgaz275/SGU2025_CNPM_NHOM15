@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { doc, getDoc, updateDoc, GeoPoint } from 'firebase/firestore'
 import { db } from '@/config/FirebaseConfig'
-import { MapPin, Upload } from 'lucide-react'
+import { MapPin, Upload, AlertCircle } from 'lucide-react'
 import toast from 'react-hot-toast'
 import AddressPickerModal from '@/components/Modals/AddressPickerModal'
 
@@ -13,6 +13,7 @@ export default function RestaurantBasicInfo({ restaurantId }) {
     const [isAddressModalOpen, setIsAddressModalOpen] = useState(false)
     const [uploadingLogo, setUploadingLogo] = useState(false)
     const [uploadingBanner, setUploadingBanner] = useState(false)
+    const [isEnabled, setIsEnabled] = useState(true)
 
     const [formData, setFormData] = useState({
         name: '',
@@ -50,6 +51,7 @@ export default function RestaurantBasicInfo({ restaurantId }) {
                         logo: data.imageUrl || null,
                         banner: data.bannerURL || null
                     })
+                    setIsEnabled(data.is_enable !== false)
                 }
             } catch (error) {
                 console.error('Error fetching restaurant:', error)
@@ -215,6 +217,18 @@ export default function RestaurantBasicInfo({ restaurantId }) {
 
     return (
         <div className="space-y-6">
+            {/* Banned Restaurant Alert */}
+            {!isEnabled && (
+                <div className="bg-red-50 border-l-4 border-red-600 rounded-lg p-4 flex gap-4">
+                    <AlertCircle className="text-red-600 flex-shrink-0 mt-0.5" size={20} />
+                    <div>
+                        <h3 className="font-semibold text-red-900 mb-1">Restaurant Banned</h3>
+                        <p className="text-red-800 text-sm">
+                            Your restaurant has been banned by an administrator and will not appear in customer view. Please contact support for more information.
+                        </p>
+                    </div>
+                </div>
+            )}
             {/* Restaurant Name */}
             <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">

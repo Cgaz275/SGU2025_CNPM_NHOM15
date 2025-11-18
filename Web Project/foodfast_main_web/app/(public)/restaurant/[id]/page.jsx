@@ -185,7 +185,10 @@ export default function RestaurantDetailPage({ params: paramsPromise }) {
             restaurantId: params.id,
             imageUrl: orderData.imageUrl,
             name: orderData.dishName,
-            price: orderData.price
+            price: orderData.price,
+            basePrice: orderData.basePrice,
+            selectedChoices: orderData.selectedChoices,
+            addonDetails: orderData.addonDetails || []
         }))
         toast.success(`${orderData.dishName} added to cart!`)
     }
@@ -199,7 +202,10 @@ export default function RestaurantDetailPage({ params: paramsPromise }) {
                 restaurantId: params.id,
                 imageUrl: pendingOrderData.imageUrl,
                 name: pendingOrderData.dishName,
-                price: pendingOrderData.price
+                price: pendingOrderData.price,
+                basePrice: pendingOrderData.basePrice,
+                selectedChoices: pendingOrderData.selectedChoices,
+                addonDetails: pendingOrderData.addonDetails || []
             }))
             toast.success(`${pendingOrderData.dishName} added to cart!`)
             setIsConfirmModalOpen(false)

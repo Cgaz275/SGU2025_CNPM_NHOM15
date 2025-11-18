@@ -75,12 +75,43 @@ export default function OrderModal({ isOpen, dish, optionGroupId, onClose, onAdd
     }
 
     const handleAddToCart = () => {
+        // Build detailed addon info with names and prices
+        const addonDetails = [];
+        optionGroups.forEach(group => {
+            const selectedChoice = selectedChoices[group.id];
+            if (selectedChoice && group.choices) {
+                if (group.type === 'multiple' && selectedChoice.choiceNames) {
+                    selectedChoice.choiceNames.forEach(choiceName => {
+                        const choice = group.choices.find(c => c.name === choiceName);
+                        if (choice) {
+                            addonDetails.push({
+                                groupName: group.name,
+                                choiceName: choice.name,
+                                price: choice.price || 0
+                            });
+                        }
+                    });
+                } else if (group.type !== 'multiple' && selectedChoice.choiceName) {
+                    const choice = group.choices.find(c => c.name === selectedChoice.choiceName);
+                    if (choice) {
+                        addonDetails.push({
+                            groupName: group.name,
+                            choiceName: choice.name,
+                            price: choice.price || 0
+                        });
+                    }
+                }
+            }
+        });
+
         const orderData = {
             dishId: dish.id,
             dishName: dish.name,
-            price: dish.price,
+            basePrice: dish.price,
+            price: parseFloat(calculateTotal()),
             quantity,
             selectedChoices,
+            addonDetails,
             optionGroups: optionGroups.map(g => g.name),
             imageUrl: dish.imageUrl || dish.image
         }

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
-import { db } from '../config/FirebaseConfig'; 
+import { collection, onSnapshot, query, orderBy, where } from 'firebase/firestore';
+import { db } from '../config/FirebaseConfig';
 
 
 const useRestaurants = () => {
@@ -9,16 +9,20 @@ const [loading, setLoading] = useState(true);
  const [error, setError] = useState(null);
 
 useEffect(() => {
- // Thay đổi tên collection thành 'restaurants' (hoặc tên collection chứa data quán ăn)
- const restaurantsCollectionRef = collection(db, 'restaurants'); 
- //  Sắp xếp theo 'rating' giảm dần hoặc 'name'
-const q = query(restaurantsCollectionRef, orderBy('rating', 'asc')); 
+ // Fetch only enabled restaurants for customer view
+ const restaurantsCollectionRef = collection(db, 'restaurants');
+ // Filter by is_enable = true and sort by rating
+const q = query(
+   restaurantsCollectionRef,
+   where('is_enable', '==', true),
+   orderBy('rating', 'desc')
+ );
 
- // Lắng nghe thay đổi theo thời gian thực (real-time)
+ // Listen for real-time changes
  const unsubscribe = onSnapshot(
- q, 
+ q,
 (snapshot) => {
- // Lặp qua các documents và gộp ID cùng dữ liệu
+ // Map documents to include ID and data
  const restaurantsData = snapshot.docs.map(doc => ({
  id: doc.id,
  ...doc.data(),
@@ -35,9 +39,9 @@ const q = query(restaurantsCollectionRef, orderBy('rating', 'asc'));
 }
 );
 
-// Dọn dẹp (cleanup) listener khi component unmount
+// Cleanup listener on unmount
  return () => unsubscribe();
- }, []); 
+ }, []);
 
  return { data, loading, error };
 };
