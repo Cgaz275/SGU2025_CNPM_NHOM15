@@ -62,11 +62,11 @@ export const getDroneState = (battery, isFlying) => {
  */
 export const FLIGHT_CONFIG = {
   cruisingSpeed: 50, // km/h
-  stationToRestaurant: 2, // minutes
+  stationToRestaurant: 3, // minutes
   restaurantPickup: 1, // minutes
-  restaurantToDelivery: 3, // minutes
+  restaurantToDelivery: 4, // minutes
   atDelivery: 1, // minutes (time spent at delivery location)
-  deliveryToStation: 2, // minutes
+  deliveryToStation: 3, // minutes
 };
 
 /**

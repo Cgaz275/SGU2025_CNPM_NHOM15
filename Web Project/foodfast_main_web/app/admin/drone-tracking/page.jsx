@@ -16,6 +16,7 @@ export default function DroneTrackingPage() {
   const markers = useRef([])
   const layers = useRef([])
   const svgOverlay = useRef(null)
+  const droneMarker = useRef(null)
   const [selectedOrderId, setSelectedOrderId] = useState(null)
   const [elapsedSeconds, setElapsedSeconds] = useState(0)
   const [droneInfo, setDroneInfo] = useState(null)
@@ -106,7 +107,11 @@ export default function DroneTrackingPage() {
           deliveryLocation,
         })
 
-        // Remove old map
+        // Remove old map and drone marker
+        if (droneMarker.current) {
+          droneMarker.current.remove()
+          droneMarker.current = null
+        }
         if (map.current) {
           map.current.remove()
         }
@@ -170,6 +175,10 @@ export default function DroneTrackingPage() {
             id: 'planned-route-line',
             type: 'line',
             source: 'planned-route',
+            layout: {
+              'line-join': 'round',
+              'line-cap': 'round',
+            },
             paint: {
               'line-color': '#60A5FA',
               'line-width': 3,
@@ -203,11 +212,6 @@ export default function DroneTrackingPage() {
 
     setDroneLocation(sim)
 
-    // Remove old drone marker
-    const oldDroneMarkers = markers.current.filter((m) => m.element?.getAttribute('data-type') === 'drone')
-    oldDroneMarkers.forEach((m) => m.remove())
-    markers.current = markers.current.filter((m) => m.element?.getAttribute('data-type') !== 'drone')
-
     // Update or create flown route
     if (sim.flownPath && sim.flownPath.length > 1) {
       if (map.current.getSource('flown-route')) {
@@ -234,6 +238,10 @@ export default function DroneTrackingPage() {
           id: 'flown-route-line',
           type: 'line',
           source: 'flown-route',
+          layout: {
+            'line-join': 'round',
+            'line-cap': 'round',
+          },
           paint: {
             'line-color': '#10B981',
             'line-width': 4,
@@ -245,23 +253,22 @@ export default function DroneTrackingPage() {
       }
     }
 
-    // Add single animated drone marker
-    const droneElement = document.createElement('div')
-    droneElement.setAttribute('data-type', 'drone')
-    droneElement.className = 'drone-marker'
-    droneElement.innerHTML = `
-      <div class="flex items-center justify-center">
-        <div class="w-1 h-1 bg-red-500 rounded-full absolute" style="width: 6px; height: 6px; box-shadow: 0 0 8px rgba(239, 68, 68, 0.8);"></div>
-        <div class="w-1 h-1 border border-red-500 rounded-full absolute" style="width: 14px; height: 14px; animation: pulse 1.5s ease-in-out infinite;"></div>
-        <span class="text-lg" style="font-size: 18px; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3));">✈</span>
-      </div>
-    `
+    // Create drone marker once, then just update its position
+    if (!droneMarker.current) {
+      const droneElement = document.createElement('div')
+      droneElement.setAttribute('data-type', 'drone')
+      droneElement.className = 'drone-marker'
+      droneElement.innerHTML = `
+        <span style="font-size: 22px; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.4));">✈</span>
+      `
 
-    const droneMarker = new goongjs.current.Marker({ element: droneElement })
-      .setLngLat([sim.position.longitude, sim.position.latitude])
-      .addTo(map.current)
-
-    markers.current.push(droneMarker)
+      droneMarker.current = new goongjs.current.Marker({ element: droneElement })
+        .setLngLat([sim.position.longitude, sim.position.latitude])
+        .addTo(map.current)
+    } else {
+      // Just update position of existing marker
+      droneMarker.current.setLngLat([sim.position.longitude, sim.position.latitude])
+    }
   }, [elapsedSeconds, simulationData])
 
   // Simulation timer
@@ -302,6 +309,27 @@ export default function DroneTrackingPage() {
   const handleResetSimulation = () => {
     setElapsedSeconds(0)
     setIsRunning(false)
+    setDroneLocation(null)
+
+    // Clear the flown route from the map
+    if (map.current) {
+      // Remove flown route layer and source
+      if (map.current.getLayer('flown-route-line')) {
+        map.current.removeLayer('flown-route-line')
+      }
+      if (map.current.getSource('flown-route')) {
+        map.current.removeSource('flown-route')
+      }
+
+      // Remove drone marker
+      if (droneMarker.current) {
+        droneMarker.current.remove()
+        droneMarker.current = null
+      }
+
+      // Update layers array
+      layers.current = layers.current.filter((layer) => layer !== 'flown-route-line')
+    }
   }
 
   const formatTime = (seconds) => {
