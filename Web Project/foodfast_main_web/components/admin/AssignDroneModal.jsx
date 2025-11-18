@@ -88,7 +88,7 @@ export default function AssignDroneModal({ isOpen, order, onClose, onAssignSucce
             await updateDoc(orderRef, {
                 assignedDroneId: selectedDroneId,
                 assignedDroneName: selectedDrone.name,
-                status: 'confirmed',
+                status: 'shipping',
                 updatedAt: new Date(),
             })
 

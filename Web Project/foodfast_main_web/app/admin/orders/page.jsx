@@ -7,7 +7,7 @@ import OrderDetailModal from '@/components/admin/OrderDetailModal'
 import { formatTimestampDisplay } from '@/utils/timestampUtils'
 
 export default function AdminOrders() {
-    const { data: orders, loading } = useOrdersAdmin()
+    const { data: orders, loading, refetch } = useOrdersAdmin()
     const [selectedOrder, setSelectedOrder] = useState(null)
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
 
@@ -19,6 +19,10 @@ export default function AdminOrders() {
     const handleCloseDetails = () => {
         setIsDetailModalOpen(false)
         setSelectedOrder(null)
+    }
+
+    const handleStatusChange = () => {
+        refetch()
     }
 
     const getStatusColor = (status) => {
@@ -88,13 +92,15 @@ export default function AdminOrders() {
             key: 'actions',
             label: 'Actions',
             render: (item) => (
-                <button
-                    onClick={() => handleViewDetails(item)}
-                    className="flex items-center gap-2 px-3 py-1 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg transition text-sm font-medium"
-                >
-                    <Eye size={16} />
-                    View
-                </button>
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => handleViewDetails(item)}
+                        className="flex items-center gap-2 px-3 py-1 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg transition text-sm font-medium"
+                    >
+                        <Eye size={16} />
+                        View
+                    </button>
+                </div>
             )
         },
     ]
@@ -119,6 +125,7 @@ export default function AdminOrders() {
                 isOpen={isDetailModalOpen}
                 order={selectedOrder}
                 onClose={handleCloseDetails}
+                onStatusChange={handleStatusChange}
             />
         </div>
     )

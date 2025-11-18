@@ -1,11 +1,36 @@
 'use client'
 import { useState } from 'react'
-import { X, MapPin, Package, CreditCard, Zap } from 'lucide-react'
+import { X, MapPin, Package, CreditCard, Zap, Loader } from 'lucide-react'
 import { formatTimestampDisplay } from '@/utils/timestampUtils'
+import { updateOrderStatus, canChangeOrderStatus, getAvailableNextStatuses } from '@/utils/orderUtils'
+import toast from 'react-hot-toast'
 import AssignDroneModal from './AssignDroneModal'
 
-export default function OrderDetailModal({ isOpen, order, onClose }) {
+export default function OrderDetailModal({ isOpen, order, onClose, onStatusChange }) {
     const [isAssignDroneOpen, setIsAssignDroneOpen] = useState(false)
+    const [statusChanging, setStatusChanging] = useState(false)
+    const [showStatusDropdown, setShowStatusDropdown] = useState(false)
+
+    const handleStatusChange = async (newStatus) => {
+        if (!order?.id) {
+            toast.error('Order ID not found')
+            return
+        }
+
+        setStatusChanging(true)
+        try {
+            await updateOrderStatus(order.id, newStatus)
+            toast.success(`Order status updated to ${newStatus}`)
+            setShowStatusDropdown(false)
+            onStatusChange?.()
+        } catch (error) {
+            console.error('Error updating status:', error)
+            toast.error('Failed to update order status')
+        } finally {
+            setStatusChanging(false)
+        }
+    }
+
     if (!isOpen || !order) return null
 
     const getStatusColor = (status) => {
@@ -43,16 +68,47 @@ export default function OrderDetailModal({ isOpen, order, onClose }) {
                 <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
                     {/* Status and Payment Info */}
                     <div className="grid grid-cols-2 gap-4">
-                        <div className="bg-slate-50 p-4 rounded-lg">
+                        <div className="bg-slate-50 p-4 rounded-lg relative">
                             <p className="text-xs text-slate-600 uppercase font-semibold mb-2">Status</p>
-                            <span className={`px-3 py-1.5 rounded-lg text-sm font-semibold capitalize ${getStatusColor(order.status)}`}>
-                                {order.status || 'Unknown'}
-                            </span>
+                            <div className="relative">
+                                <button
+                                    onClick={() => setShowStatusDropdown(!showStatusDropdown)}
+                                    className={`w-full text-left px-3 py-1.5 rounded-lg text-sm font-semibold capitalize ${getStatusColor(order.status)} cursor-pointer hover:opacity-80 transition`}
+                                    disabled={!canChangeOrderStatus(order.status) || statusChanging}
+                                >
+                                    {order.status || 'Unknown'}
+                                </button>
+
+                                {/* Status Dropdown Menu */}
+                                {showStatusDropdown && canChangeOrderStatus(order.status) && (
+                                    <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-slate-200 rounded-lg shadow-lg z-10">
+                                        {getAvailableNextStatuses(order.status).map((status) => (
+                                            <button
+                                                key={status}
+                                                onClick={() => handleStatusChange(status)}
+                                                disabled={statusChanging}
+                                                className={`w-full text-left px-4 py-2 text-sm capitalize hover:bg-slate-50 transition first:rounded-t-lg last:rounded-b-lg border-b last:border-b-0 ${
+                                                    statusChanging ? 'opacity-50 cursor-not-allowed' : ''
+                                                }`}
+                                            >
+                                                {statusChanging ? (
+                                                    <span className="flex items-center gap-2">
+                                                        <Loader size={14} className="animate-spin" />
+                                                        Changing to {status}...
+                                                    </span>
+                                                ) : (
+                                                    status
+                                                )}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
                         </div>
                         <div className="bg-slate-50 p-4 rounded-lg">
                             <p className="text-xs text-slate-600 uppercase font-semibold mb-2">Payment Status</p>
                             <p className={`text-sm font-medium ${order.isPaid ? 'text-green-600' : 'text-red-600'}`}>
-                                {order.isPaid ? '✓ Paid' : '✗ Unpaid'} �� {order.paymentMethod || 'Unknown'}
+                                {order.isPaid ? '✓ Paid' : '✗ Unpaid'} • {order.paymentMethod || 'Unknown'}
                             </p>
                         </div>
                     </div>
