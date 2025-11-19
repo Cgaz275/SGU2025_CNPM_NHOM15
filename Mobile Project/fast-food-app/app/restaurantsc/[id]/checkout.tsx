@@ -52,7 +52,7 @@ export default function Checkout2Screen() {
           const userRef = doc(db, 'user', user.uid);
           const userSnap = await getDoc(userRef);
           if (userSnap.exists()) {
-            const defaultId = userSnap.data().defaultAddress;
+            const defaultId = userSnap.data().defaultAddressId;
             if (defaultId) {
               const addrSnap = await getDoc(doc(db, 'address', defaultId));
               if (addrSnap.exists())

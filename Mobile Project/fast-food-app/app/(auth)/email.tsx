@@ -50,7 +50,7 @@ export default function Email() {
         return showModal('Tài khoản đã bị khóa.');
       }
 
-      if (data.role !== 'user' && data.role !== 'merchant') {
+      if (data.role !== 'customer' && data.role !== 'merchant') {
         return showModal('Bạn không có quyền truy cập.');
       }
 
