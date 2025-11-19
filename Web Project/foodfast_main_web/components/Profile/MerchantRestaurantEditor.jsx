@@ -5,6 +5,7 @@ import RestaurantBasicInfo from './RestaurantBasicInfo'
 import RestaurantCategories from './RestaurantCategories'
 import DishManagement from './DishManagement'
 import RestaurantPromotions from './RestaurantPromotions'
+import MerchantOrders from './MerchantOrders'
 
 export default function MerchantRestaurantEditor({ user }) {
     const [activeTab, setActiveTab] = useState('basic')
@@ -17,7 +18,8 @@ export default function MerchantRestaurantEditor({ user }) {
         { id: 'basic', label: 'Restaurant Info' },
         { id: 'categories', label: 'Categories'},
         { id: 'dishes', label: 'Dishes'},
-        { id: 'promotions', label: 'Promotions'}
+        { id: 'promotions', label: 'Promotions'},
+        { id: 'orders', label: 'Orders'}
     ]
 
     return (
@@ -52,6 +54,7 @@ export default function MerchantRestaurantEditor({ user }) {
                 {activeTab === 'categories' && <RestaurantCategories restaurantId={user.uid} />}
                 {activeTab === 'dishes' && <DishManagement restaurantId={user.uid} />}
                 {activeTab === 'promotions' && <RestaurantPromotions restaurantId={user.uid} />}
+                {activeTab === 'orders' && <MerchantOrders restaurantId={user.uid} />}
             </div>
         </div>
     )

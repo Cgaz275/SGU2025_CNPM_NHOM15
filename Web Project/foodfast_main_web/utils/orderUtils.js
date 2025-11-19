@@ -3,11 +3,12 @@ import { db } from '@/config/FirebaseConfig';
 
 // Define valid status transitions
 const STATUS_FLOW = {
-  pending: ['confirmed'],
+  pending: ['confirmed', 'rejected'],
   confirmed: ['shipping'],
   shipping: ['completed'],
   completed: [],
-  cancelled: []
+  cancelled: [],
+  rejected: []
 };
 
 /**
@@ -36,7 +37,7 @@ export const getAvailableNextStatuses = (currentStatus) => {
  * @returns {boolean} - True if status can be changed
  */
 export const canChangeOrderStatus = (status) => {
-  const unchangeableStatuses = ['completed', 'cancelled'];
+  const unchangeableStatuses = ['completed', 'cancelled', 'rejected'];
   return !unchangeableStatuses.includes(status?.toLowerCase());
 };
 

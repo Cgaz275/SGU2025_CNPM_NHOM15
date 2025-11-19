@@ -1,14 +1,16 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import { Zap, MapPin, Clock, AlertCircle } from 'lucide-react'
 import useOrdersAdmin from '@/hooks/useOrdersAdmin'
-import { calculateDronePosition, formatFlightPhase, getDroneState, DRONE_STATES } from '@/utils/droneSimulation'
+import { calculateDronePosition, formatFlightPhase, getDroneState, DRONE_STATES, FLIGHT_PHASES } from '@/utils/droneSimulation'
 import { doc, getDoc, updateDoc } from 'firebase/firestore'
 import { db } from '@/config/FirebaseConfig'
 import { GOONG_MAP_TILES_KEY, GOONG_MAP_STYLE } from '@/config/GoongMapConfig'
 import toast from 'react-hot-toast'
 
 export default function DroneTrackingPage() {
+  const router = useRouter()
   const { data: orders } = useOrdersAdmin()
   const mapContainer = useRef(null)
   const map = useRef(null)
@@ -17,6 +19,7 @@ export default function DroneTrackingPage() {
   const layers = useRef([])
   const svgOverlay = useRef(null)
   const droneMarker = useRef(null)
+  const completedOrderRef = useRef(new Set())
   const [selectedOrderId, setSelectedOrderId] = useState(null)
   const [elapsedSeconds, setElapsedSeconds] = useState(0)
   const [droneInfo, setDroneInfo] = useState(null)
@@ -51,6 +54,12 @@ export default function DroneTrackingPage() {
   // Initialize map when order is selected
   useEffect(() => {
     if (!selectedOrderId || !mapContainer.current || !goongjs.current) return
+
+    // Validate that mapContainer is actually an HTMLElement
+    if (!(mapContainer.current instanceof HTMLElement)) {
+      console.error('Invalid mapContainer: not an HTMLElement', mapContainer.current)
+      return
+    }
 
     const initializeMap = async () => {
       try {
@@ -120,6 +129,12 @@ export default function DroneTrackingPage() {
         // Create new map
         if (!GOONG_MAP_TILES_KEY) {
           setError('Goong Maps API key is not configured')
+          return
+        }
+
+        // Validate container is still valid before creating map
+        if (!(mapContainer.current instanceof HTMLElement)) {
+          console.error('mapContainer is not a valid HTMLElement')
           return
         }
 
@@ -300,11 +315,20 @@ export default function DroneTrackingPage() {
         if (!order?.assignedDroneId) return
 
         const droneRef = doc(db, 'drones', order.assignedDroneId)
-        await updateDoc(droneRef, {
+
+        // Update drone location
+        const updateData = {
           'latlong.latitude': droneLocation.position.latitude,
           'latlong.longitude': droneLocation.position.longitude,
           lastUpdated: new Date().toISOString(),
-        })
+        }
+
+        // If drone has returned to base, mark it as at_base
+        if (droneLocation.isCompleted) {
+          updateData.at_base = true
+        }
+
+        await updateDoc(droneRef, updateData)
       } catch (error) {
         console.error('Error updating drone location:', error)
       }
@@ -313,11 +337,55 @@ export default function DroneTrackingPage() {
     updateDroneLocation()
   }, [droneLocation, selectedOrderId, isRunning, orders])
 
+  // Auto-complete order when drone returns to base
+  useEffect(() => {
+    if (!selectedOrderId || !droneLocation?.isCompleted) return
+
+    // Prevent multiple completions of the same order
+    if (completedOrderRef.current.has(selectedOrderId)) {
+      return
+    }
+
+    const completeOrder = async () => {
+      try {
+        const order = orders?.find((o) => o.id === selectedOrderId)
+        if (!order) return
+
+        // Mark order as completed in this session
+        completedOrderRef.current.add(selectedOrderId)
+
+        // Update order status to completed
+        const orderRef = doc(db, 'orders', selectedOrderId)
+        await updateDoc(orderRef, {
+          status: 'completed',
+          updatedAt: new Date().toISOString(),
+        })
+
+        toast.success('Order completed! Drone returned to base.')
+
+        // Stop simulation
+        setIsRunning(false)
+
+        // Redirect to orders page after 1 second
+        setTimeout(() => {
+          router.push('/admin/orders')
+        }, 1000)
+      } catch (error) {
+        console.error('Error completing order:', error)
+        toast.error('Failed to complete order')
+      }
+    }
+
+    completeOrder()
+  }, [droneLocation?.isCompleted, selectedOrderId, orders, router])
+
   const handleStartSimulation = () => {
     if (!selectedOrderId) {
       toast.error('Please select an order')
       return
     }
+    // Reset completion tracking when starting a new simulation
+    completedOrderRef.current.delete(selectedOrderId)
     setElapsedSeconds(0)
     setIsRunning(true)
   }
@@ -353,6 +421,11 @@ export default function DroneTrackingPage() {
 
       // Update layers array
       layers.current = layers.current.filter((layer) => layer !== 'flown-route-line')
+    }
+
+    // Reset completed order tracking for this order
+    if (selectedOrderId) {
+      completedOrderRef.current.delete(selectedOrderId)
     }
   }
 
