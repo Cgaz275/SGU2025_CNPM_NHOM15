@@ -15,6 +15,8 @@ export default function OrderDetailModal({ isOpen, order, onClose, onStatusChang
     const [showStatusDropdown, setShowStatusDropdown] = useState(false)
     const [droneLocation, setDroneLocation] = useState(null)
     const [loadingDroneLocation, setLoadingDroneLocation] = useState(false)
+    const [restaurantData, setRestaurantData] = useState(null)
+    const [loadingRestaurant, setLoadingRestaurant] = useState(false)
 
     const handleStatusChange = async (newStatus) => {
         if (!order?.id) {
@@ -35,6 +37,30 @@ export default function OrderDetailModal({ isOpen, order, onClose, onStatusChang
             setStatusChanging(false)
         }
     }
+
+    useEffect(() => {
+        if (!isOpen || !order?.restaurantId) {
+            setRestaurantData(null)
+            return
+        }
+
+        const fetchRestaurantData = async () => {
+            setLoadingRestaurant(true)
+            try {
+                const restaurantRef = doc(db, 'restaurants', order.restaurantId)
+                const restaurantSnap = await getDoc(restaurantRef)
+                if (restaurantSnap.exists()) {
+                    setRestaurantData(restaurantSnap.data())
+                }
+            } catch (error) {
+                console.error('Error fetching restaurant data:', error)
+            } finally {
+                setLoadingRestaurant(false)
+            }
+        }
+
+        fetchRestaurantData()
+    }, [isOpen, order?.restaurantId])
 
     useEffect(() => {
         if (!isOpen || !order?.assignedDroneId) {
@@ -146,6 +172,23 @@ export default function OrderDetailModal({ isOpen, order, onClose, onStatusChang
                             </p>
                         </div>
                     </div>
+
+                    {/* Restaurant Info */}
+                    {restaurantData && (
+                        <div className="bg-emerald-50 p-4 rounded-lg border border-emerald-200">
+                            <div className="flex items-center gap-2 mb-2">
+                                <MapPin size={16} className="text-emerald-600" />
+                                <p className="text-xs text-emerald-600 uppercase font-semibold">Restaurant</p>
+                            </div>
+                            <p className="text-lg font-semibold text-emerald-900">{restaurantData.name || restaurantData.restaurant || 'N/A'}</p>
+                            {restaurantData.address && (
+                                <p className="text-sm text-emerald-700 mt-1">{restaurantData.address}</p>
+                            )}
+                            {restaurantData.phone && (
+                                <p className="text-xs text-emerald-600 mt-1">Phone: {restaurantData.phone}</p>
+                            )}
+                        </div>
+                    )}
 
                     {/* Assigned Drone Info */}
                     {order.assignedDroneName && (
