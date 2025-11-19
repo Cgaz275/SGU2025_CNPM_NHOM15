@@ -12,6 +12,7 @@ import {
   View,
 } from 'react-native';
 import { auth, db } from '../../FirebaseConfig';
+
 interface PromoCode {
   id: string;
   code: string;
@@ -31,7 +32,7 @@ export default function Promotion() {
   const [promoList, setPromoList] = useState<PromoCode[]>([]);
   const [restaurantId, setRestaurantId] = useState<string | null>(null);
 
-  // Load restaurant của user hiện tại
+  // ---- LOAD RESTAURANT ----
   useEffect(() => {
     const loadRestaurant = async () => {
       const user = auth.currentUser;
@@ -41,15 +42,24 @@ export default function Promotion() {
         collection(db, 'restaurants'),
         where('userId', '==', user.uid)
       );
+
       const snapRes = await getDocs(qRes);
       if (!snapRes.empty) {
         setRestaurantId(snapRes.docs[0].id);
       }
     };
+
     loadRestaurant();
   }, []);
 
-  // Load promo theo restaurantId
+  // ---- SAFE DATE CONVERT ----
+  const safeDate = (value: any) => {
+    if (!value) return new Date();
+    if (value?.toDate) return value.toDate(); // Timestamp
+    return new Date(value); // string or anything else
+  };
+
+  // ---- LOAD PROMO ----
   useEffect(() => {
     if (!restaurantId) return;
 
@@ -58,7 +68,9 @@ export default function Promotion() {
         collection(db, 'promotions_restaurant'),
         where('restaurantId', '==', restaurantId)
       );
+
       const snap = await getDocs(q);
+
       const promos = snap.docs.map((d) => {
         const data = d.data();
         return {
@@ -67,32 +79,37 @@ export default function Promotion() {
           discount_percentage: data.discount_percentage,
           minPrice: data.minPrice,
           detail: data.detail,
-          createdAt: data.createdAt.toDate(), // 🔹 convert Timestamp -> Date
-          expiryDate: data.expiryDate.toDate(), // 🔹 convert Timestamp -> Date
+          createdAt: safeDate(data.createdAt),
+          expiryDate: safeDate(data.expiryDate),
           usage_limit: data.usage_limit,
           usage_count: data.usage_count,
           is_enable: data.is_enable,
           restaurantId: data.restaurantId,
         } as PromoCode;
       });
+
       setPromoList(promos);
     };
 
     loadPromo();
   }, [restaurantId]);
 
+  // ---- DELETE ----
   const handleDelete = (promo: PromoCode) => {
     Alert.alert('Xác nhận', `Xóa promo ${promo.code}?`, [
       { text: 'Hủy', style: 'cancel' },
       {
         text: 'Xóa',
         style: 'destructive',
-        onPress: () => setPromoList(promoList.filter((p) => p.id !== promo.id)),
+        onPress: () =>
+          setPromoList((prev) => prev.filter((p) => p.id !== promo.id)),
       },
     ]);
   };
 
-  const formatDate = (date: string) => {
+  // ---- FORMAT DATE ----
+  const formatDate = (date: Date) => {
+    if (!date) return '';
     const d = new Date(date);
     return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1)
       .toString()
@@ -146,7 +163,7 @@ export default function Promotion() {
               onPress={() =>
                 router.push({
                   pathname: '../promo/editpromo',
-                  params: { promoId: p.id }, // truyền id promo
+                  params: { promoId: p.id },
                 })
               }
               style={styles.actionBtn}
@@ -157,6 +174,7 @@ export default function Promotion() {
                 color="#007AFF"
               />
             </TouchableOpacity>
+
             <TouchableOpacity
               onPress={() => handleDelete(p)}
               style={styles.actionBtn}
@@ -174,6 +192,7 @@ export default function Promotion() {
   );
 }
 
+// ---- CSS ----
 const styles = StyleSheet.create({
   headerRow: {
     flexDirection: 'row',

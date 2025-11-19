@@ -42,7 +42,7 @@ export default function Register() {
         email: user.email,
         createdAt: new Date(),
         is_enable: true,
-        role: 'user',
+        role: 'customer',
         name: '',
         phone: '',
         defaultAddress: '',

@@ -210,36 +210,69 @@ function OrderManagementScreen() {
                       resizeMode="cover"
                     />
                   )}
+
                   <View style={{ flex: 1, marginLeft: 10 }}>
-                    <Text style={styles.itemName}>{item.name}</Text>
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                      }}
+                    >
+                      <Text style={styles.itemName}>{item.name}</Text>
+
+                      {/* Hiện số lượng tổng của item */}
+                      <Text style={{ fontWeight: '600', fontSize: 13 }}>
+                        x{item.quantity ?? 1}
+                      </Text>
+                    </View>
+
+                    {/* Options groups */}
                     {item.options &&
                       Object.keys(item.options).map((groupKey) => {
-                        const group = item.options?.[groupKey];
-                        if (!Array.isArray(group)) return null;
+                        const raw = item.options?.[groupKey];
+                        const groupArray = Array.isArray(raw)
+                          ? raw
+                          : raw
+                          ? [raw]
+                          : [];
 
                         return (
                           <View
                             key={groupKey}
-                            style={{ marginLeft: 10 }}
+                            style={{ marginLeft: 0, marginTop: 6 }}
                           >
                             <Text style={{ fontWeight: '600', fontSize: 12 }}>
                               {groupKey}:
                             </Text>
-                            {group.map((opt: any) => (
-                              <Text
-                                key={opt.id}
-                                style={styles.itemQuantity}
-                              >
-                                {opt.name ?? '---'} -{' '}
-                                {(opt.price ?? 0).toLocaleString()}đ
-                              </Text>
-                            ))}
+
+                            <View style={styles.optionsContainer}>
+                              {groupArray.map((opt: any) => (
+                                <View
+                                  key={opt?.id ?? Math.random().toString()}
+                                  style={styles.optionChip}
+                                >
+                                  <Text style={styles.optionText}>
+                                    {opt?.name ?? '---'}
+                                    {/* Hiện giá nếu có */}
+                                    {opt?.price
+                                      ? ` • ${opt.price.toLocaleString()}đ`
+                                      : ''}
+                                    {/* Hiện số lượng option nếu có (vd: topping x2) */}
+                                    {typeof opt?.quantity !== 'undefined'
+                                      ? ` • x${opt.quantity}`
+                                      : ''}
+                                  </Text>
+                                </View>
+                              ))}
+                            </View>
                           </View>
                         );
                       })}
                   </View>
+
                   <Text style={styles.itemPrice}>
-                    {item.price?.toLocaleString() ?? 0}đ
+                    {(item.price ?? 0).toLocaleString()}đ
                   </Text>
                 </View>
               ))}
@@ -426,6 +459,30 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   confirmText: { color: '#27ae60', fontWeight: '700' },
+  // Thêm vào phần styles
+  optionsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: 6,
+    alignItems: 'flex-start',
+  },
+  optionChip: {
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#eee',
+    backgroundColor: '#fff',
+    marginRight: 8,
+    marginBottom: 6,
+    // optional: giảm kích thước để nhét được nhiều hơn
+    minWidth: 40,
+    maxWidth: 220,
+  },
+  optionText: {
+    fontSize: 12,
+    color: '#444',
+  },
 });
 
 export default function WrappedOrderManagementScreen() {
